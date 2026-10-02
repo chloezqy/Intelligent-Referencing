@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --background-image-dots: radial-gradient(#d4d4d8 1px, transparent 1px);
+}
+
+.dot-pattern {
+  background-image: radial-gradient(var(--color-zinc-300) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
