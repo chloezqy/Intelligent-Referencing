@@ -226,3 +226,20 @@ button:disabled { opacity:.45; }
 
 .conversation-popover.collab-panel { position:absolute;height:auto;padding:0; }
 .conversation-popover .reference-detail { padding:12px; }
+
+.conversation-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:8px; }
+.conversation-heading h3 { margin:0; }
+.conversation-more { position:relative;flex-shrink:0;font-size:11px; }
+.conversation-more summary { cursor:pointer;padding:2px 4px;border-radius:4px; }
+.conversation-more > button { position:absolute;right:0;top:100%;z-index:2;white-space:nowrap;background:white;box-shadow:0 3px 12px #0002; }
+.conversation-intent { font-size:11px;font-weight:600;margin-top:4px; }
+.conversation-status { font-size:11px;color:#666; }
+.conversation-note-label { font-size:11px;font-weight:600;margin-top:12px; }
+
+.attention-notice { position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:65;display:flex;align-items:center;gap:8px;max-width:calc(100% - 24px);padding:10px 12px;background:white;border:1px solid #ddd8e9;border-radius:8px;box-shadow:0 4px 16px #0002;font-size:12px; }
+.attention-notice > span { min-width:0; }.attention-notice small { display:block;max-width:230px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#777;font-size:11px; }
+.attention-notice button { padding:5px 8px;border:1px solid #dedbe8;border-radius:4px; }.attention-notice button:focus-visible {outline:2px solid #7965c6;outline-offset:2px;}
+
+.collaborator-cursors { position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:35; }
+.collaborator-cursor { position:absolute;pointer-events:none;color:var(--participant-color);display:flex;align-items:flex-start;gap:2px; }
+.collaborator-cursor span { margin-top:16px;white-space:nowrap;background:var(--participant-color);color:white;padding:3px 6px;border-radius:4px;font-size:10px;line-height:14px; }

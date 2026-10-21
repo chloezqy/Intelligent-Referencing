@@ -22,3 +22,5 @@ export interface Session { code: string; userId: UserId; token: string }
 export interface ReferenceDraft { elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel; label: string; research?: { level: 4 | 5; attemptId: string } }
 export const DOCUMENT_ID = 'mobile-commerce-v1';
 export const INTENTS: ReferenceIntent[] = ['Review', 'Compare', 'Help', 'Look at this'];
+
+export interface CollaboratorCursor { userId:UserId; x:number; y:number; visible:boolean; at:number }

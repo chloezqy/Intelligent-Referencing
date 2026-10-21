@@ -138,3 +138,11 @@ To clear an old test reference from the canvas, open it and choose **Archive ref
 ### Share beneath the pin
 
 The share action names the recipient: **Share to User A** or **Share to User B**. Its compact popup contains the intended action, note and Send button. It opens beneath the object’s temporary pin when space allows, otherwise moves above it to stay inside the canvas. Closing the popup keeps the unsent request; click its **+** pin to reopen it, or choose **Resume share popup** in References. **Cancel draft** discards it. Saved references and replies continue to use the existing References panel.
+
+### Bring another user to your selection
+
+Select objects and choose **Bring User A/B here**. This opens a **Look at this** request with fixed targets; press **Send** to deliver it. The recipient gets a small notification with **View** and **Later**. View zooms to the objects and opens the conversation. It never moves their canvas before they choose View. The sender can see a “viewed the referenced elements” receipt in the conversation; this records a visit, not continuous live viewing. Later hides the notification for the current page visit; the saved reference remains in References. Offline recipients receive it when they reconnect.
+
+### Collaborator cursors
+
+When both users are connected to the same room, each sees the other’s cursor over the canvas: purple for User A and teal for User B. Cursors track design coordinates, so each person can pan and zoom independently. They disappear when the pointer leaves the canvas, the tab loses focus, the participant disconnects, or updates become stale. Cursor positions are temporary presence data and are not saved in the room history.

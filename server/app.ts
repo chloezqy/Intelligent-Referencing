@@ -15,7 +15,7 @@ export function collaborationServer(store: RoomStore) {
     // Same-origin browser requests only; bearer tokens remain in authorization headers.
     const origin = req.get('origin');
     if (origin && new URL(origin).host !== req.get('host')) return next(new ApiError(403, 'Use this server’s workspace URL.'));
-    if (req.method !== 'GET') {
+    if (req.method !== 'GET' && !/^\/rooms\/[a-f0-9]{24}\/cursor$/.test(req.path)) {
       const key = req.ip || 'local', now = Date.now();
       if (limits.size > 10000) for (const [k, v] of limits) if (v.until < now) limits.delete(k);
       const limit = limits.get(key); if (!limit || limit.until < now) limits.set(key, { count: 1, until: now + 60000 }); else if (++limit.count > 120) return next(new ApiError(429, 'Too many requests. Try again shortly.'));
@@ -24,6 +24,17 @@ export function collaborationServer(store: RoomStore) {
   });
   const route = (fn: (req: express.Request, res: express.Response) => void) => (req: express.Request, res: express.Response, next: express.NextFunction) => { try { fn(req, res); } catch (error) { next(error); } };
   const auth = (req: express.Request) => store.authorize(String(req.params.code), (req.get('authorization') || '').replace(/^Bearer /, ''));
+  const cursorLimits=new Map<string,{count:number;until:number}>();
+  const cursorEvent=(code:string,cursor:object)=>{for(const client of clients.get(code)||[])client.response.write(`event: cursor\ndata: ${JSON.stringify(cursor)}\n\n`);};
+  app.post('/api/rooms/:code/cursor',route((req,res)=>{
+    const userId=auth(req),code=String(req.params.code),now=Date.now(),key=`${code}:${userId}`;
+    for(const [k,v] of cursorLimits)if(v.until<now)cursorLimits.delete(k);
+    const limit=cursorLimits.get(key);if(limit&&++limit.count>30)throw new ApiError(429,'Cursor update rate exceeded.');
+    if(!limit)cursorLimits.set(key,{count:1,until:now+1000});
+    const {x,y,visible}=req.body;
+    if(typeof visible!=='boolean'||!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>1000000||Math.abs(y)>1000000)throw new ApiError(400,'Invalid cursor position.');
+    cursorEvent(code,{userId,x,y,visible,at:now});res.json({ok:true});
+  }));
   app.get('/api/health', (_req, res) => res.json({ ok: true, backend: 'express-sse', persistence: 'server-disk' }));
   app.post('/api/rooms', route((_req, res) => res.status(201).json(store.create())));
   app.post('/api/rooms/:code/join', route((req, res) => { const session = store.join(String(req.params.code), req.body.token); broadcast(session.code); res.json(session); }));
@@ -34,7 +45,7 @@ export function collaborationServer(store: RoomStore) {
     const set = clients.get(code) || new Set(); const client = { user, response: res }; set.add(client); clients.set(code, set);
     res.write('retry: 1500\n\n'); broadcast(code);
     const timer = setInterval(() => res.write(': heartbeat\n\n'), 15000);
-    res.on('close', () => { clearInterval(timer); set.delete(client); if (!set.size) clients.delete(code); broadcast(code); });
+    res.on('close', () => { clearInterval(timer); set.delete(client); if (!set.size) clients.delete(code); if(!online(code,user))cursorEvent(code,{userId:user,x:0,y:0,visible:false,at:Date.now()}); broadcast(code); });
   }));
   app.post('/api/rooms/:code/references', route((req, res) => { const user = auth(req), code = String(req.params.code); const id = store.share(code, user, req.body); broadcast(code); res.status(201).json({ id }); }));
   app.post('/api/rooms/:code/references/:id/responses', route((req, res) => { const user = auth(req), code = String(req.params.code); store.respond(code, user, String(req.params.id), req.body); broadcast(code); res.json({ ok: true }); }));

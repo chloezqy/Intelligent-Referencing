@@ -17,7 +17,7 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
   const base=`http://127.0.0.1:${(server.address() as any).port}`;
   const api=async(path:string,body?:unknown,session?:Session)=>{const res=await fetch(base+'/api'+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...(session?{Authorization:`Bearer ${session.token}`}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:res.status,body:await res.json()};};
   const controllers:AbortController[]=[];
-  const stream=async(s:Session)=>{const controller=new AbortController();controllers.push(controller);const response=await fetch(`${base}/api/rooms/${s.code}/events`,{headers:{Authorization:`Bearer ${s.token}`},signal:controller.signal});assert.equal(response.status,200);const reader=response.body!.getReader(),decoder=new TextDecoder();let buffer='';return {close:()=>controller.abort(),wait:async(predicate:(snapshot:RoomSnapshot)=>boolean)=>{const timeout=setTimeout(()=>controller.abort(),8000);try{while(true){let end:number;while((end=buffer.indexOf('\n\n'))!==-1){const event=buffer.slice(0,end);buffer=buffer.slice(end+2);const data=event.split('\n').find(s=>s.startsWith('data: '));if(data){const snap=JSON.parse(data.slice(6));if(predicate(snap))return snap;}}const read=await reader.read();assert.equal(read.done,false);buffer+=decoder.decode(read.value,{stream:true});}}finally{clearTimeout(timeout);}}};};
+  const stream=async(s:Session)=>{const controller=new AbortController();controllers.push(controller);const response=await fetch(`${base}/api/rooms/${s.code}/events`,{headers:{Authorization:`Bearer ${s.token}`},signal:controller.signal});assert.equal(response.status,200);const reader=response.body!.getReader(),decoder=new TextDecoder();let buffer='';return {close:()=>controller.abort(),wait:async(predicate:(snapshot:RoomSnapshot)=>boolean,cursorEvent=false)=>{const timeout=setTimeout(()=>controller.abort(),8000);try{while(true){let end:number;while((end=buffer.indexOf('\n\n'))!==-1){const event=buffer.slice(0,end);buffer=buffer.slice(end+2);const data=event.split('\n').find(s=>s.startsWith('data: '));if(data){const snap=JSON.parse(data.slice(6));if(event.includes('event: cursor')!==cursorEvent)continue;if(predicate(snap))return snap;}}const read=await reader.read();assert.equal(read.done,false);buffer+=decoder.decode(read.value,{stream:true});}}finally{clearTimeout(timeout);}}};};
   try {
     const created=await api('/rooms',{}),a=created.body as Session;assert.equal(created.status,201);assert.equal(a.userId,'A');
     assert.equal((await api(`/rooms/${a.code}`)).status,401);
@@ -26,6 +26,17 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     assert.equal((await api(`/rooms/${a.code}/join`,{token:randomBytes(32).toString('hex')})).status,409);
     const sa=await stream(a),sb=await stream(b);
     await sa.wait(s=>s.members.every(m=>m.online)); await sb.wait(s=>s.members.every(m=>m.online));
+    const revisionBefore=store.snapshot(a.code,()=>true).revision;
+    assert.equal((await api(`/rooms/${a.code}/cursor`,{x:100,y:200,visible:true})).status,401);
+    assert.equal((await api(`/rooms/${a.code}/cursor`,{x:'bad',y:200,visible:true},a)).status,400);
+    assert.equal((await api(`/rooms/${a.code}/cursor`,{x:100,y:200,visible:true,userId:'B'},a)).status,200);
+    const cursorA=await sb.wait((s:any)=>s.userId==='A'&&s.visible,true);
+    assert.equal((cursorA as any).x,100);await sa.wait((s:any)=>s.userId==='A'&&s.visible,true);
+    assert.equal((await api(`/rooms/${a.code}/cursor`,{x:300,y:400,visible:true},b)).status,200);
+    await sa.wait((s:any)=>s.userId==='B'&&s.x===300,true);await sb.wait((s:any)=>s.userId==='B'&&s.x===300,true);
+    assert.equal((await api(`/rooms/${a.code}/cursor`,{x:0,y:0,visible:false},b)).status,200);
+    await sa.wait((s:any)=>s.userId==='B'&&!s.visible,true);await sb.wait((s:any)=>s.userId==='B'&&!s.visible,true);
+    assert.equal(store.snapshot(a.code,()=>true).revision,revisionBefore); // Cursors never persist or change document state.
     const referenceId=randomUUID();
     const payload={requestId:referenceId,elementIds:['hc1-price','hc2-price'],exemplarIds:['hc1-price'],scope:'screen',label:'Product prices',intent:'Compare',message:'Please compare these.',sourceUser:'B',targetUser:'A',research:{level:4,attemptId:randomUUID()}};
     assert.equal((await api(`/rooms/${a.code}/references`,payload,a)).status,201);
