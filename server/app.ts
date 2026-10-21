@@ -40,6 +40,7 @@ export function collaborationServer(store: RoomStore) {
   app.post('/api/rooms/:code/references/:id/responses', route((req, res) => { const user = auth(req), code = String(req.params.code); store.respond(code, user, String(req.params.id), req.body); broadcast(code); res.json({ ok: true }); }));
   app.post('/api/rooms/:code/references/:id/review', route((req, res) => { const user = auth(req), code = String(req.params.code); store.review(code, user, String(req.params.id)); broadcast(code); res.json({ ok: true }); }));
   app.post('/api/rooms/:code/references/:id/activity', route((req, res) => { const user = auth(req), code = String(req.params.code); store.activity(code, user, String(req.params.id), req.body); broadcast(code); res.json({ ok: true }); }));
+  app.post('/api/rooms/:code/references/:id/archive', route((req, res) => { const user = auth(req), code = String(req.params.code); store.archive(code, user, String(req.params.id), req.body.archived); broadcast(code); res.json({ ok: true }); }));
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Unknown API endpoint.' }));
   app.use((error: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => { const status = error instanceof ApiError ? error.status : [400,413].includes(error.status) ? error.status : 500; if (status === 500) console.error(error); res.status(status).json({ error: status === 500 ? 'The server could not save this change. Try again.' : error.message }); });
   return app;

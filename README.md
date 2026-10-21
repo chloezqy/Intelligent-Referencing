@@ -37,7 +37,7 @@ The bottom input helps you describe why your collaborator should look at the sel
 1. Choose **Select** to click an item. Hold **Shift** while clicking to add or remove items from your selection.
 2. Choose **Smart Reference** and draw across a few related items, such as two category chips on Home.
 3. Inspect the suggested interpretation. Use **Touched**, **Screen** or **All Screens** to adjust how broadly the reference applies. You can also use Select and Shift-click to correct individual targets.
-4. Use **Share Reference** when you are ready to discuss the selection with someone.
+4. Use **Share to User A/B** when you are ready to discuss the selection with someone.
 
 Use **Pan** or hold **Space** while dragging to move around the canvas. Use the zoom controls to look closer, and **Fit view** to find all six screens again. Help contains the keyboard shortcuts.
 
@@ -50,7 +50,7 @@ You can select and reference the sample content, but you cannot currently move, 
 1. Open **References** or the room control in the top bar.
 2. Choose **Create room as User A**.
 3. Copy the invitation link and send it to the other person.
-4. Select or gesture across the objects you want to discuss, then choose **Share Reference**.
+4. Select or gesture across the objects you want to discuss, then choose **Share to User A/B**.
 5. Choose a purpose: **Review**, **Compare**, **Help** or **Look at this**.
 6. Add a note explaining what needs attention, then choose **Send to User B**.
 
@@ -117,3 +117,24 @@ This is an early research prototype, not a complete design editor or a Figma plu
 The five task flows have been tested, including live collaboration between two independent browser sessions on one computer. Testing on two physical computers or a public deployment has not yet been verified.
 
 For developers helping you run or extend the prototype, see the [technical setup and implementation notes](docs/TECHNICAL.md).
+
+## Compare and discuss objects
+
+Select two or more objects, then choose **Compare** in the small selection toolbar. A compact share popup opens beneath a temporary pin on the selected objects. Expand **Targets and comparison** to inspect the comparison before sending. Nothing is sent until you press **Send**. You can also choose **Ask for review**, or use **More → Ask for help**. For one object, Review, Help and Share are available directly.
+
+The comparison lists the sample objects’ actual text, dimensions, colors, corner radius, available typography and screen positions. Differences appear first; expand **Matching properties** to see what is the same. **Not specified** means that the sample data does not contain that property. This is a rule-based property comparison, not an AI opinion or a command to change the design.
+
+After sharing, both people see pins attached to the referenced objects. Pins move with the design when you pan or zoom. Nearby pins combine into a count to keep the canvas clear: click the count to open its conversation, or choose a conversation if several overlap. All pins belonging to a reference open the same discussion. A check mark indicates reviewed status. Opening a pin highlights its targets without moving your view; **Locate referenced elements** moves your view when you choose.
+
+These interactions adapt the object pins, contextual actions and comparison presentation from [Prototype 3](https://github.com/Rok1006/AI_Widget_Referencing/tree/main/src/prototypes/03-cross-application). The new React implementation uses Smart Reference’s real rooms and saved object IDs. It does not include the old prototype’s scripted User B, automatic style matching or editing tools. Public backend deployment is still separate work.
+
+## Keep references tidy
+
+Click a single reference pin to open its conversation in **References**. If a pin represents several overlapping references, it opens a small list with short labels, reference numbers, times and statuses. Full messages and replies appear only after you choose a reference, inside the References panel.
+
+To clear an old test reference from the canvas, open it and choose **Archive reference**. It disappears from both users’ pins and active lists immediately. Find it under **Archived** and choose **Restore reference** to bring it back. Either participant can archive or restore. Archiving preserves the original targets, notes, replies and task history; it does not count as a review. Archived conversations are read-only until restored.
+
+
+### Share beneath the pin
+
+The share action names the recipient: **Share to User A** or **Share to User B**. Its compact popup contains the intended action, note and Send button. It opens beneath the object’s temporary pin when space allows, otherwise moves above it to stay inside the canvas. Closing the popup keeps the unsent request; click its **+** pin to reopen it, or choose **Resume share popup** in References. **Cancel draft** discards it. Saved references and replies continue to use the existing References panel.

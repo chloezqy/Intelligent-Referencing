@@ -74,10 +74,10 @@ export class RoomStore {
   respond(code: string, user: UserId, id: string, body: any) {
     const message = text(body.message, 2000);
     if (!message || !/^[a-f0-9-]{36}$/i.test(body.requestId || '')) throw new ApiError(400, 'Write a response.');
-    this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.responses.some(r => r.id === body.requestId)) return; if (ref.responses.length >= 100) throw new ApiError(409, 'Response limit reached.'); ref.responses.push({ id: body.requestId, userId: user, message, createdAt: new Date().toISOString() }); room.revision++; });
+    this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.archivedAt) throw new ApiError(409, 'Restore this reference before responding.'); if (ref.responses.some(r => r.id === body.requestId)) return; if (ref.responses.length >= 100) throw new ApiError(409, 'Response limit reached.'); ref.responses.push({ id: body.requestId, userId: user, message, createdAt: new Date().toISOString() }); room.revision++; });
   }
   review(code: string, user: UserId, id: string) {
-    this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.targetUser !== user) throw new ApiError(403, 'Only the recipient can mark a reference reviewed.'); if (ref.status !== 'reviewed') { ref.status = 'reviewed'; ref.reviewedAt = new Date().toISOString(); room.revision++; } });
+    this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.targetUser !== user) throw new ApiError(403, 'Only the recipient can mark a reference reviewed.'); if (ref.archivedAt) throw new ApiError(409, 'Restore this reference before reviewing.'); if (ref.status !== 'reviewed') { ref.status = 'reviewed'; ref.reviewedAt = new Date().toISOString(); room.revision++; } });
   }
   activity(code: string, user: UserId, id: string, body: any) {
     if (!['opened', 'located'].includes(body.kind)) throw new ApiError(400, 'Invalid reference activity.');
@@ -85,12 +85,25 @@ export class RoomStore {
     this.transaction(rooms => {
       const room = this.room(code, rooms), ref = room.references.find(r => r.id === id);
       if (!ref) throw new ApiError(404, 'Reference not found.');
+      if (ref.archivedAt) throw new ApiError(409, 'Restore this reference before opening or locating its targets.');
       if (ids.some(id => !ref.elementIds.includes(id)) || (body.kind === 'located' && !ids.length)) throw new ApiError(400, 'Navigate to existing reference targets.');
       const activity = ref.activity ||= [];
       // Idempotent evidence bounded by users × targets, including reconnect retries.
       const previous = activity.filter(e => e.userId === user && e.kind === body.kind);
       if (body.kind === 'opened' ? previous.length > 0 : ids.every(id => previous.some(e => e.elementIds.includes(id)))) return;
       activity.push({ id: randomUUID(), userId: user, kind: body.kind, elementIds: body.kind === 'opened' ? [] : ids, at: new Date().toISOString() });
+      room.revision++;
+    });
+  }
+
+  archive(code: string, user: UserId, id: string, archived: unknown) {
+    if (typeof archived !== 'boolean') throw new ApiError(400, 'Specify whether to archive or restore the reference.');
+    this.transaction(rooms => {
+      const room = this.room(code, rooms), ref = room.references.find(r => r.id === id);
+      if (!ref) throw new ApiError(404, 'Reference not found.');
+      if (!!ref.archivedAt === archived) return;
+      if (archived) { ref.archivedAt = new Date().toISOString(); ref.archivedBy = user; }
+      else { delete ref.archivedAt; delete ref.archivedBy; }
       room.revision++;
     });
   }

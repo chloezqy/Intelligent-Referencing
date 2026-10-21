@@ -90,3 +90,31 @@ Verification for restored tasks: Levels 1–3 were completed through real browse
 ## API response diagnostics
 
 All room commands validate the HTTP status, Content-Type and JSON object before consuming the response. Realtime connections require `text/event-stream`; error responses pass through the same JSON validator. Errors identify the endpoint, status and returned media type instead of trying to parse a proxy error page as JSON. Invalid streams reconnect and do not report a healthy connection. Session identities are validated before saving them. Research task storage itself does not make API requests; shared-task open/locate/reply evidence uses the room API.
+
+## Prototype 3 interaction integration
+
+The React integration adapts `renderReferencePins` / `showSpatialComment`, `comparisonAnalysis`, and `compactActionsFor` from the original Prototype 3 interaction patterns. It does not execute or import that prototype's imperative DOM code, simulation timers, editor, or CSS. Source inspected: `Rok1006/AI_Widget_Referencing`, `src/prototypes/03-cross-application/interaction.js`, blob `ce4bfaf4be046c187f6535e1b1617749b8b90fde`.
+
+- `src/referencePresentation.ts`: pure world-to-screen object anchors, spatial-bucket clustering (24px pins, 8px separation), stable creation/ID ordering, active-anchor priority, and dataset-only property comparison. Missing properties are reported, not inferred from computed styles. Coordinates are relative to their screen. Mixed/incomplete comparisons retain every available target and flag unavailable IDs.
+- `ReferencePins.tsx`: accessible object pins and a single conversation chooser for overlapping references. Per-element pins resolve to the existing reference ID. Choosing a conversation calls the existing authenticated open command; no camera update or selection mutation occurs.
+- `PropertyComparison.tsx`: reusable draft/saved-reference comparison, matching/incomplete sections and table-local scrolling. Compare references expand by default; other references stay collapsed until requested.
+- `ReferenceActions.tsx`: compact intent shortcuts that create a frozen draft without sending it. Explicit intent overrides research defaults. Replacing draft targets preserves the original research attempt and the currently chosen intent.
+
+SharedReference and room API/storage contracts are unchanged. No pin coordinates, comparison output, or independent annotation system are persisted. SSE snapshots remain authoritative for targets, notes, responses and status. Comparisons and cluster choosers do not generate research navigation or recipient-response evidence. Existing open/locate/reply/review commands retain that responsibility.
+
+Verification: automated pure-helper tests cover coordinate transforms, clustering, overlap separation, active priority, stable ordering, offscreen/missing targets, CTA property differences, missing properties and non-mutating comparison behavior. Real A/B browser clients verified live pin receipt, clustered conversation opening without camera movement, frozen draft targets after clearing selection, deterministic comparison, replies and status synchronization, and completion of Levels 4 and 5 through recipient actions. Public Vercel backend deployment remains unimplemented.
+
+## Compact pin chooser and synchronized archive
+
+The canvas chooser contains short metadata rows only: intent/label, stable reference number, time, source and review state. Full notes are not rendered in the chooser or pin tooltips. The chooser is at most 240px wide and 224px tall, clamped to the canvas with an 8px margin and an independently scrollable list. It routes to the existing References conversation; a single-reference pin bypasses it.
+
+`SharedReference` has optional `archivedAt` and `archivedBy` fields. Older room files remain compatible without migration. `POST /api/rooms/:code/references/:id/archive` accepts `{ archived: boolean }`, authenticates the member, assigns the actor/timestamp server-side, saves atomically and broadcasts the same room snapshot. Both A and B can archive/restore; retries are idempotent. Archiving leaves review status, target IDs, replies and research evidence unchanged. It hides pins, highlights, active list entries and pending-review counts. Archived items remain in the existing room/reference collection and count toward its storage limit.
+
+Archived history is readable in References, but replying, marking reviewed and recording open/locate evidence require restoration. Opening an archived history item does not send research opening activity. Restore recovers the original conversation and object anchors; no second annotation or conversation store exists.
+
+
+## Pin-attached share composer
+
+`SharePopover.tsx` now owns the only share form, positioned as a canvas overlay. The sidebar retains room setup, saved references, archive/restore and conversations; it contains no duplicated composer. App state owns the frozen draft, note, intent and popup visibility, preserving them when a saved conversation opens or the share popup closes. The temporary pin reopens the same unsent draft. The send command and idempotent request ID still use the existing collaboration API. Research metadata remains on the original draft during target replacement.
+
+`sharePopoverLayout` derives its anchor from the first visible saved target ID, follows the local camera, and bounds a 312px-wide, at-most-360px-tall popup to the canvas. It flips above the pin when needed. If all targets are offscreen, the pin stays at the nearest viewport edge and the popup offers explicit Locate. Popup Locate changes only the local viewport, not recipient research evidence. The generic action label is “Share to user?” before room identity exists, then names the opposite real participant. Comparison and target replacement remain available in an expandable section.

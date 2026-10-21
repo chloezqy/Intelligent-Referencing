@@ -8,6 +8,8 @@ export interface SharedReference {
   status: 'open' | 'reviewed';
   research?: { level: 4 | 5; attemptId: string };
   reviewedAt?: string;
+  archivedAt?: string;
+  archivedBy?: UserId;
   activity?: { id: string; userId: UserId; kind: 'opened' | 'located'; elementIds: string[]; at: string }[];
   responses: { id: string; userId: UserId; message: string; createdAt: string }[];
 }
