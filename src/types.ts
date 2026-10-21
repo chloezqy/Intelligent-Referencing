@@ -50,7 +50,7 @@ export interface Point {
   y: number;
 }
 
-export type ToolMode = 'pointer' | 'smart-ref' | 'pan';
+export type ToolMode = 'pointer' | 'pan';
 
 export type SelectionState = 'idle' | 'drawing' | 'interpreting' | 'disambiguating' | 'preview' | 'rect-selecting';
 

@@ -392,7 +392,7 @@ export function generateScopeInterpretations(
  * Infers initial exemplars and generates scope-aware interpretations.
  */
 export function inferSelection(stroke: Point[], nodes: UIElement[]): Interpretation[] {
-  if (stroke.length < 3) return [];
+  if (stroke.length < 2) return [];
 
   // Filter out screen containers from atomic touch detection
   const selectableNodes = nodes.filter(n => n.type !== 'screen' && n.type !== 'tabbar' && n.type !== 'header');

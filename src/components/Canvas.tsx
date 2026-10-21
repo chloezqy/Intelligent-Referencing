@@ -1,3 +1,4 @@
+import { isSelectionDrag, selectionDragKind } from '../selectionInteraction';
 import { selectionActionLayout } from '../selectionActionLayout';
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -75,10 +76,11 @@ export default function Canvas({
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
+  const pendingPointer=useRef<{id:number;start:Point;screenStart:Point;screenPoints:Point[];path:Point[];node:UIElement|null;shift:boolean;previous:InferredReference|null;dragging:boolean}|null>(null);
+  const panPoint=useRef<Point|null>(null);
   // Gesture & Marquee Path
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
   const [rectStart, setRectStart] = useState<Point | null>(null);
-  const [marqueeShift, setMarqueeShift] = useState(false);
 
   // Interpretations from gesture inference
   const [interpretations, setInterpretations] = useState<Interpretation[]>([]);
@@ -99,19 +101,18 @@ export default function Canvas({
         setIsSpacePressed(true);
       }
       if (e.key === 'v' || e.key === 'V') {
-        if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
-        if(selectionState==='interpreting'||selectionState==='drawing'){setSelectionState('idle');setCurrentPath([]);}
+        handlePointerCancel();
         setToolMode('pointer');
       }
       if (e.key === 's' || e.key === 'S') {
-        setToolMode('smart-ref');
+        handlePointerCancel();setToolMode('pointer');
       }
       if (e.key === 'h' || e.key === 'H') {
-        if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
-        if(selectionState==='interpreting'||selectionState==='drawing'){setSelectionState('idle');setCurrentPath([]);}
+        handlePointerCancel();
         setToolMode('pan');
       }
       if (e.key === 'Escape') {
+        if(pendingPointer.current||panPoint.current||selectionState==='interpreting'){handlePointerCancel();return;}
         if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
         setSelectionState('idle');
         setInferredRef(null);
@@ -190,197 +191,65 @@ export default function Canvas({
     };
   };
 
-  // --- FIGMA-LIKE SELECTION: INDIVIDUAL NODE POINTER DOWN ---
-  const handleNodePointerDown = (e: React.PointerEvent, node: UIElement) => {
-    if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
-    if (e.button === 1 || isSpacePressed || toolMode === 'pan') return;
-
-    if (toolMode === 'pointer') {
-      setActionAnchor(getCanvasCoords(e));
-      e.stopPropagation();
-      
-      const newClicks = clicksCounter + 1;
-      setClicksCounter(newClicks);
-
-      const currentSelected = inferredRef?.selectedIds || [];
-
-      if (e.shiftKey) {
-        // Figma Shift+Click: Toggle selection
-        let nextSelected: string[];
-        if (currentSelected.includes(node.id)) {
-          nextSelected = currentSelected.filter(id => id !== node.id);
-        } else {
-          nextSelected = [...currentSelected, node.id];
-        }
-
-        if (nextSelected.length > 0) {
-          setInferredRef({
-            selectedIds: nextSelected,
-            exemplarIds: nextSelected,
-            label: nextSelected.length === 1 ? (nodes.find(n => n.id === nextSelected[0])?.label || '1 layer') : `${nextSelected.length} layers selected`,
-            scope: 'exemplars',
-            selectionMethod: 'conventional',
-            clicksCount: newClicks
-          });
-          setSelectionState('preview');
-        } else {
-          setInferredRef(null);
-          setSelectionState('idle');
-        }
-      } else {
-        // Regular Click: Select only this element
-        setInferredRef({
-          selectedIds: [node.id],
-          exemplarIds: [node.id],
-          label: node.label,
-          matchingRole: node.role,
-          matchingComponent: node.component,
-          scope: 'exemplars',
-          selectionMethod: 'conventional',
-          clicksCount: newClicks
-        });
-        setSelectionState('preview');
-      }
+  // One Select interaction: decide click versus drag only after movement/release.
+  const handleNodePointerDown=(e:React.PointerEvent,node:UIElement)=>{e.stopPropagation();handlePointerDown(e,node);};
+  const handlePointerDown=(e:React.PointerEvent,node:UIElement|null=null)=>{
+    if(e.button!==0&&e.button!==1)return;
+    if(pendingPointer.current||panPoint.current)return;
+    if(inferenceTimer.current){clearTimeout(inferenceTimer.current);inferenceTimer.current=null;}
+    if(e.button===1||isSpacePressed||toolMode==='pan'){
+      setIsPanning(true);panPoint.current={x:e.clientX,y:e.clientY};containerRef.current?.setPointerCapture(e.pointerId);return;
     }
+    const start=getCanvasCoords(e),screenStart={x:e.clientX,y:e.clientY};
+    pendingPointer.current={id:e.pointerId,start,screenStart,screenPoints:[screenStart],path:[start],node,shift:e.shiftKey,previous:inferredRef,dragging:false};
+    containerRef.current?.setPointerCapture(e.pointerId);
   };
-
-  // --- CANVAS BACKGROUND POINTER DOWN ---
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (e.button === 1 || isSpacePressed || toolMode === 'pan') {
-      setIsPanning(true);
-      (e.target as Element).setPointerCapture(e.pointerId);
-      return;
+  const handlePointerMove=(e:React.PointerEvent)=>{
+    if(panPoint.current){const previous=panPoint.current;panPoint.current={x:e.clientX,y:e.clientY};setTransform(t=>({...t,x:t.x+e.clientX-previous.x,y:t.y+e.clientY-previous.y}));return;}
+    const pending=pendingPointer.current;if(!pending||pending.id!==e.pointerId)return;
+    pending.screenPoints.push({x:e.clientX,y:e.clientY});pending.path.push(getCanvasCoords(e));
+    if(!pending.dragging&&isSelectionDrag(pending.screenStart,pending.screenPoints)){
+      pending.dragging=true;setSelectionState(selectionDragKind(pending.shift));setShowAlternatives(false);setDetailsOpen(false);
     }
-
-    if (selectionState === 'interpreting') return;
-
-    const pt = getCanvasCoords(e);
-
-    if (toolMode === 'pointer') {
-      if (!e.shiftKey) {
-        setInferredRef(null);
-        setSelectionState('idle');
-        setShowAlternatives(false);
-      }
-      setMarqueeShift(e.shiftKey);
-      setSelectionState('rect-selecting');
-      setRectStart(pt);
-      setCurrentPath([pt, pt]);
-    } else if (toolMode === 'smart-ref') {
-      setSelectionState('drawing');
-      setCurrentPath([pt]);
-      setInferredRef(null);
-      setInterpretations([]);
-      setActiveInterpretation(null);
-      setShowAlternatives(false);
-    }
-    
-    (e.target as Element).setPointerCapture(e.pointerId);
+    if(pending.dragging){setRectStart(pending.start);setCurrentPath(pending.shift?[pending.start,pending.path[pending.path.length-1]]:[...pending.path]);}
   };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (isPanning) {
-      setTransform(prev => ({
-        ...prev,
-        x: prev.x + e.movementX,
-        y: prev.y + e.movementY
-      }));
-      return;
-    }
-
-    if (selectionState !== 'drawing' && selectionState !== 'rect-selecting') return;
-
-    const pt = getCanvasCoords(e);
-
-    if (selectionState === 'drawing') {
-      setCurrentPath(prev => [...prev, pt]);
-    } else if (selectionState === 'rect-selecting' && rectStart) {
-      setCurrentPath([rectStart, pt]);
-    }
+  const commitClick=(node:UIElement|null,shift:boolean,previous:InferredReference|null)=>{
+    if(!node){if(!shift){setInferredRef(null);setSelectionState('idle');}return;}
+    const count=clicksCounter+1;setClicksCounter(count);
+    const ids=shift?(previous?.selectedIds.includes(node.id)?previous.selectedIds.filter(id=>id!==node.id):[...(previous?.selectedIds||[]),node.id]):[node.id];
+    if(!ids.length){setInferredRef(null);setSelectionState('idle');return;}
+    setInferredRef({selectedIds:ids,exemplarIds:ids,label:ids.length===1?nodes.find(n=>n.id===ids[0])!.label:`${ids.length} layers selected`,...(ids.length===1?{matchingRole:nodes.find(n=>n.id===ids[0])?.role,matchingComponent:nodes.find(n=>n.id===ids[0])?.component}:{}),scope:'exemplars',selectionMethod:'conventional',clicksCount:count});
+    setSelectionState('preview');setShowAlternatives(false);
   };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (isPanning) {
-      setIsPanning(false);
-      try {
-        (e.target as Element).releasePointerCapture(e.pointerId);
-      } catch {}
-      return;
+  const handlePointerCancel=()=>{
+    if(inferenceTimer.current){clearTimeout(inferenceTimer.current);inferenceTimer.current=null;}
+    const active=!!pendingPointer.current||!!panPoint.current||selectionState==='drawing'||selectionState==='rect-selecting'||selectionState==='interpreting';
+    pendingPointer.current=null;panPoint.current=null;setIsPanning(false);setCurrentPath([]);setRectStart(null);
+    if(active)setSelectionState(inferredRef?'preview':'idle');
+  };
+  useEffect(()=>{const blur=()=>{setIsSpacePressed(false);handlePointerCancel();};window.addEventListener('blur',blur);return()=>window.removeEventListener('blur',blur);},[inferredRef,selectionState]);
+  const handlePointerUp=(e:React.PointerEvent)=>{
+    if(panPoint.current){panPoint.current=null;setIsPanning(false);if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);return;}
+    const pending=pendingPointer.current;if(!pending||pending.id!==e.pointerId)return;
+    pendingPointer.current=null;
+    const end=getCanvasCoords(e);pending.path.push(end);pending.screenPoints.push({x:e.clientX,y:e.clientY});
+    if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);
+    setActionAnchor(end);setCurrentPath([]);setRectStart(null);
+    if(!pending.dragging&&!isSelectionDrag(pending.screenStart,pending.screenPoints)){commitClick(pending.node,pending.shift,pending.previous);return;}
+    if(pending.shift){
+      const r={x:Math.min(pending.start.x,end.x),y:Math.min(pending.start.y,end.y),w:Math.abs(end.x-pending.start.x),h:Math.abs(end.y-pending.start.y)};
+      const hitIds=nodes.filter(n=>n.type!=='screen'&&rectIntersect(n,r)).map(n=>n.id);
+      const ids=[...new Set([...(pending.previous?.selectedIds||[]),...hitIds])];
+      const count=clicksCounter+1;setClicksCounter(count);
+      setInferredRef(ids.length?{selectedIds:ids,exemplarIds:ids,label:`${ids.length} layers selected`,scope:'exemplars',selectionMethod:'conventional',clicksCount:count}:null);setSelectionState(ids.length?'preview':'idle');return;
     }
-
-    if(selectionState==='rect-selecting'||selectionState==='drawing')setActionAnchor(getCanvasCoords(e));
-
-    // Conventional Marquee Box finished
-    if (selectionState === 'rect-selecting' && rectStart && currentPath.length === 2) {
-      const end = currentPath[1];
-      const r = {
-        x: Math.min(rectStart.x, end.x),
-        y: Math.min(rectStart.y, end.y),
-        w: Math.abs(end.x - rectStart.x),
-        h: Math.abs(end.y - rectStart.y)
-      };
-      
-      const newHitIds = nodes.filter(n => n.type !== 'screen' && rectIntersect(n, r)).map(n => n.id);
-      
-      let finalSelected: string[];
-      if (marqueeShift && inferredRef) {
-        finalSelected = Array.from(new Set([...inferredRef.selectedIds, ...newHitIds]));
-      } else {
-        finalSelected = newHitIds;
-      }
-      
-      if (finalSelected.length > 0) {
-        const newClicks = clicksCounter + 1;
-        setClicksCounter(newClicks);
-        setInferredRef({
-          selectedIds: finalSelected,
-          exemplarIds: finalSelected,
-          label: `${finalSelected.length} layers selected`,
-          scope: 'exemplars',
-          selectionMethod: 'conventional',
-          clicksCount: newClicks
-        });
-        setSelectionState('preview');
-      } else if (!marqueeShift) {
-        setSelectionState('idle');
-      }
-      
-      setCurrentPath([]);
-      setRectStart(null);
-      return;
-    }
-
-    if (selectionState !== 'drawing') return;
-
-    onResearchEvent('gesture_attempt');
-    // Smart Reference Gesture finished
-    if (currentPath.length < 4) {
-      setSelectionState('idle');
-      setCurrentPath([]);
-      return;
-    }
-
-    // Brief "Interpreting..." feedback state
-    setSelectionState('interpreting');
-    
-    inferenceTimer.current = setTimeout(() => {
-      const results = inferSelection(currentPath, nodes);
-      
-      if (results.length === 0) {
-        setSelectionState('idle');
-        setCurrentPath([]);
-        return;
-      }
-
-      setInterpretations(results);
-      
-      // Auto-commit the best match and open simplified alternatives dropdown
-      const best = results[0];
-      onResearchEvent('gesture_interpreted');
-      commitInterpretation(best, false);
-      setSelectionState('disambiguating');
-      setShowAlternatives(true);
-    }, 300);
+    onResearchEvent('gesture_attempt');setSelectionState('interpreting');setCurrentPath(pending.path);
+    inferenceTimer.current=setTimeout(()=>{
+      inferenceTimer.current=null;
+      const results=inferSelection(pending.path,nodes);
+      if(!results.length){setSelectionState(pending.previous?'preview':'idle');setCurrentPath([]);return;}
+      setInterpretations(results);onResearchEvent('gesture_interpreted');commitInterpretation(results[0],false);setSelectionState('disambiguating');setShowAlternatives(true);
+    },300);
   };
 
   const commitInterpretation = (interp: Interpretation, finalize = true) => {
@@ -526,7 +395,7 @@ export default function Canvas({
   return (
     <div 
       className={`relative w-full h-full overflow-clip bg-[#e8e8e8] select-none
-        ${isPanning || isSpacePressed ? 'cursor-grab' : toolMode === 'smart-ref' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
+        ${isPanning || isSpacePressed ? 'cursor-grab' : selectionState === 'drawing' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* 
@@ -686,7 +555,8 @@ export default function Canvas({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={() => { if(inferenceTimer.current)clearTimeout(inferenceTimer.current); setIsPanning(false); setCurrentPath([]); setRectStart(null); setSelectionState('idle'); }}
+        onPointerCancel={handlePointerCancel}
+        onLostPointerCapture={()=>{if(pendingPointer.current||panPoint.current)handlePointerCancel();}}
       >
         <div 
           style={{ 

@@ -26,22 +26,9 @@ export default function Toolbar({
               ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-zinc-700'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
           }`}
-          title="Selection Tool (V) - Click or box marquee"
+          title="Selection Tool (V) - Click, drag for rough gesture, Shift-drag for box"
         >
           <MousePointer2 className="w-4 h-4" />
-        </button>
-
-        <button
-          onClick={() => setToolMode('smart-ref')}
-          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all relative ${
-            toolMode === 'smart-ref'
-              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20 ring-2 ring-indigo-500/50'
-              : 'text-indigo-400 hover:bg-indigo-950/40 hover:text-indigo-300'
-          }`}
-          title="Smart Reference (S) - Rough gesture or strike-through selection"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 ring-2 ring-zinc-900" />
         </button>
 
         <button

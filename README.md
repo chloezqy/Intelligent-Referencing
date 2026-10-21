@@ -28,18 +28,18 @@ The prototype uses six example mobile shopping screens: Home, Search, Product De
 | References | Create or join a room, share references, and read or reply to requests. |
 | Tasks | Choose a research level, read instructions and check progress. |
 | Center canvas | Explore the six mobile screens. Pan and zoom to inspect their contents. |
-| Bottom controls | Switch between Select, Smart Reference and Pan. Add a note to a reference request. |
+| Bottom controls | Use Select for clicks and rough gestures, or Hand to pan. Add a note to a reference request. |
 
 The bottom input helps you describe why your collaborator should look at the selected items. It is not a general-purpose AI chat or a design-editing command box.
 
 ## Start with selection
 
 1. Choose **Select** to click an item. Hold **Shift** while clicking to add or remove items from your selection.
-2. Choose **Smart Reference** and draw across a few related items, such as two category chips on Home.
+2. Stay in **Select** and drag more than 6px across related items, such as two category chips on Home. Hold Shift while dragging for a precise rectangular selection.
 3. Inspect the suggested interpretation. Use **Touched**, **Screen** or **All Screens** to adjust how broadly the reference applies. You can also use Select and Shift-click to correct individual targets.
 4. Use **Share to User A/B** when you are ready to discuss the selection with someone.
 
-Use **Pan** or hold **Space** while dragging to move around the canvas. Use the zoom controls to look closer, and **Fit view** to find all six screens again. Help contains the keyboard shortcuts.
+Use **Hand** or hold **Space** while dragging to move around the canvas. Use the zoom controls to look closer, and **Fit view** to find all six screens again. Help contains the keyboard shortcuts.
 
 You can select and reference the sample content, but you cannot currently move, resize, recolor or edit its text.
 
@@ -156,3 +156,7 @@ Choose Compare to freeze both selections in the pin popup. **Context suggestions
 The property table labels objects by the user who selected them; objects selected by both carry both labels. Changes to live selections never alter the draft or conversation. **Refresh comparison** explicitly captures the latest selections while retaining your purpose and note. Draft snapshots expire after one hour or a server restart; refresh the comparison if prompted. Saved comparisons and replies survive refresh and server restarts. The other user can open the reference, locate both sets of targets, and reply or mark it reviewed.
 
 Manual Compare references within your own selection still work. All five research levels retain their existing completion checks. No design edits or viewports are synchronized.
+
+### One selection tool
+
+**Select (V or S)** handles both ordinary selection and rough gestures. Click selects one object; Shift-click adds or removes it. Drag more than 6 screen pixels to draw a rough gesture, even when starting on an object. Shift-drag adds objects using a precise box. Small pointer movements remain clicks. Selection changes commit on release, and gesture results commit after interpretation; pending strokes do not change the other participant’s selection view. Cancelled strokes retain your previous selection. **Hand (H)**, Space-drag, and middle-button drag pan the canvas.
