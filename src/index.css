@@ -223,3 +223,6 @@ button:disabled { opacity:.45; }
 .share-popover .primary-action { color:#6352b8;background:#eeedff;border-color:#d5ccf4!important; }
 .share-popover button:disabled { opacity:.5;cursor:not-allowed; }.share-popover .subtle { font-size:10px;line-height:1.5;margin:6px 0; }
 .share-target-options > summary { cursor:pointer;color:#888;font-size:10px;padding:3px 0; }.share-target-options > button { padding:6px;border:1px solid #ddd;border-radius:4px; }
+
+.conversation-popover.collab-panel { position:absolute;height:auto;padding:0; }
+.conversation-popover .reference-detail { padding:12px; }
