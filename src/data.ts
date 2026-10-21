@@ -1,4 +1,4 @@
-import { UIElement, ResearchTask } from './types';
+import { UIElement } from './types';
 
 export const INITIAL_NODES: UIElement[] = [];
 
@@ -1397,81 +1397,4 @@ function buildDataset(): UIElement[] {
 }
 
 export const MOCK_NODES = buildDataset();
-
-// Curated 5 HCI Research Tasks strictly ordered from Easy to Expert
-export const RESEARCH_STUDY_TASKS: ResearchTask[] = [
-  {
-    id: 'task-1-chips',
-    level: 1,
-    difficulty: 'Easy',
-    title: 'Select 4 Category Chips on Home Screen',
-    description: 'Select the 4 category filter chips ("All Chairs", "Desk Lamps", "Oak Stools", "Vases") on the Home screen.',
-    hintConventional: 'In Select mode (V), drag a small marquee box over the 4 chips, or Shift+Click each chip.',
-    hintSmartRef: 'In Smart Reference mode (S), draw a quick line stroke crossing 2 chips — AI infers the 4 category chips.',
-    targetRole: 'filterChip',
-    targetScope: 'screen',
-    screenTarget: 'Home',
-    expectedCount: 4,
-    conventionalClicksNeeded: 4,
-    targetIds: ['home-chip-0', 'home-chip-1', 'home-chip-2', 'home-chip-3']
-  },
-  {
-    id: 'task-2-cards',
-    level: 2,
-    difficulty: 'Easy-Medium',
-    title: 'Select 4 Product Cards in Search Results',
-    description: 'Select all 4 product card components in the Search Results screen at the container granularity level.',
-    hintConventional: 'In Select mode (V), drag a selection marquee over the cards, or Shift+Click each of the 4 cards.',
-    hintSmartRef: 'In Smart Reference mode (S), roughly circle 2 cards — AI infers component container scope for Search.',
-    targetComponent: 'ProductCard',
-    targetScope: 'screen',
-    screenTarget: 'Search',
-    expectedCount: 4,
-    conventionalClicksNeeded: 4,
-    targetIds: ['sc1', 'sc2', 'sc3', 'sc4']
-  },
-  {
-    id: 'task-3-hearts',
-    level: 3,
-    difficulty: 'Medium',
-    title: 'Select 4 Wishlist Heart Buttons in Search',
-    description: 'Select the 4 small wishlist heart buttons nestled inside each search result card.',
-    hintConventional: 'In Select mode (V), precisely Shift+Click the 4 small 24px heart icons individually.',
-    hintSmartRef: 'In Smart Reference mode (S), make a rough stroke intersecting 2 heart icons — AI infers all 4 in this screen.',
-    targetRole: 'favorite',
-    targetScope: 'screen',
-    screenTarget: 'Search',
-    expectedCount: 4,
-    conventionalClicksNeeded: 4,
-    targetIds: ['sc1-fav', 'sc2-fav', 'sc3-fav', 'sc4-fav']
-  },
-  {
-    id: 'task-4-cta',
-    level: 4,
-    difficulty: 'Hard',
-    title: 'Select all "Add to Bag" CTAs across Flow',
-    description: 'Select all primary action buttons ("Add to Bag", "Proceed to Checkout", "Place Order") across the screens.',
-    hintConventional: 'In Select mode (V), pan across the canvas and Shift+Click 13 individual action buttons across 6 screens.',
-    hintSmartRef: 'In Smart Reference mode (S), stroke across 2 "Add to Bag" buttons on Home, then toggle scope to "All Screens".',
-    targetRole: 'primaryCTA',
-    targetScope: 'document',
-    expectedCount: 13,
-    conventionalClicksNeeded: 13,
-    targetIds: MOCK_NODES.filter(n => n.role === 'primaryCTA').map(n => n.id)
-  },
-  {
-    id: 'task-5-prices',
-    level: 5,
-    difficulty: 'Expert',
-    title: 'Select all 13 Product Prices across Catalog',
-    description: 'Select all product price tags ($289.00, $85.00, etc.) across the entire 6-screen workspace.',
-    hintConventional: 'In Select mode (V), pan horizontally and Shift+Click each tiny price text across all 6 artboards.',
-    hintSmartRef: 'In Smart Reference mode (S), scribble across 2 price labels on any screen, then toggle scope to "All Screens".',
-    targetRole: 'price',
-    targetScope: 'document',
-    expectedCount: 13,
-    conventionalClicksNeeded: 13,
-    targetIds: MOCK_NODES.filter(n => n.role === 'price').map(n => n.id)
-  }
-];
 

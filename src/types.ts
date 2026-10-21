@@ -84,19 +84,3 @@ export interface InferredReference {
   clicksCount?: number;
 }
 
-export interface ResearchTask {
-  id: string;
-  level: number;
-  difficulty: 'Easy' | 'Easy-Medium' | 'Medium' | 'Hard' | 'Expert';
-  title: string;
-  description: string;
-  hintSmartRef: string;
-  hintConventional: string;
-  targetRole?: string;
-  targetComponent?: string;
-  targetScope: ScopeLevel;
-  screenTarget?: string;
-  expectedCount: number;
-  targetIds: string[];
-  conventionalClicksNeeded: number;
-}

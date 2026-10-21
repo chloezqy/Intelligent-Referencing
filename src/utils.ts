@@ -429,7 +429,8 @@ export function inferSelection(stroke: Point[], nodes: UIElement[]): Interpretat
   }
 
   // Default initial scope to 'screen' or 'document'
-  return generateScopeInterpretations(exemplarIds, nodes, 'screen');
+  const screens = new Set(nodes.filter(n=>exemplarIds.includes(n.id)).map(n=>n.screen));
+  return generateScopeInterpretations(exemplarIds, nodes, screens.size > 1 ? 'document' : 'screen');
 }
 
 /**

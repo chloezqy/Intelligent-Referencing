@@ -1,12 +1,16 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Point, UIElement, ToolMode, SelectionState, InferredReference, Interpretation, ScopeLevel } from '../types';
+import { SharedReference } from '../collaboration';
 import { zoomAtPoint } from '../workspace';
 import { SCREEN_CONFIGS, SCREEN_W, SCREEN_H, START_Y } from '../data';
 import { inferSelection, getBoundingBox, expandScope, rectIntersect, generateScopeInterpretations } from '../utils';
 import { Check, Sparkles, X, MousePointer2, ChevronDown } from 'lucide-react';
 
 interface CanvasProps {
+  sharedReferences: SharedReference[];
+  activeSharedId: string | null;
+  onOpenShared: (id:string)=>void;
   toolMode: ToolMode;
   setToolMode: (mode: ToolMode) => void;
   selectionState: SelectionState;
@@ -29,7 +33,7 @@ export default function Canvas({
   onAcceptReference,
   nodes,
   transform,
-  setTransform
+  setTransform, sharedReferences, activeSharedId, onOpenShared
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
@@ -54,6 +58,8 @@ export default function Canvas({
   const [hoveredInterpretation, setHoveredInterpretation] = useState<Interpretation | null>(null);
   const [activeInterpretation, setActiveInterpretation] = useState<Interpretation | null>(null);
   const [showAlternatives, setShowAlternatives] = useState(false);
+  const inferenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(()=>()=>{if(inferenceTimer.current)clearTimeout(inferenceTimer.current);},[]);
   const [clicksCounter, setClicksCounter] = useState(0);
 
   // Keyboard navigation & shortcuts (Figma standard)
@@ -66,15 +72,20 @@ export default function Canvas({
         setIsSpacePressed(true);
       }
       if (e.key === 'v' || e.key === 'V') {
+        if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
+        if(selectionState==='interpreting'||selectionState==='drawing'){setSelectionState('idle');setCurrentPath([]);}
         setToolMode('pointer');
       }
       if (e.key === 's' || e.key === 'S') {
         setToolMode('smart-ref');
       }
       if (e.key === 'h' || e.key === 'H') {
+        if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
+        if(selectionState==='interpreting'||selectionState==='drawing'){setSelectionState('idle');setCurrentPath([]);}
         setToolMode('pan');
       }
       if (e.key === 'Escape') {
+        if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
         setSelectionState('idle');
         setInferredRef(null);
         setCurrentPath([]);
@@ -154,6 +165,7 @@ export default function Canvas({
 
   // --- FIGMA-LIKE SELECTION: INDIVIDUAL NODE POINTER DOWN ---
   const handleNodePointerDown = (e: React.PointerEvent, node: UIElement) => {
+    if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
     if (e.button === 1 || isSpacePressed || toolMode === 'pan') return;
 
     if (toolMode === 'pointer') {
@@ -320,7 +332,7 @@ export default function Canvas({
     // Brief "Interpreting..." feedback state
     setSelectionState('interpreting');
     
-    setTimeout(() => {
+    inferenceTimer.current = setTimeout(() => {
       const results = inferSelection(currentPath, nodes);
       
       if (results.length === 0) {
@@ -360,15 +372,13 @@ export default function Canvas({
 
   // --- UNCONDITIONAL ROBUST SCOPE SWITCHER ("All Screens", "Screen", "Touched") ---
   const handleScopeChange = (newScope: ScopeLevel) => {
-    const baseExemplars = activeInterpretation?.exemplarIds?.length
-      ? activeInterpretation.exemplarIds
-      : (inferredRef?.exemplarIds?.length ? inferredRef.exemplarIds : (inferredRef?.selectedIds || []));
+    const baseExemplars = inferredRef?.exemplarIds?.length ? inferredRef.exemplarIds : (inferredRef?.selectedIds || []);
 
     if (baseExemplars.length === 0) return;
 
-    const roleHint = activeInterpretation?.matchingRole || inferredRef?.matchingRole;
-    const compHint = activeInterpretation?.matchingComponent || inferredRef?.matchingComponent;
-    const screenHint = activeInterpretation?.targetScreen;
+    const roleHint = inferredRef?.matchingRole;
+    const compHint = inferredRef?.matchingComponent;
+    const screenHint = inferredRef?.activeInterpretation?.targetScreen;
 
     // Dynamically regenerate the smart suggestions list tailored to the selected scope!
     const newInterpretations = generateScopeInterpretations(
@@ -485,6 +495,15 @@ export default function Canvas({
       className={`relative w-full h-full overflow-hidden bg-[#e8e8e8] select-none
         ${isPanning || isSpacePressed ? 'cursor-grab' : toolMode === 'smart-ref' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
+      <div className="shared-pins absolute inset-0 pointer-events-none z-30" aria-label="Shared reference pins">
+        {sharedReferences.flatMap((ref,index)=>SCREEN_CONFIGS.map(screen=>{
+          const targets=nodes.filter(n=>ref.elementIds.includes(n.id)&&n.screen===screen.name);
+          const box=getBoundingBox(targets.map(n=>n.id),nodes);if(!box)return null;
+          const left=box.x*transform.scale+transform.x,top=box.y*transform.scale+transform.y-22-(index%4)*20;
+          if(left<0||left>viewport.width-24||top<0||top>viewport.height-24)return null;
+          return <button key={`${ref.id}-${screen.name}`} className={`reference-pin pointer-events-auto user-${ref.sourceUser} ${ref.id===activeSharedId?'selected':''} ${ref.status==='reviewed'?'reviewed':''}`} style={{left,top}} title={`User ${ref.sourceUser}: ${ref.intent} — ${ref.message||ref.label}`} aria-label={`Open ${ref.intent} reference from User ${ref.sourceUser} in ${screen.name}`} onClick={()=>onOpenShared(ref.id)}>{ref.sourceUser}{index+1}</button>;
+        }))}
+      </div>
       {/* 
         ========================================================================
         SINGLE CONSISTENT TOP CONTEXTUAL SCOPE & SELECTION BAR (Fixed at Top Center)
@@ -578,10 +597,10 @@ export default function Canvas({
               <button
                 onPointerDown={(e) => { e.stopPropagation(); onAcceptReference(); }}
                 className="ml-0.5 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-zinc-900 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-colors shadow-xs"
-                title="Attach this selection to AI Prompt Bar"
+                title="Share this selection with your collaborator"
               >
                 <Check className="w-3 h-3" />
-                <span>Attach</span>
+                <span>Share Reference</span>
               </button>
 
               {/* Clear Selection (Esc) */}
@@ -660,7 +679,7 @@ export default function Canvas({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={() => { setIsPanning(false); setCurrentPath([]); setRectStart(null); setSelectionState('idle'); }}
+        onPointerCancel={() => { if(inferenceTimer.current)clearTimeout(inferenceTimer.current); setIsPanning(false); setCurrentPath([]); setRectStart(null); setSelectionState('idle'); }}
       >
         <div 
           style={{ 
@@ -699,6 +718,8 @@ export default function Canvas({
 
           {/* Render All UI Nodes with Real Conventional Selection Handlers */}
           {nodes.filter(node => node.type === 'screen' || !node.screen).map(node => renderNode(node))}
+
+          {sharedReferences.filter(ref=>ref.id===activeSharedId).flatMap(ref=>nodes.filter(n=>ref.elementIds.includes(n.id)).map(node=><div key={`shared-${ref.id}-${node.id}`} className={`shared-target absolute pointer-events-none z-20 ${ref.sourceUser==='A'?'shared-a':'shared-b'}`} style={{left:node.x-2,top:node.y-2,width:node.w+4,height:node.h+4,borderRadius:(node.radius||0)+2,borderWidth:2/transform.scale}}/>))}
 
           {/* Individual Selection Ring Overlays */}
           <AnimatePresence>
@@ -755,11 +776,8 @@ export default function Canvas({
               >
                 {/* Clean Blue Bounding Box Outline */}
                 <div className="w-full h-full border border-[#0d99ff]/70 relative">
-                  {/* Figma 4 Corner Resize Handles */}
-                  <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#0d99ff] rounded-xs shadow-xs" />
-                  <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#0d99ff] rounded-xs shadow-xs" />
-                  <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-[#0d99ff] rounded-xs shadow-xs" />
-                  <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-[#0d99ff] rounded-xs shadow-xs" />
+                  {/* Selection boundary only; no editing handles. */}
+
                 </div>
               </motion.div>
             )}

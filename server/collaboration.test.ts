@@ -1,0 +1,50 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { randomUUID, randomBytes } from 'node:crypto';
+import { createServer } from 'node:http';
+import { collaborationServer } from './app';
+import { RoomStore } from './store';
+import { RoomSnapshot, Session } from '../src/collaboration';
+
+test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and recover durable rooms', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'sr-room-test-')), file = join(dir,'rooms.json');
+  const store = new RoomStore(file), server = createServer(collaborationServer(store));
+  await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const base=`http://127.0.0.1:${(server.address() as any).port}`;
+  const api=async(path:string,body?:unknown,session?:Session)=>{const res=await fetch(base+'/api'+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...(session?{Authorization:`Bearer ${session.token}`}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:res.status,body:await res.json()};};
+  const controllers:AbortController[]=[];
+  const stream=async(s:Session)=>{const controller=new AbortController();controllers.push(controller);const response=await fetch(`${base}/api/rooms/${s.code}/events`,{headers:{Authorization:`Bearer ${s.token}`},signal:controller.signal});assert.equal(response.status,200);const reader=response.body!.getReader(),decoder=new TextDecoder();let buffer='';return {close:()=>controller.abort(),wait:async(predicate:(snapshot:RoomSnapshot)=>boolean)=>{const timeout=setTimeout(()=>controller.abort(),8000);try{while(true){let end:number;while((end=buffer.indexOf('\n\n'))!==-1){const event=buffer.slice(0,end);buffer=buffer.slice(end+2);const data=event.split('\n').find(s=>s.startsWith('data: '));if(data){const snap=JSON.parse(data.slice(6));if(predicate(snap))return snap;}}const read=await reader.read();assert.equal(read.done,false);buffer+=decoder.decode(read.value,{stream:true});}}finally{clearTimeout(timeout);}}};};
+  try {
+    const created=await api('/rooms',{}),a=created.body as Session;assert.equal(created.status,201);assert.equal(a.userId,'A');
+    assert.equal((await api(`/rooms/${a.code}`)).status,401);
+    const joinToken=randomBytes(32).toString('hex'), joined=await api(`/rooms/${a.code}/join`,{token:joinToken}), b=joined.body as Session;assert.equal(b.userId,'B');assert.notEqual(a.token,b.token);
+    assert.equal((await api(`/rooms/${a.code}/join`,{token:joinToken})).body.userId,'B');
+    assert.equal((await api(`/rooms/${a.code}/join`,{token:randomBytes(32).toString('hex')})).status,409);
+    const sa=await stream(a),sb=await stream(b);
+    await sa.wait(s=>s.members.every(m=>m.online)); await sb.wait(s=>s.members.every(m=>m.online));
+    const referenceId=randomUUID();
+    const payload={requestId:referenceId,elementIds:['hc1-price','hc2-price'],exemplarIds:['hc1-price'],scope:'screen',label:'Product prices',intent:'Compare',message:'Please compare these.',sourceUser:'B',targetUser:'A'};
+    assert.equal((await api(`/rooms/${a.code}/references`,payload,a)).status,201);
+    const received=await sb.wait(s=>s.references.some(r=>r.id===referenceId));
+    assert.equal(received.references[0].sourceUser,'A');assert.equal(received.references[0].targetUser,'B');
+    assert.deepEqual(received.references[0].elementIds,payload.elementIds);
+    assert.equal((await api(`/rooms/${a.code}/references`,payload,a)).status,201);
+    assert.equal((await api(`/rooms/${a.code}`,undefined,a)).body.references.length,1);
+    assert.equal((await api(`/rooms/${a.code}/references`,{...payload,requestId:randomUUID(),elementIds:['not-a-node']},a)).status,400);
+    assert.equal((await api(`/rooms/${a.code}/references/${referenceId}/review`,{},a)).status,403);
+    const replyId=randomUUID();
+    assert.equal((await api(`/rooms/${a.code}/references/${referenceId}/responses`,{requestId:replyId,message:'Reviewed the prices.'},b)).status,200);
+    const reply=await sa.wait(s=>s.references[0]?.responses.length===1);assert.equal(reply.references[0].responses[0].userId,'B');
+    assert.equal((await api(`/rooms/${a.code}/references/${referenceId}/review`,{},b)).status,200);
+    await sa.wait(s=>s.references[0]?.status==='reviewed');
+    sb.close();await sa.wait(s=>s.members.some(m=>m.userId==='B'&&!m.online));
+    const sbAgain=await stream(b);await sbAgain.wait(s=>s.references[0]?.status==='reviewed'&&s.members.every(m=>m.online));
+    const recovered=new RoomStore(file);assert.equal(recovered.authorize(a.code,a.token),'A');assert.equal(recovered.authorize(b.code,b.token),'B');
+    assert.equal(recovered.snapshot(a.code,()=>false).references[0].responses[0].message,'Reviewed the prices.');
+    assert.equal((await api(`/rooms/${a.code}/elements`,{},a)).status,404);
+    const hostile=await fetch(base+'/api/rooms',{method:'POST',headers:{Origin:'https://unrelated.example','Content-Type':'application/json'},body:'{}'});assert.equal(hostile.status,403);
+  } finally { controllers.forEach(c=>c.abort());server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));rmSync(dir,{recursive:true,force:true}); }
+});

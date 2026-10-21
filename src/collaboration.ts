@@ -1,0 +1,19 @@
+import { ScopeLevel } from './types';
+export type UserId = 'A' | 'B';
+export type ReferenceIntent = 'Review' | 'Compare' | 'Help' | 'Look at this';
+export interface SharedReference {
+  id: string; sourceUser: UserId; targetUser: UserId;
+  elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel;
+  label: string; intent: ReferenceIntent; message: string; createdAt: string;
+  status: 'open' | 'reviewed';
+  responses: { id: string; userId: UserId; message: string; createdAt: string }[];
+}
+export interface RoomSnapshot {
+  code: string; documentId: string; revision: number;
+  members: { userId: UserId; online: boolean }[];
+  references: SharedReference[];
+}
+export interface Session { code: string; userId: UserId; token: string }
+export interface ReferenceDraft { elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel; label: string }
+export const DOCUMENT_ID = 'mobile-commerce-v1';
+export const INTENTS: ReferenceIntent[] = ['Review', 'Compare', 'Help', 'Look at this'];

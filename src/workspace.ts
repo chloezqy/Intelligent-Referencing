@@ -18,3 +18,8 @@ export function zoomAtPoint(previous: CanvasTransform, factor: number, x: number
   const ratio = scale / previous.scale;
   return { scale, x: x - (x - previous.x) * ratio, y: y - (y - previous.y) * ratio };
 }
+
+export function fitBounds(box: {x:number;y:number;w:number;h:number}, width:number, height:number): CanvasTransform {
+  const scale = Math.max(.08,Math.min(1.5,(width-80)/Math.max(1,box.w),(height-80)/Math.max(1,box.h)));
+  return {scale,x:(width-box.w*scale)/2-box.x*scale,y:(height-box.h*scale)/2-box.y*scale};
+}
