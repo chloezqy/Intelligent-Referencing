@@ -104,6 +104,8 @@ npm ci
 npm run dev
 ```
 
+For a built preview, run `npm run build` followed by `npm run preview`; this also starts the room server. Publishing only the frontend files does not enable collaboration.
+
 Then open [localhost:3000](http://localhost:3000). If the terminal reports a different configured port, use that address instead. A “connection refused” message usually means the server is not running or the browser is using the wrong address.
 
 **For two computers:** both people must connect to the same running server. A `localhost` link only works on the computer running it. Ask the person hosting the prototype for its network address and create the invitation from that address. Using it over different networks requires hosting the app online; an invitation alone does not make it publicly available.

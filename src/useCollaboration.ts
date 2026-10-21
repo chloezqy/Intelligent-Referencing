@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ApiResponseError, readApiJson, requireEventStream, parseRoomEvent } from './apiResponse';
 import { ReferenceDraft, ReferenceIntent, RoomSnapshot, Session } from './collaboration';
 export function requestId() {
   const bytes = crypto.getRandomValues(new Uint8Array(16)); bytes[6] = bytes[6] & 15 | 64; bytes[8] = bytes[8] & 63 | 128;
@@ -14,11 +15,11 @@ export function useCollaboration() {
   const [initialCode] = useState(roomFromUrl);
   async function api(path: string, body?: unknown, identity = session) {
     const response = await fetch(`/api${path}`, { method: body === undefined ? 'GET' : 'POST', headers: { ...(body === undefined ? {} : { 'Content-Type': 'application/json' }), ...(identity ? { Authorization: `Bearer ${identity.token}` } : {}) }, body: body === undefined ? undefined : JSON.stringify(body), signal: AbortSignal.timeout(15000) });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || `Request failed (${response.status}).`);
-    return result;
+    return readApiJson(response, `/api${path}`);
   }
-  function remember(identity: Session) {
+  function remember(result: Record<string, any>) {
+    const identity: Session = { code: result.code, userId: result.userId, token: result.token };
+    if (!identity || !/^[a-f0-9]{24}$/.test(identity.code) || !['A','B'].includes(identity.userId) || typeof identity.token !== 'string' || identity.token.length < 40) throw new Error('The room server returned an invalid session. Check the backend configuration.');
     try { sessionStorage.setItem(`sr-room-${identity.code}`, JSON.stringify(identity)); localStorage.setItem(`sr-room-${identity.code}`, JSON.stringify(identity)); } catch { /* The live connection still works when browser storage is unavailable. */ }
     const url = new URL(location.href); url.searchParams.set('room', identity.code); url.searchParams.delete('join'); history.replaceState(null, '', url);
     setSession(identity); setRoom(null); setError('');
@@ -42,8 +43,9 @@ export function useCollaboration() {
         let watchdog = setTimeout(stop, 15000);
         const alive = () => { clearTimeout(watchdog); watchdog = setTimeout(stop, 45000); };
         try {
-          const response = await fetch(`/api/rooms/${session.code}/events`, { headers: { Authorization: `Bearer ${session.token}` }, signal: attempt.signal });
-          if (!response.ok) { const result = await response.json(); if (response.status === 401 || response.status === 404) { setError(result.error); return; } throw new Error(result.error); }
+          const endpoint = `/api/rooms/${session.code}/events`;
+          const response = await fetch(endpoint, { headers: { Authorization: `Bearer ${session.token}` }, signal: attempt.signal });
+          await requireEventStream(response, endpoint);
           setConnected(true); setError(''); retry = 1000; alive();
           const reader = response.body!.getReader(), decoder = new TextDecoder(); let buffer = '';
           while (!controller.signal.aborted) {
@@ -52,11 +54,12 @@ export function useCollaboration() {
             while ((index = buffer.indexOf('\n\n')) !== -1) {
               const event = buffer.slice(0,index); buffer = buffer.slice(index+2);
               const data = event.split('\n').find(line => line.startsWith('data: '));
-              if (data && !controller.signal.aborted) setRoom(JSON.parse(data.slice(6)));
+              if (data && !controller.signal.aborted) setRoom(parseRoomEvent(data.slice(6), endpoint));
             }
           }
         } catch (err) {
           if (controller.signal.aborted) return;
+          if (err instanceof ApiResponseError && [401,404].includes(err.status) && err.contentType === 'application/json') { setError(err.message); return; }
           setError(attempt.signal.aborted ? 'Connection lost. Reconnecting…' : err instanceof Error ? err.message : 'Connection lost. Reconnecting…');
         } finally { clearTimeout(watchdog); attempt.abort(); controller.signal.removeEventListener('abort', stop); if (!controller.signal.aborted) setConnected(false); }
         await new Promise<void>(resolve => { const finish = () => { clearTimeout(timer); controller.signal.removeEventListener('abort', finish); resolve(); }; const timer = setTimeout(finish, retry); controller.signal.addEventListener('abort', finish, { once: true }); });

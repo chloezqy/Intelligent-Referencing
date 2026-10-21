@@ -34,7 +34,7 @@ npm run build
 npm start
 ```
 
-The server runtime currently uses `tsx`, so install development dependencies as well as production dependencies. `npm run preview` is Vite's static preview and **does not start the room backend**; use `npm start` for a complete production preview.
+The server runtime currently uses `tsx`, so install development dependencies as well as production dependencies. After `npm run build`, both `npm run preview` and `npm start` launch the complete Node server, including the room backend. Do not serve `dist` alone: a static host does not provide the collaboration API.
 
 ## Architecture
 
@@ -85,3 +85,8 @@ Each draft freezes its task/attempt identity and target IDs. Completion evaluate
 Research modules: `src/research.ts` (task definitions/pure validation), `src/useResearch.ts` (attempts, event recording, persistence/export), `src/components/ResearchPanel.tsx` (level/progress UI). Server activity is additive and backward-compatible with rooms saved before research tasks.
 
 Verification for restored tasks: Levels 1–3 were completed through real browser selection/gestures. Two independent browser tabs with distinct server-issued A/B identities completed Levels 4–5 via live SSE, including a negative check that a response plus navigation to only one comparison target remains incomplete. A refresh recovered completed tasks; server-store restart recovery is covered by integration tests. These are separate browser sessions on one computer; physical two-computer testing is not claimed.
+
+
+## API response diagnostics
+
+All room commands validate the HTTP status, Content-Type and JSON object before consuming the response. Realtime connections require `text/event-stream`; error responses pass through the same JSON validator. Errors identify the endpoint, status and returned media type instead of trying to parse a proxy error page as JSON. Invalid streams reconnect and do not report a healthy connection. Session identities are validated before saving them. Research task storage itself does not make API requests; shared-task open/locate/reply evidence uses the room API.

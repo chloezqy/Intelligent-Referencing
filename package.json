@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --import tsx server/index.ts",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "NODE_ENV=production node --import tsx server/index.ts",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
     "start": "NODE_ENV=production node --import tsx server/index.ts",
