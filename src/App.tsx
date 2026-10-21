@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react';
 import TopBar from './components/TopBar';
-import Toolbar from './components/Toolbar';
 import Canvas from './components/Canvas';
 import PromptBar from './components/PromptBar';
 import LayersPanel from './components/LayersPanel';
@@ -8,9 +7,9 @@ import PropertiesPanel from './components/PropertiesPanel';
 import ResearchPanel from './components/ResearchPanel';
 import HelpModal from './components/HelpModal';
 import { ToolMode, SelectionState, InferredReference, UIElement, ResearchTask, ScopeLevel } from './types';
-import { MOCK_NODES, RESEARCH_STUDY_TASKS, SCREEN_CONFIGS, SCREEN_W, SCREEN_GAP } from './data';
+import { MOCK_NODES, RESEARCH_STUDY_TASKS } from './data';
 import { expandScope } from './utils';
-import { Zap, ChevronDown, Sparkles } from 'lucide-react';
+import { Layers, Zap, SlidersHorizontal, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, MousePointer2, Sparkles, Hand } from 'lucide-react';
 
 export default function App() {
   const [toolMode, setToolMode] = useState<ToolMode>('smart-ref');
@@ -25,13 +24,11 @@ export default function App() {
   const [transform, setTransform] = useState({ x: 30, y: 10, scale: 0.46 });
 
   // Sidebar Panels (collapsible, not distracting)
-  const [activePanelTab, setActivePanelTab] = useState<'layers' | 'research' | 'properties'>('research');
+  const [activePanelTab, setActivePanelTab] = useState<'layers' | 'research' | 'properties'>('layers');
   const [activeTaskId, setActiveTaskId] = useState<string | null>(RESEARCH_STUDY_TASKS[0].id);
-  const [isTasksOpen, setIsTasksOpen] = useState(false); // Collapsed by default to avoid distraction
+  const [isTasksOpen, setIsTasksOpen] = useState(() => window.innerWidth > 1000);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
-  // Active task for the compact floating widget
-  const currentTask = RESEARCH_STUDY_TASKS.find(t => t.id === activeTaskId) || RESEARCH_STUDY_TASKS[0];
 
   // Zoom Helpers
   const handleZoomIn = () => {
@@ -79,7 +76,7 @@ export default function App() {
   const handleSelectTask = (task: ResearchTask) => {
     setActiveTaskId(task.id);
     setActivePanelTab('research');
-    setIsTasksOpen(true);
+    setLeftOpen(true);
   };
 
   // Global Scope Change Handler (works from PropertiesPanel or anywhere)
@@ -165,155 +162,67 @@ export default function App() {
     }
   };
 
+  const [leftOpen, setLeftOpen] = useState(() => window.innerWidth > 1000);
+  const [leftWidth, setLeftWidth] = useState(260);
+  const leftTab = activePanelTab === 'research' ? 'research' : 'layers';
+  const openSection = (tab: 'layers' | 'research' | 'properties') => {
+    if (tab === 'properties') { setIsTasksOpen(v => !v); if (window.innerWidth < 1000) setLeftOpen(false); return; }
+    setActivePanelTab(tab);
+    { setLeftOpen(v => activePanelTab === tab ? !v : true); if (window.innerWidth < 1000) setIsTasksOpen(false); }
+  };
+  const resizeLeft = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const startX = e.clientX, width = leftWidth;
+    e.currentTarget.onpointermove = event => setLeftWidth(Math.max(230, Math.min(360, width + event.clientX - startX)));
+    e.currentTarget.onpointerup = () => { e.currentTarget.onpointermove = null; };
+  };
+
   return (
-    <div className="flex flex-col h-screen w-screen bg-zinc-950 overflow-hidden font-sans text-zinc-100 antialiased selection:bg-indigo-500/30">
-      
-      {/* Professional Top Bar */}
-      <TopBar
-        toolMode={toolMode}
-        setToolMode={setToolMode}
-        scale={transform.scale}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onZoomFit={handleZoomFit}
-        isTasksOpen={isTasksOpen}
-        setIsTasksOpen={setIsTasksOpen}
-        inferredRef={inferredRef}
-        onShowHelp={() => setIsHelpOpen(true)}
-      />
-
-      <div className="flex-1 relative flex overflow-hidden">
-        {/* Left Tool Rail */}
-        <Toolbar
-          toolMode={toolMode}
-          setToolMode={setToolMode}
-          activePanelTab={activePanelTab}
-          setActivePanelTab={(tab) => {
-            setActivePanelTab(tab);
-            setIsTasksOpen(true);
-          }}
-        />
-
-        {/* Central Infinite Design Canvas */}
-        <div className="flex-1 relative flex items-center justify-center bg-zinc-950 overflow-hidden">
-          <Canvas
-            toolMode={toolMode}
-            setToolMode={setToolMode}
-            selectionState={selectionState}
-            setSelectionState={setSelectionState}
-            inferredRef={inferredRef}
-            setInferredRef={setInferredRef}
-            onAcceptReference={handleAcceptReference}
-            nodes={nodes}
-            transform={transform}
-            setTransform={setTransform}
-          />
-
-          {/* Compact Floating HCI Benchmark Badge (when panel is collapsed) */}
-          {!isTasksOpen && (
-            <div className="absolute top-4 right-6 pointer-events-auto z-20">
-              <button
-                onClick={() => {
-                  setActivePanelTab('research');
-                  setIsTasksOpen(true);
-                }}
-                className="bg-zinc-900/90 hover:bg-zinc-850 backdrop-blur-md border border-zinc-700/80 text-zinc-200 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-2 text-xs font-medium transition-all group"
-                title="Open HCI Benchmark Tasks Drawer"
-              >
-                <span className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
-                  🧪
-                </span>
-                <span className="font-semibold text-zinc-300">Level {currentTask.level}:</span>
-                <span className="text-zinc-400 truncate max-w-[140px]">{currentTask.title}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-500 group-hover:text-zinc-300 transition-colors ml-0.5" />
+    <div className="app-shell flex flex-col h-dvh w-full overflow-hidden text-zinc-800 bg-white font-sans">
+      <TopBar toolMode={toolMode} setToolMode={setToolMode} scale={transform.scale}
+        onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onZoomFit={handleZoomFit}
+        isTasksOpen={leftOpen && leftTab === 'research'}
+        setIsTasksOpen={() => { setActivePanelTab('research'); setLeftOpen(v => leftTab === 'research' ? !v : true); }}
+        inferredRef={inferredRef} onShowHelp={() => setIsHelpOpen(true)} />
+      <div className="flex flex-1 min-h-0 overflow-hidden relative">
+        <nav aria-label="Workspace sections" className="navigation-rail">
+          <div className="flex flex-col gap-2">
+            {([{ id: 'layers', label: 'Layers', icon: Layers }, { id: 'research', label: 'Research Tasks', icon: Zap }, { id: 'properties', label: 'Properties', icon: SlidersHorizontal }] as const).map(item => (
+              <button key={item.id} title={item.label} aria-label={item.label} aria-pressed={item.id === 'properties' ? isTasksOpen : leftOpen && leftTab === item.id}
+                onClick={() => openSection(item.id)} className={`rail-button ${(item.id === 'properties' ? isTasksOpen : leftOpen && leftTab === item.id) ? 'active' : ''}`}>
+                <item.icon size={20} /><span>{item.id === 'research' ? 'Tasks' : item.label}</span>
               </button>
-            </div>
-          )}
-
-          {/* Floating AI Prompt Bar at Bottom */}
-          <PromptBar
-            attachedRef={attachedRef}
-            onClearRef={handleClearAttachedRef}
-            onApplyAIAction={handleApplyAIAction}
-          />
-        </div>
-
-        {/* Right Collapsible Inspector / Research Drawer */}
-        {isTasksOpen && (
-          <aside className="w-84 h-full bg-zinc-900 border-l border-zinc-800 flex flex-col z-20 shadow-xl">
-            {/* Tab Header */}
-            <div className="flex border-b border-zinc-800 bg-zinc-950 text-xs">
-              <button
-                onClick={() => setActivePanelTab('research')}
-                className={`flex-1 py-2.5 font-semibold text-center transition-colors border-b-2 ${
-                  activePanelTab === 'research'
-                    ? 'border-amber-400 text-amber-300 bg-zinc-900/60'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                5 Tasks
-              </button>
-              <button
-                onClick={() => setActivePanelTab('properties')}
-                className={`flex-1 py-2.5 font-semibold text-center transition-colors border-b-2 ${
-                  activePanelTab === 'properties'
-                    ? 'border-indigo-500 text-indigo-300 bg-zinc-900/60'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                Properties
-              </button>
-              <button
-                onClick={() => setActivePanelTab('layers')}
-                className={`flex-1 py-2.5 font-semibold text-center transition-colors border-b-2 ${
-                  activePanelTab === 'layers'
-                    ? 'border-indigo-500 text-indigo-300 bg-zinc-900/60'
-                    : 'border-transparent text-zinc-500 hover:text-zinc-300'
-                }`}
-              >
-                Layers
-              </button>
-            </div>
-
-            {/* Tab Contents */}
-            <div className="flex-1 overflow-hidden">
-              {activePanelTab === 'research' && (
-                <ResearchPanel
-                  activeTaskId={activeTaskId}
-                  onSelectTask={handleSelectTask}
-                  inferredRef={inferredRef}
-                  nodes={nodes}
-                  toolMode={toolMode}
-                  onClose={() => setIsTasksOpen(false)}
-                />
-              )}
-              {activePanelTab === 'properties' && (
-                <PropertiesPanel
-                  inferredRef={inferredRef}
-                  nodes={nodes}
-                  onBatchColorChange={handleBatchColor}
-                  onBatchDiscount={handleBatchDiscount}
-                  onScopeChange={handleGlobalScopeChange}
-                />
-              )}
-              {activePanelTab === 'layers' && (
-                <LayersPanel
-                  nodes={nodes}
-                  inferredRef={inferredRef}
-                  onSelectNode={handleSelectNode}
-                />
-              )}
-            </div>
-          </aside>
-        )}
+            ))}
+          </div>
+          <button className="rail-button" title={leftOpen ? 'Collapse left sidebar' : 'Expand left sidebar'} aria-label={leftOpen ? 'Collapse left sidebar' : 'Expand left sidebar'} onClick={() => { setLeftOpen(v => !v); if (window.innerWidth < 1000) setIsTasksOpen(false); }}>{leftOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}</button>
+        </nav>
+        <aside className={`left-sidebar ${leftOpen ? '' : 'panel-hidden'}`} style={{ width: leftOpen ? leftWidth : 0 }} aria-label="Workspace navigation" inert={!leftOpen}>
+          <div className="panel-heading"><span>Mobile Commerce</span><button title="Collapse left sidebar" aria-label="Collapse left sidebar" onClick={() => setLeftOpen(false)}><PanelLeftClose size={16} /></button></div>
+          <div className="panel-tabs" role="tablist" aria-label="Navigation panels">
+            <button role="tab" aria-selected={leftTab === 'layers'} onClick={() => setActivePanelTab('layers')}>Layers</button>
+            <button role="tab" aria-selected={leftTab === 'research'} onClick={() => setActivePanelTab('research')}>Research Tasks <span>5</span></button>
+          </div>
+          <div className="flex-1 min-h-0" hidden={leftTab !== 'layers'}><LayersPanel nodes={nodes} inferredRef={inferredRef} onSelectNode={handleSelectNode} /></div>
+          <div className="flex-1 min-h-0" hidden={leftTab !== 'research'}><ResearchPanel activeTaskId={activeTaskId} onSelectTask={handleSelectTask} inferredRef={inferredRef} nodes={nodes} toolMode={toolMode} onClose={() => setLeftOpen(false)} /></div>
+          <div role="separator" aria-label="Resize left sidebar" aria-orientation="vertical" aria-valuenow={leftWidth} aria-valuemin={230} aria-valuemax={360} tabIndex={0} className="panel-resizer" onPointerDown={resizeLeft} onKeyDown={e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); setLeftWidth(v => Math.max(230, Math.min(360, v + (e.key === 'ArrowRight' ? 10 : -10)))); } }} />
+        </aside>
+        <main className="workspace flex-1 min-w-0 relative overflow-hidden" aria-label="Design canvas">
+          <div className="workspace-caption"><span>Mobile Commerce Workspace</span><span>6 artboards</span></div>
+          <Canvas toolMode={toolMode} setToolMode={setToolMode} selectionState={selectionState} setSelectionState={setSelectionState} inferredRef={inferredRef} setInferredRef={setInferredRef} onAcceptReference={handleAcceptReference} nodes={nodes} transform={transform} setTransform={setTransform} />
+          <PromptBar attachedRef={attachedRef} onClearRef={handleClearAttachedRef} onApplyAIAction={handleApplyAIAction} />
+          <div className="floating-toolbar" role="toolbar" aria-label="Canvas tools">
+            {([{ mode: 'pointer', name: 'Select', key: 'V', icon: MousePointer2 }, { mode: 'smart-ref', name: 'Smart Reference', key: 'S', icon: Sparkles }, { mode: 'pan', name: 'Pan', key: 'H', icon: Hand }] as const).map(tool => <button key={tool.mode} title={`${tool.name} (${tool.key})`} aria-pressed={toolMode === tool.mode} onClick={() => setToolMode(tool.mode)}><tool.icon size={18} /><span>{tool.name}</span><kbd>{tool.key}</kbd></button>)}
+          </div>
+          {!isTasksOpen && <button className="inspector-toggle" title="Open Properties" aria-label="Open Properties" onClick={() => { setIsTasksOpen(true); if (window.innerWidth < 1000) setLeftOpen(false); }}><PanelRightOpen size={18} /></button>}
+        </main>
+        <aside className={`right-sidebar ${isTasksOpen ? '' : 'panel-hidden'}`} aria-label="Properties" inert={!isTasksOpen}>
+          <div className="panel-heading"><span>Properties</span><button title="Collapse Properties" aria-label="Collapse Properties" onClick={() => setIsTasksOpen(false)}><PanelRightClose size={16} /></button></div>
+          <div className="inspector-document"><span className="document-eyebrow">WORKSPACE</span><strong>Mobile Commerce</strong><span>6 screens · Smart Reference Prototype</span></div>
+          <div className="flex-1 min-h-0"><PropertiesPanel inferredRef={inferredRef} nodes={nodes} onBatchColorChange={handleBatchColor} onBatchDiscount={handleBatchDiscount} onScopeChange={handleGlobalScopeChange} /></div>
+          <div className="panel-footer"><Sparkles size={14} /><span>{inferredRef ? `${inferredRef.selectedIds.length} layers selected` : 'Select an element to inspect'}</span></div>
+        </aside>
       </div>
-
-      {/* Instructional Help Modal */}
-      <HelpModal
-        isOpen={isHelpOpen}
-        onClose={() => setIsHelpOpen(false)}
-      />
-
+      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   );
 }

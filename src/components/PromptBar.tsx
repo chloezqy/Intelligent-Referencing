@@ -140,7 +140,7 @@ export default function PromptBar({ attachedRef, onClearRef, onApplyAIAction }: 
   };
 
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-40 pointer-events-none flex flex-col gap-2.5">
+    <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-full max-w-xl px-4 z-40 pointer-events-none flex flex-col gap-2.5">
       
       {/* Response Bubbles */}
       <div className="flex flex-col gap-2 max-h-48 overflow-y-auto no-scrollbar pointer-events-auto px-1">
@@ -149,21 +149,21 @@ export default function PromptBar({ attachedRef, onClearRef, onApplyAIAction }: 
             key={i}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-3 rounded-2xl text-xs max-w-[85%] shadow-xl backdrop-blur-md flex items-start gap-2.5 ${
+            className={`p-3 rounded-2xl text-xs max-w-[85%] shadow-xl  flex items-start gap-2.5 ${
               msg.role === 'user'
-                ? 'self-end bg-zinc-800 text-zinc-100 border border-zinc-700'
-                : 'self-start bg-zinc-900/95 text-zinc-200 border border-indigo-500/40 ring-1 ring-indigo-500/20'
+                ? 'self-end bg-zinc-100 text-zinc-900 border border-zinc-200'
+                : 'self-start bg-white/95 text-zinc-800 border border-indigo-500/40 ring-1 ring-indigo-500/20'
             }`}
           >
             {msg.role === 'assistant' && (
               <div className="w-5 h-5 rounded-md bg-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
-                <Sparkles className="w-3 h-3 text-white" />
+                <Sparkles className="w-3 h-3 text-zinc-900" />
               </div>
             )}
             <div>
               <p className="leading-relaxed">{msg.text}</p>
               {msg.actionTaken && (
-                <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-emerald-400">
+                <span className="inline-flex items-center gap-1 mt-1 text-[10px] font-semibold text-emerald-700">
                   <Check className="w-3 h-3" /> Canvas updated in real-time
                 </span>
               )}
@@ -178,16 +178,16 @@ export default function PromptBar({ attachedRef, onClearRef, onApplyAIAction }: 
           <button
             key={idx}
             onClick={() => handleSubmit(undefined, s)}
-            className="px-3 py-1.5 rounded-full bg-zinc-900/90 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/80 text-[11px] font-medium whitespace-nowrap shadow-md transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-md bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200/80 text-[11px] font-medium whitespace-nowrap shadow-md transition-all flex items-center gap-1.5"
           >
-            <Sparkles className="w-3 h-3 text-indigo-400" />
+            <Sparkles className="w-3 h-3 text-indigo-600" />
             <span>{s}</span>
           </button>
         ))}
       </div>
 
       {/* Main Input Box */}
-      <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-700/90 rounded-2xl shadow-2xl p-2 pointer-events-auto ring-1 ring-zinc-800">
+      <div className="bg-white/95  border border-zinc-200/90 rounded-2xl shadow-lg p-2 pointer-events-auto ring-1 ring-zinc-200">
         
         {/* Attached Reference Chip */}
         <AnimatePresence>
@@ -198,16 +198,16 @@ export default function PromptBar({ attachedRef, onClearRef, onApplyAIAction }: 
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden pb-2 px-1"
             >
-              <div className="inline-flex items-center gap-2 bg-indigo-950/70 border border-indigo-700/80 text-indigo-200 px-3 py-1 rounded-xl text-xs font-semibold shadow-sm">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <div className="inline-flex items-center gap-2 bg-indigo-50/70 border border-indigo-700/80 text-indigo-800 px-3 py-1 rounded-xl text-xs font-semibold shadow-sm">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                 <span>{attachedRef.label}</span>
-                <span className="px-1.5 py-0.2 rounded bg-indigo-900 font-mono text-[10px] text-indigo-300 uppercase">
+                <span className="px-1.5 py-0.2 rounded bg-indigo-100 font-mono text-[10px] text-indigo-700 uppercase">
                   {attachedRef.selectedIds.length} items · {attachedRef.scope}
                 </span>
 
                 <button
                   onClick={onClearRef}
-                  className="ml-1 p-0.5 hover:bg-indigo-800 rounded-md text-indigo-400 hover:text-white transition-colors"
+                  className="ml-1 p-0.5 hover:bg-indigo-800 rounded-md text-indigo-600 hover:text-zinc-900 transition-colors"
                   title="Remove reference"
                 >
                   <X className="w-3 h-3" />
@@ -218,9 +218,9 @@ export default function PromptBar({ attachedRef, onClearRef, onApplyAIAction }: 
         </AnimatePresence>
 
         <form onSubmit={e => handleSubmit(e)} className="flex items-center gap-2 px-2">
-          <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
+          <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
           <input
-            type="text"
+            type="text" aria-label="AI prompt"
             value={prompt}
             onChange={e => setPrompt(e.target.value)}
             placeholder={
@@ -228,13 +228,13 @@ export default function PromptBar({ attachedRef, onClearRef, onApplyAIAction }: 
                 ? `Prompt AI with referenced ${attachedRef.label}...` 
                 : "Ask AI to reference, inspect, or modify elements..."
             }
-            className="flex-1 bg-transparent border-none outline-none text-zinc-100 placeholder:text-zinc-500 py-1.5 text-xs font-medium"
+            className="flex-1 bg-transparent border-none outline-none text-zinc-900 placeholder:text-zinc-500 py-1.5 text-xs font-medium"
           />
 
           <button
-            type="submit"
+            type="submit" aria-label="Send prompt"
             disabled={!prompt.trim()}
-            className="w-7 h-7 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+            className="w-7 h-7 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-zinc-900 flex items-center justify-center shrink-0 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
           >
             <Send className="w-3.5 h-3.5" />
           </button>

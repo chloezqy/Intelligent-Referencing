@@ -25,10 +25,10 @@ export default function LayersPanel({ nodes, inferredRef, onSelectNode }: Layers
   const exemplarIds = inferredRef?.exemplarIds || [];
 
   return (
-    <div className="flex flex-col h-full text-zinc-300 text-xs select-none">
-      <div className="p-3 border-b border-zinc-800 bg-zinc-900/60 flex items-center justify-between">
-        <div className="flex items-center gap-1.5 font-semibold text-white">
-          <Layers className="w-4 h-4 text-zinc-400" />
+    <div className="flex flex-col h-full text-zinc-700 text-xs select-none">
+      <div className="p-3 border-b border-zinc-200 bg-white/60 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 font-semibold text-zinc-900">
+          <Layers className="w-4 h-4 text-zinc-600" />
           <span>Workspace Artboards</span>
         </div>
         <span className="font-mono text-[10px] text-zinc-500">6 Screens</span>
@@ -41,11 +41,11 @@ export default function LayersPanel({ nodes, inferredRef, onSelectNode }: Layers
           const hasSelectedChild = directChildren.some(c => selectedIds.includes(c.id));
 
           return (
-            <div key={screen.id} className="flex flex-col rounded-lg overflow-hidden border border-zinc-800/60 bg-zinc-900/30">
+            <div key={screen.id} className="shrink-0 flex flex-col rounded-lg overflow-hidden border border-zinc-200/60 bg-white/30">
               <button
                 onClick={() => toggleScreen(screen.id)}
-                className={`flex items-center justify-between px-2.5 py-2 text-left hover:bg-zinc-800/60 transition-colors ${
-                  hasSelectedChild ? 'text-indigo-300 bg-indigo-950/20' : 'text-zinc-200'
+                className={`flex items-center justify-between px-2.5 py-2 text-left hover:bg-zinc-100/60 transition-colors ${
+                  hasSelectedChild ? 'text-indigo-700 bg-indigo-50/20' : 'text-zinc-800'
                 }`}
               >
                 <div className="flex items-center gap-1.5 font-medium truncate">
@@ -58,7 +58,7 @@ export default function LayersPanel({ nodes, inferredRef, onSelectNode }: Layers
               </button>
 
               {!isCollapsed && (
-                <div className="flex flex-col py-1 pl-4 pr-1 border-t border-zinc-800/50 bg-zinc-950/40">
+                <div className="flex flex-col py-1 pl-4 pr-1 border-t border-zinc-200/50 bg-zinc-50/40">
                   {directChildren.map(child => {
                     const isExemplar = exemplarIds.includes(child.id);
                     const isSelected = selectedIds.includes(child.id);
@@ -69,10 +69,10 @@ export default function LayersPanel({ nodes, inferredRef, onSelectNode }: Layers
                         onClick={() => onSelectNode(child.id)}
                         className={`flex items-center justify-between px-2 py-1.5 rounded text-left transition-colors ${
                           isExemplar
-                            ? 'bg-indigo-600/30 text-indigo-200 font-semibold ring-1 ring-indigo-500/50'
+                            ? 'bg-indigo-600/30 text-indigo-800 font-semibold ring-1 ring-indigo-500/50'
                             : isSelected
-                            ? 'bg-indigo-950/40 text-indigo-300'
-                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
+                            ? 'bg-indigo-50/40 text-indigo-700'
+                            : 'text-zinc-600 hover:text-zinc-800 hover:bg-zinc-100/40'
                         }`}
                       >
                         <div className="flex items-center gap-2 truncate">
@@ -86,7 +86,7 @@ export default function LayersPanel({ nodes, inferredRef, onSelectNode }: Layers
                         </div>
 
                         {isSelected && (
-                          <span className="text-[9px] px-1 py-0.2 rounded font-mono bg-indigo-900/60 text-indigo-300 shrink-0">
+                          <span className="text-[9px] px-1 py-0.2 rounded font-mono bg-indigo-100/60 text-indigo-700 shrink-0">
                             {isExemplar ? 'Exemplar' : 'Inferred'}
                           </span>
                         )}

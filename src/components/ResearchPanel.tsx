@@ -68,26 +68,26 @@ export default function ResearchPanel({
   // Render Collapsed Pill
   if (isCollapsed) {
     return (
-      <div className="p-2 border-b border-zinc-800 bg-zinc-900/90 flex items-center justify-between text-xs select-none">
+      <div className="p-2 border-b border-zinc-200 bg-white/90 flex items-center justify-between text-xs select-none">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
+          <div className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-[10px]">
             L{currentTask.level}
           </div>
-          <div className="flex items-center gap-1.5 text-zinc-200 font-semibold truncate max-w-[160px]">
+          <div className="flex items-center gap-1.5 text-zinc-800 font-semibold truncate max-w-[160px]">
             <span>Task {currentTask.level}/5:</span>
-            <span className="text-zinc-400 font-normal truncate">{currentTask.title}</span>
+            <span className="text-zinc-600 font-normal truncate">{currentTask.title}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-1">
           {evaluation.isCompleted && (
-            <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800 flex items-center gap-0.5">
+            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5">
               <CheckCircle2 className="w-3 h-3" /> Done
             </span>
           )}
           <button
             onClick={() => setIsCollapsed(false)}
-            className="p-1 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded transition-colors"
+            className="p-1 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 rounded transition-colors"
             title="Expand task drawer"
           >
             <ChevronDown className="w-4 h-4" />
@@ -98,30 +98,30 @@ export default function ResearchPanel({
   }
 
   return (
-    <div className="flex flex-col h-full text-zinc-300 text-xs select-none">
+    <div className="flex flex-col h-full text-zinc-700 text-xs select-none">
       {/* Drawer Header with Collapse & Close Controls */}
-      <div className="p-3 border-b border-zinc-800 bg-zinc-950/80 flex items-center justify-between">
+      <div className="p-3 border-b border-zinc-200 bg-zinc-50/80 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-[10px]">
+          <div className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-700 flex items-center justify-center font-bold text-[10px]">
             🧪
           </div>
           <div>
-            <h3 className="font-bold text-white text-xs">HCI Benchmark Tasks</h3>
-            <p className="text-[10px] text-zinc-400">5 Progressive Levels (Easy → Expert)</p>
+            <h3 className="font-bold text-zinc-900 text-xs">HCI Benchmark Tasks</h3>
+            <p className="text-[10px] text-zinc-600">5 Progressive Levels (Easy → Expert)</p>
           </div>
         </div>
 
         <div className="flex items-center gap-1">
           <button
             onClick={() => setIsCollapsed(true)}
-            className="p-1 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded transition-colors"
+            className="p-1 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 rounded transition-colors"
             title="Minimize drawer"
           >
             <ChevronUp className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded transition-colors"
+            className="p-1 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 rounded transition-colors"
             title="Close panel"
           >
             <X className="w-3.5 h-3.5" />
@@ -130,7 +130,7 @@ export default function ResearchPanel({
       </div>
 
       {/* Level Selector Tabs (1 to 5) */}
-      <div className="grid grid-cols-5 p-2 gap-1 border-b border-zinc-800 bg-zinc-900/60">
+      <div className="grid grid-cols-5 p-2 gap-1 border-b border-zinc-200 bg-white/60">
         {RESEARCH_STUDY_TASKS.map(task => {
           const isCurrent = task.id === currentTask.id;
           const isDone = completedTaskIds.includes(task.id);
@@ -141,14 +141,14 @@ export default function ResearchPanel({
               onClick={() => onSelectTask(task)}
               className={`py-1 px-1 rounded-md text-center transition-all ${
                 isCurrent
-                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold'
+                  ? 'bg-amber-500/20 text-amber-800 border border-amber-500/40 font-bold'
                   : isDone
-                  ? 'bg-emerald-950/50 text-emerald-300 border border-emerald-800/60'
-                  : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 border border-zinc-800'
+                  ? 'bg-emerald-50/50 text-emerald-800 border border-emerald-200/60'
+                  : 'bg-white text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800 border border-zinc-200'
               }`}
             >
               <div className="text-[10px] flex items-center justify-center gap-0.5">
-                {isDone ? <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" /> : null}
+                {isDone ? <CheckCircle2 className="w-2.5 h-2.5 text-emerald-700" /> : null}
                 <span>L{task.level}</span>
               </div>
               <div className="text-[8px] font-mono opacity-70 truncate">{task.difficulty}</div>
@@ -162,30 +162,30 @@ export default function ResearchPanel({
         {/* Task Objective Card */}
         <div className={`p-3 rounded-xl border transition-all ${
           evaluation.isCompleted
-            ? 'bg-emerald-950/40 border-emerald-500/50 text-emerald-100 shadow-md shadow-emerald-950/30'
-            : 'bg-zinc-900/90 border-zinc-800 text-zinc-200'
+            ? 'bg-emerald-50/40 border-emerald-500/50 text-emerald-800 shadow-none'
+            : 'bg-white/90 border-zinc-200 text-zinc-800'
         }`}>
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400">
+            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-700">
               Level {currentTask.level} · {currentTask.difficulty}
             </span>
-            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-zinc-950 border border-zinc-800 text-zinc-400">
+            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-zinc-50 border border-zinc-200 text-zinc-600">
               Target: {currentTask.expectedCount} items
             </span>
           </div>
 
-          <h4 className="text-xs font-bold text-white mt-1.5 leading-snug">{currentTask.title}</h4>
-          <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">{currentTask.description}</p>
+          <h4 className="text-xs font-bold text-zinc-900 mt-1.5 leading-snug">{currentTask.title}</h4>
+          <p className="text-[11px] text-zinc-600 mt-1 leading-relaxed">{currentTask.description}</p>
 
           {/* Smart Succeeded Banner */}
           {evaluation.isCompleted ? (
-            <div className="mt-3 p-2.5 rounded-lg bg-emerald-900/40 border border-emerald-700/60 text-emerald-200 flex flex-col gap-1.5">
-              <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-300">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="mt-3 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200/60 text-emerald-800 flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-800">
+                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
                 <span>Success: {evaluation.hits}/{currentTask.expectedCount} Items Matched!</span>
               </div>
 
-              <div className="text-[10px] text-emerald-300/90 mt-0.5">
+              <div className="text-[10px] text-emerald-800/90 mt-0.5">
                 {evaluation.method === 'smart-ref' ? (
                   <span>
                     ⚡ <strong>Smart Reference:</strong> 1 gesture + 1 scope click ({evaluation.actionsTaken} actions). Saved ~{Math.round((1 - 2 / currentTask.conventionalClicksNeeded) * 100)}% effort!
@@ -208,8 +208,8 @@ export default function ResearchPanel({
               )}
             </div>
           ) : (
-            <div className="mt-3 pt-2 border-t border-zinc-800/80 flex items-center justify-between text-[10px] text-zinc-400">
-              <span>Current Matches: <strong className="text-white font-mono">{evaluation.hits}/{currentTask.expectedCount}</strong></span>
+            <div className="mt-3 pt-2 border-t border-zinc-200/80 flex items-center justify-between text-[10px] text-zinc-600">
+              <span>Current Matches: <strong className="text-zinc-900 font-mono">{evaluation.hits}/{currentTask.expectedCount}</strong></span>
               <span className="text-zinc-500">Awaiting selection...</span>
             </div>
           )}
@@ -222,29 +222,29 @@ export default function ResearchPanel({
           </span>
 
           {/* Scenario A: Conventional Selection */}
-          <div className="p-2.5 rounded-lg bg-zinc-900/60 border border-zinc-800">
-            <div className="flex items-center justify-between text-zinc-200 font-semibold text-[11px]">
+          <div className="p-2.5 rounded-lg bg-white/60 border border-zinc-200">
+            <div className="flex items-center justify-between text-zinc-800 font-semibold text-[11px]">
               <span className="flex items-center gap-1.5">
-                <MousePointer className="w-3.5 h-3.5 text-zinc-400" />
+                <MousePointer className="w-3.5 h-3.5 text-zinc-600" />
                 <span>1. Conventional Figma Selection (V)</span>
               </span>
               <span className="text-[10px] font-mono text-zinc-500">{currentTask.conventionalClicksNeeded} clicks</span>
             </div>
-            <p className="text-[11px] text-zinc-400 mt-1 leading-relaxed">
+            <p className="text-[11px] text-zinc-600 mt-1 leading-relaxed">
               {currentTask.hintConventional}
             </p>
           </div>
 
           {/* Scenario B: Smart Reference */}
-          <div className="p-2.5 rounded-lg bg-indigo-950/30 border border-indigo-800/50">
-            <div className="flex items-center justify-between text-indigo-200 font-semibold text-[11px]">
+          <div className="p-2.5 rounded-lg bg-indigo-50/30 border border-indigo-800/50">
+            <div className="flex items-center justify-between text-indigo-800 font-semibold text-[11px]">
               <span className="flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                 <span>2. Smart Reference by Example (S)</span>
               </span>
-              <span className="text-[10px] font-mono text-emerald-400 font-bold">1–2 actions</span>
+              <span className="text-[10px] font-mono text-emerald-700 font-bold">1–2 actions</span>
             </div>
-            <p className="text-[11px] text-zinc-300 mt-1 leading-relaxed">
+            <p className="text-[11px] text-zinc-700 mt-1 leading-relaxed">
               {currentTask.hintSmartRef}
             </p>
           </div>
@@ -252,11 +252,11 @@ export default function ResearchPanel({
       </div>
 
       {/* Progress Footer */}
-      <div className="p-3 border-t border-zinc-800 bg-zinc-950/60 flex items-center justify-between text-[11px] text-zinc-400">
-        <span>Completed: <strong className="text-white">{completedTaskIds.length}/5</strong> tasks</span>
+      <div className="p-3 border-t border-zinc-200 bg-zinc-50/60 flex items-center justify-between text-[11px] text-zinc-600">
+        <span>Completed: <strong className="text-zinc-900">{completedTaskIds.length}/5</strong> tasks</span>
         <button
           onClick={() => setCompletedTaskIds([])}
-          className="text-zinc-500 hover:text-zinc-300 flex items-center gap-1 text-[10px]"
+          className="text-zinc-500 hover:text-zinc-700 flex items-center gap-1 text-[10px]"
           title="Reset task completion"
         >
           <RotateCcw className="w-2.5 h-2.5" />

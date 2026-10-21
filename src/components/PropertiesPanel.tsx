@@ -31,7 +31,7 @@ export default function PropertiesPanel({
     return (
       <div className="flex flex-col items-center justify-center h-full p-6 text-center text-zinc-500 text-xs">
         <Sliders className="w-8 h-8 stroke-1 text-zinc-600 mb-2" />
-        <span className="font-medium text-zinc-400">No Elements Selected</span>
+        <span className="font-medium text-zinc-600">No Elements Selected</span>
         <p className="text-[11px] text-zinc-500 mt-1 max-w-[200px]">
           Click or Shift+Click layers with the Select tool (V), or draw rough gestures with Smart Reference (S).
         </p>
@@ -43,33 +43,33 @@ export default function PropertiesPanel({
   const comp = inferredRef.matchingComponent || inferredRef.activeInterpretation?.matchingComponent || selectedNodes[0]?.component;
 
   return (
-    <div className="flex flex-col h-full text-zinc-300 text-xs overflow-y-auto">
+    <div className="flex flex-col h-full text-zinc-700 text-xs overflow-y-auto">
       {/* Selection Header */}
-      <div className="p-3 border-b border-zinc-800 bg-zinc-900/60">
+      <div className="p-3 border-b border-zinc-200 bg-white/60">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
-            {inferredRef.selectionMethod === 'smart-ref' ? 'Smart Reference' : 'Figma Selection'}
+          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+            {inferredRef.selectionMethod === 'smart-ref' ? 'Smart Reference' : 'Conventional Selection'}
           </span>
-          <span className="px-1.5 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 text-[10px] uppercase font-mono">
+          <span className="px-1.5 py-0.5 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 text-[10px] uppercase font-mono">
             {inferredRef.selectionMethod || 'pointer'}
           </span>
         </div>
-        <h3 className="text-sm font-semibold text-white mt-1 truncate">{inferredRef.label}</h3>
+        <h3 className="text-sm font-semibold text-zinc-900 mt-1 truncate">{inferredRef.label}</h3>
         
         {/* Scope Switcher Inside Properties Panel */}
         <div className="mt-3 flex flex-col gap-1.5">
-          <div className="flex items-center justify-between text-[11px] text-zinc-400">
+          <div className="flex items-center justify-between text-[11px] text-zinc-600">
             <span>Semantic Scope:</span>
-            <span className="text-indigo-400 font-mono font-semibold">{selectedNodes.length} items</span>
+            <span className="text-indigo-600 font-mono font-semibold">{selectedNodes.length} items</span>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800">
+          <div className="grid grid-cols-3 gap-1 bg-zinc-50 p-1 rounded-lg border border-zinc-200">
             <button
               onClick={() => onScopeChange('exemplars')}
               className={`py-1 text-[11px] rounded font-medium transition-colors ${
                 inferredRef.scope === 'exemplars'
-                  ? 'bg-zinc-800 text-white font-semibold shadow-xs'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-zinc-100 text-zinc-900 font-semibold shadow-xs'
+                  : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
               Touched ({exemplarNodes.length})
@@ -79,8 +79,8 @@ export default function PropertiesPanel({
               onClick={() => onScopeChange('screen')}
               className={`py-1 text-[11px] rounded font-medium transition-colors ${
                 inferredRef.scope === 'screen'
-                  ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
+                  : 'text-zinc-600 hover:text-zinc-900'
               }`}
             >
               Screen
@@ -90,8 +90,8 @@ export default function PropertiesPanel({
               onClick={() => onScopeChange('document')}
               className={`py-1 text-[11px] rounded font-medium transition-colors flex items-center justify-center gap-1 ${
                 inferredRef.scope === 'document'
-                  ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-                  : 'text-indigo-400 hover:bg-indigo-950/60'
+                  ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
+                  : 'text-indigo-600 hover:bg-indigo-50/60'
               }`}
             >
               <Sparkles className="w-2.5 h-2.5" />
@@ -102,19 +102,19 @@ export default function PropertiesPanel({
       </div>
 
       {/* Exemplar vs Inferred Breakdown */}
-      <div className="p-3 border-b border-zinc-800">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Inference Breakdown</span>
+      <div className="p-3 border-b border-zinc-200">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">Inference Breakdown</span>
         <div className="mt-2 flex flex-col gap-1.5">
-          <div className="flex items-center justify-between p-2 rounded bg-zinc-900 border border-zinc-800">
-            <div className="flex items-center gap-1.5 text-zinc-300">
+          <div className="flex items-center justify-between p-2 rounded bg-white border border-zinc-200">
+            <div className="flex items-center gap-1.5 text-zinc-700">
               <span className="w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-indigo-500/30" />
               <span>Direct Gestured / Clicked</span>
             </div>
-            <span className="font-mono font-semibold text-white">{exemplarNodes.length}</span>
+            <span className="font-mono font-semibold text-zinc-900">{exemplarNodes.length}</span>
           </div>
 
-          <div className="flex items-center justify-between p-2 rounded bg-zinc-900 border border-zinc-800">
-            <div className="flex items-center gap-1.5 text-zinc-300">
+          <div className="flex items-center justify-between p-2 rounded bg-white border border-zinc-200">
+            <div className="flex items-center gap-1.5 text-zinc-700">
               <span className="w-2 h-2 rounded-full border border-dashed border-cyan-400" />
               <span>Inferred via Pattern</span>
             </div>
@@ -126,37 +126,37 @@ export default function PropertiesPanel({
       </div>
 
       {/* Semantic Tags */}
-      <div className="p-3 border-b border-zinc-800 flex flex-col gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Semantic Metadata</span>
+      <div className="p-3 border-b border-zinc-200 flex flex-col gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">Semantic Metadata</span>
         <div className="grid grid-cols-2 gap-2 text-[11px]">
-          <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
+          <div className="p-2 rounded bg-white border border-zinc-200">
             <span className="text-zinc-500 block text-[10px]">ROLE</span>
-            <span className="font-mono text-zinc-200 mt-0.5 block truncate">{role || 'mixed'}</span>
+            <span className="font-mono text-zinc-800 mt-0.5 block truncate">{role || 'mixed'}</span>
           </div>
-          <div className="p-2 rounded bg-zinc-900 border border-zinc-800">
+          <div className="p-2 rounded bg-white border border-zinc-200">
             <span className="text-zinc-500 block text-[10px]">COMPONENT</span>
-            <span className="font-mono text-zinc-200 mt-0.5 block truncate">{comp || 'mixed'}</span>
+            <span className="font-mono text-zinc-800 mt-0.5 block truncate">{comp || 'mixed'}</span>
           </div>
         </div>
       </div>
 
       {/* Quick Batch Actions */}
-      <div className="p-3 border-b border-zinc-800 flex flex-col gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Batch Design Actions</span>
+      <div className="p-3 border-b border-zinc-200 flex flex-col gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">Batch Design Actions</span>
         
         {role === 'price' && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-zinc-400">Simulate Promotional Discount:</span>
+            <span className="text-[11px] text-zinc-600">Simulate Promotional Discount:</span>
             <div className="flex gap-1.5">
               <button 
                 onClick={() => onBatchDiscount(15)}
-                className="flex-1 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded font-medium text-xs transition-colors"
+                className="flex-1 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded font-medium text-xs transition-colors"
               >
                 -15% Off
               </button>
               <button 
                 onClick={() => onBatchDiscount(25)}
-                className="flex-1 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded font-medium text-xs transition-colors"
+                className="flex-1 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 rounded font-medium text-xs transition-colors"
               >
                 -25% Off
               </button>
@@ -166,7 +166,7 @@ export default function PropertiesPanel({
 
         {(role === 'primaryCTA' || role === 'button' || role === 'favorite') && (
           <div className="flex flex-col gap-1.5">
-            <span className="text-[11px] text-zinc-400">Batch Button Color:</span>
+            <span className="text-[11px] text-zinc-600">Batch Button Color:</span>
             <div className="flex gap-2">
               {[
                 { name: 'Indigo', hex: '#4f46e5' },
@@ -178,7 +178,7 @@ export default function PropertiesPanel({
                   key={c.name}
                   onClick={() => onBatchColorChange(c.hex)}
                   title={c.name}
-                  className="w-6 h-6 rounded-full border border-zinc-700 hover:scale-110 transition-transform"
+                  className="w-6 h-6 rounded-full border border-zinc-200 hover:scale-110 transition-transform"
                   style={{ backgroundColor: c.hex }}
                 />
               ))}
@@ -189,11 +189,11 @@ export default function PropertiesPanel({
 
       {/* Selected Items List */}
       <div className="p-3 flex-1">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">Selected Layers ({selectedNodes.length})</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600">Selected Layers ({selectedNodes.length})</span>
         <div className="mt-2 flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
           {selectedNodes.map(node => (
-            <div key={node.id} className="p-1.5 rounded bg-zinc-900/60 border border-zinc-800/80 flex items-center justify-between text-[11px]">
-              <span className="truncate text-zinc-300 font-medium">{node.label}</span>
+            <div key={node.id} className="p-1.5 rounded bg-white/60 border border-zinc-200/80 flex items-center justify-between text-[11px]">
+              <span className="truncate text-zinc-700 font-medium">{node.label}</span>
               <span className="text-[10px] font-mono text-zinc-500">{node.screen}</span>
             </div>
           ))}

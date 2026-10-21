@@ -409,7 +409,7 @@ export default function Canvas({
 
   return (
     <div 
-      className={`relative w-full h-full overflow-hidden bg-zinc-950 select-none
+      className={`relative w-full h-full overflow-hidden bg-[#e8e8e8] select-none
         ${isPanning || isSpacePressed ? 'cursor-grab' : toolMode === 'smart-ref' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
       {/* 
@@ -427,15 +427,15 @@ export default function Canvas({
             transition={{ duration: 0.15 }}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            className="absolute top-3.5 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-auto select-none"
+            className="selection-context absolute top-3.5 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-auto select-none"
           >
             {/* The Main Pill Bar */}
-            <div className="bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80 text-white px-3.5 py-1.5 rounded-xl shadow-2xl flex items-center gap-3 text-xs ring-1 ring-zinc-800">
+            <div className="bg-white/95  border border-zinc-200/80 text-zinc-900 px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-3 text-xs ring-1 ring-zinc-200">
               
               {/* Selection Identity & Label */}
-              <div className="flex items-center gap-1.5 font-semibold text-zinc-100 max-w-[200px] sm:max-w-[260px] truncate">
+              <div className="flex items-center gap-1.5 font-semibold text-zinc-900 max-w-[200px] sm:max-w-[260px] truncate">
                 {inferredRef.selectionMethod === 'smart-ref' ? (
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                 ) : (
                   <MousePointer2 className="w-3.5 h-3.5 text-[#0d99ff] shrink-0" />
                 )}
@@ -448,8 +448,8 @@ export default function Canvas({
                   onPointerDown={(e) => { e.stopPropagation(); setShowAlternatives(prev => !prev); }}
                   className={`px-2 py-0.5 rounded-md text-[11px] font-medium border flex items-center gap-1 transition-colors ${
                     showAlternatives
-                      ? 'bg-indigo-950 border-indigo-600 text-indigo-300'
-                      : 'bg-zinc-800/80 border-zinc-700 text-zinc-400 hover:text-white'
+                      ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
+                      : 'bg-zinc-100/80 border-zinc-200 text-zinc-600 hover:text-zinc-900'
                   }`}
                   title="View alternative smart interpretations"
                 >
@@ -461,13 +461,13 @@ export default function Canvas({
               <span className="text-zinc-700">|</span>
 
               {/* THE SINGLE AUTHORITY SCOPE TOGGLE: TOUCHED, SCREEN, ALL SCREENS */}
-              <div className="flex items-center gap-1 bg-zinc-950 p-0.5 rounded-lg border border-zinc-800">
+              <div className="flex items-center gap-1 bg-zinc-50 p-0.5 rounded-lg border border-zinc-200">
                 <button
                   onPointerDown={(e) => { e.stopPropagation(); handleScopeChange('exemplars'); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                     inferredRef.scope === 'exemplars'
-                      ? 'bg-zinc-800 text-white font-semibold shadow-xs'
-                      : 'text-zinc-400 hover:text-white'
+                      ? 'bg-zinc-100 text-zinc-900 font-semibold shadow-xs'
+                      : 'text-zinc-600 hover:text-zinc-900'
                   }`}
                   title="Restrict to directly touched elements"
                 >
@@ -478,8 +478,8 @@ export default function Canvas({
                   onPointerDown={(e) => { e.stopPropagation(); handleScopeChange('screen'); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                     inferredRef.scope === 'screen'
-                      ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-                      : 'text-zinc-400 hover:text-white'
+                      ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
+                      : 'text-zinc-600 hover:text-zinc-900'
                   }`}
                   title="Match items across current screen"
                 >
@@ -490,8 +490,8 @@ export default function Canvas({
                   onPointerDown={(e) => { e.stopPropagation(); handleScopeChange('document'); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 ${
                     inferredRef.scope === 'document'
-                      ? 'bg-indigo-600 text-white font-semibold shadow-xs'
-                      : 'text-indigo-400 hover:bg-indigo-950/60'
+                      ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
+                      : 'text-indigo-600 hover:bg-indigo-50/60'
                   }`}
                   title="Expand to all matching items across all 6 screens!"
                 >
@@ -503,7 +503,7 @@ export default function Canvas({
               {/* Attach Reference to Prompt */}
               <button
                 onPointerDown={(e) => { e.stopPropagation(); onAcceptReference(); }}
-                className="ml-0.5 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-colors shadow-xs"
+                className="ml-0.5 px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-zinc-900 rounded-lg text-[11px] font-semibold flex items-center gap-1 transition-colors shadow-xs"
                 title="Attach this selection to AI Prompt Bar"
               >
                 <Check className="w-3 h-3" />
@@ -519,7 +519,7 @@ export default function Canvas({
                   setCurrentPath([]);
                   setShowAlternatives(false);
                 }}
-                className="p-1 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-md transition-colors"
+                className="p-1 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors"
                 title="Clear selection (Esc)"
               >
                 <X className="w-3.5 h-3.5" />
@@ -539,9 +539,9 @@ export default function Canvas({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.98 }}
                   transition={{ duration: 0.12 }}
-                  className="mt-2 bg-zinc-900/98 backdrop-blur-md border border-zinc-700/90 rounded-xl shadow-2xl p-1.5 w-80 text-zinc-200"
+                  className="mt-2 bg-white/98  border border-zinc-200/90 rounded-xl shadow-lg p-1.5 w-80 text-zinc-800"
                 >
-                  <div className="px-2 py-1 flex items-center justify-between text-[10px] text-zinc-400 uppercase font-mono tracking-wider border-b border-zinc-800 pb-1 mb-1">
+                  <div className="px-2 py-1 flex items-center justify-between text-[10px] text-zinc-600 uppercase font-mono tracking-wider border-b border-zinc-200 pb-1 mb-1">
                     <span>Inferred Interpretations</span>
                     <span className="text-zinc-500 font-sans lowercase">click to select</span>
                   </div>
@@ -561,12 +561,12 @@ export default function Canvas({
                           }}
                           className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
                             isSelected
-                              ? 'bg-indigo-950/80 text-white border border-indigo-700/60 font-medium'
-                              : 'text-zinc-300 hover:bg-zinc-800/80 hover:text-white'
+                              ? 'bg-indigo-50/80 text-zinc-900 border border-indigo-700/60 font-medium'
+                              : 'text-zinc-700 hover:bg-zinc-100/80 hover:text-zinc-900'
                           }`}
                         >
                           <span className="truncate pr-2">{interp.label}</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-800 border border-zinc-700 text-zinc-400 shrink-0">
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 shrink-0">
                             {interp.selectedIds.length} items
                           </span>
                         </button>
@@ -613,8 +613,8 @@ export default function Canvas({
                 className="absolute"
                 style={{ left: cfg.x, top: START_Y - 50, width: SCREEN_W }}
               >
-                <div className="flex items-center justify-between text-zinc-400 font-mono text-xs">
-                  <span className="font-semibold text-zinc-200">{cfg.label}</span>
+                <div className="flex items-center justify-between text-zinc-600 font-mono text-xs">
+                  <span className="font-semibold text-zinc-800">{cfg.label}</span>
                   <span className="text-[11px] text-zinc-500 font-sans">{cfg.desc}</span>
                 </div>
 
@@ -624,7 +624,7 @@ export default function Canvas({
                     className="absolute top-8 left-[390px] flex items-center gap-1.5 text-zinc-600 font-mono text-[11px]"
                     style={{ width: 100 }}
                   >
-                    <div className="h-0.5 flex-1 bg-zinc-800" />
+                    <div className="h-0.5 flex-1 bg-zinc-100" />
                     <ArrowRight className="w-3.5 h-3.5 text-zinc-600" />
                   </div>
                 )}
@@ -632,7 +632,7 @@ export default function Canvas({
             ))}
           </div>
 
-          {/* Render All UI Nodes with Real Figma Selection Handlers */}
+          {/* Render All UI Nodes with Real Conventional Selection Handlers */}
           {nodes.map(node => {
             const isScreen = node.type === 'screen';
             const isSelected = activeIds.includes(node.id);
@@ -647,7 +647,7 @@ export default function Canvas({
                 onMouseLeave={() => !isScreen && setHoveredNodeId(null)}
                 className={`absolute transition-opacity duration-150 ${
                   isScreen 
-                    ? 'shadow-2xl shadow-black/80 rounded-[40px] overflow-hidden pointer-events-none' 
+                    ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none' 
                     : 'flex items-center justify-center text-center overflow-hidden cursor-pointer'
                 } ${isHovered && !isSelected ? 'ring-1 ring-[#0d99ff] ring-offset-1 ring-offset-transparent' : ''}`}
                 style={{
@@ -673,7 +673,7 @@ export default function Canvas({
                     <div className="w-20 h-4.5 bg-black rounded-full mx-auto" />
                     <div className="flex items-center gap-1.5 text-[10px]">
                       <span>5G</span>
-                      <div className="w-5 h-2.5 rounded-sm border border-zinc-700 p-0.5 flex items-center">
+                      <div className="w-5 h-2.5 rounded-sm border border-zinc-200 p-0.5 flex items-center">
                         <div className="w-full h-full bg-zinc-800 rounded-2xs" />
                       </div>
                     </div>
@@ -719,7 +719,7 @@ export default function Canvas({
                   }}
                 >
                   {!isConventional && isExemplar ? (
-                    <span className="absolute -top-3.5 -left-1 bg-indigo-600 text-white font-mono text-[9px] px-1 py-0.2 rounded font-bold uppercase shadow-sm">
+                    <span className="absolute -top-3.5 -left-1 bg-indigo-600 text-zinc-900 font-mono text-[9px] px-1 py-0.2 rounded font-bold uppercase shadow-sm">
                       Exemplar
                     </span>
                   ) : null}
@@ -779,7 +779,7 @@ export default function Canvas({
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   filter="url(#inkGlow)"
-                  className={selectionState === 'interpreting' ? 'animate-pulse' : ''}
+                  className={selectionState === 'interpreting' ? '' : ''}
                 />
               )}
 
@@ -806,7 +806,7 @@ export default function Canvas({
                 initial={{ opacity: 0, y: -10, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute bg-zinc-900 border border-indigo-500/40 text-white px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-2xl flex items-center gap-2 pointer-events-none z-50 ring-4 ring-indigo-500/20"
+                className="absolute bg-white border border-indigo-500/40 text-zinc-900 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-2 pointer-events-none z-50 ring-4 ring-indigo-500/20"
                 style={{
                   left: gestureBB.x + gestureBB.w / 2,
                   top: gestureBB.y - 36,
@@ -823,15 +823,15 @@ export default function Canvas({
       </div>
       
       {/* Bottom Right Canvas Pan/Zoom Controls HUD */}
-      <div className="absolute bottom-6 right-6 flex items-center gap-2 pointer-events-auto z-20">
-        <div className="bg-zinc-900/90 backdrop-blur-md border border-zinc-800 text-zinc-400 px-3 py-1.5 rounded-xl shadow-lg flex items-center gap-3 text-[11px]">
-          <span><strong className="text-zinc-300">Shift + Click:</strong> Multi-Select</span>
+      <div className="canvas-shortcuts absolute top-3 left-4 right-4 flex items-center gap-2 pointer-events-none z-20">
+        <div className="bg-white/90  border border-zinc-200 text-zinc-600 px-2 py-1 rounded-md flex items-center gap-2 text-[10px]">
+          <span><strong className="text-zinc-700">Shift + Click:</strong> Multi-Select</span>
           <span className="text-zinc-700">·</span>
-          <span><strong className="text-zinc-300">Space + Drag:</strong> Pan</span>
+          <span><strong className="text-zinc-700">Space + Drag:</strong> Pan</span>
           <span className="text-zinc-700">·</span>
-          <span><strong className="text-zinc-300">S:</strong> Smart Ref</span>
+          <span><strong className="text-zinc-700">S:</strong> Smart Ref</span>
           <span className="text-zinc-700">·</span>
-          <span><strong className="text-zinc-300">V:</strong> Select</span>
+          <span><strong className="text-zinc-700">V:</strong> Select</span>
         </div>
       </div>
     </div>
