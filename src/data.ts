@@ -213,7 +213,7 @@ function buildDataset(): UIElement[] {
     });
 
     // Image container
-    const imgH = 130;
+    const imgH = Math.min(130, h - 112);
     nodes.push({
       id: `${id}-img`,
       type: 'image',
@@ -323,7 +323,7 @@ function buildDataset(): UIElement[] {
       parent: id,
       x: x + 10,
       y: y + imgH + 48,
-      w: 60,
+      w: 68,
       h: 18,
       label: `Price · ${data.price}`,
       screen,
@@ -340,9 +340,9 @@ function buildDataset(): UIElement[] {
         id: `${id}-origprice`,
         type: 'text',
         parent: id,
-        x: x + 72,
+        x: x + 82,
         y: y + imgH + 50,
-        w: 50,
+        w: 60,
         h: 16,
         label: `Original Price · ${data.origPrice}`,
         screen,

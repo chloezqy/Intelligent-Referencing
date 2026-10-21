@@ -79,3 +79,36 @@ kbd { font-family: inherit; opacity: .55; font-size: 10px; }
 .selection-context { width: calc(100% - 24px); max-width: 720px; }
 .selection-context > div:first-child { max-width: 100%; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 8px; border-radius: 8px; box-shadow: 0 2px 8px #0000000d; }
 .workspace:has(.selection-context) .canvas-shortcuts { visibility: hidden; }
+
+/* Phase 1: one contextual panel and a dock outside the navigable canvas. */
+.right-sidebar { position: relative; top: auto; bottom: auto; right: auto; max-width: 42vw; box-shadow: none; }
+.right-sidebar .panel-resizer { left: -2px; right: auto; }
+.workspace-dock { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 20px; background: #e8e8e8; border-top: 1px solid #dedede; min-width: 0; }
+.workspace-dock .floating-toolbar { position: static; transform: none; height: 40px; padding: 3px; border-radius: 7px; box-shadow: none; flex-shrink: 0; z-index: auto; }
+.workspace-dock .floating-toolbar button { padding: 0 9px; gap: 6px; border-radius: 4px; }
+.workspace-dock .floating-toolbar button[aria-pressed=true] { background: #eeedff; color: #5146b8; }
+.workspace-dock .floating-toolbar kbd { display: none; }
+.workspace-dock .floating-toolbar button:not([aria-pressed=true]) span { display: none; }
+.ai-input { flex: 1; }
+.reference-results { flex: 0 1 45%; min-height: 100px; overflow-y: auto; border-top: 1px solid #e5e5e5; padding: 16px; font-size: 12px; background: #fafafa; }
+.reference-results h3 { font-size: 11px; font-weight: 600; color: #555; margin-bottom: 12px; }
+.reference-message { padding: 8px 0; }
+.reference-message > span { display: block; font-size: 10px; color: #888; margin-bottom: 4px; }
+.reference-message p { line-height: 1.6; overflow-wrap: anywhere; }
+.reference-message.assistant > span { color: #6558b2; }
+.selection-context { width: min(440px, calc(100% - 24px)); max-height: calc(100% - 24px); overflow-y: auto; }
+.selection-context > div:first-child { justify-content: flex-start; gap: 6px; font-size: 11px; }
+.selection-context > div:first-child > div:first-child { max-width: 200px; font-weight: 500; }
+.selection-context.conventional { width: min(320px, calc(100% - 24px)); }
+.selection-context.conventional .context-scope, .selection-context.conventional .context-divider { display: none; }
+.selection-context.conventional > div:first-child { flex-wrap: nowrap; }
+.selection-context.conventional > div:first-child > div:first-child { flex: 1; }
+@media (max-width: 1100px) { .workspace-dock { gap: 8px; padding: 12px; } .workspace-dock .floating-toolbar button span { display: none; } }
+@media (max-width: 700px) { .right-sidebar { max-width: 45vw; } .workspace-dock { flex-wrap: wrap; gap: 8px; padding: 8px; } .workspace-dock .ai-input { flex-basis: 100%; } }
+
+/* All workspace panels sit directly beside the navigation rail. */
+.navigation-rail { order: 0; }
+.workspace { order: 2; }
+.right-sidebar { order: 3; }
+.right-sidebar.research-sidebar { order: 1; border-left: 0; border-right: 1px solid #e5e5e5; }
+.right-sidebar.research-sidebar .panel-resizer { left: auto; right: -2px; }

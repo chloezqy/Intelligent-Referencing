@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import TopBar from './components/TopBar';
 import Canvas from './components/Canvas';
-import PromptBar from './components/PromptBar';
+import PromptBar, { PromptMessage } from './components/PromptBar';
 import LayersPanel from './components/LayersPanel';
 import PropertiesPanel from './components/PropertiesPanel';
 import ResearchPanel from './components/ResearchPanel';
@@ -9,7 +9,8 @@ import HelpModal from './components/HelpModal';
 import { ToolMode, SelectionState, InferredReference, UIElement, ResearchTask, ScopeLevel } from './types';
 import { MOCK_NODES, RESEARCH_STUDY_TASKS } from './data';
 import { expandScope } from './utils';
-import { Layers, Zap, SlidersHorizontal, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, MousePointer2, Sparkles, Hand } from 'lucide-react';
+import { fitWorkspace, zoomAtPoint } from './workspace';
+import { Layers, Zap, SlidersHorizontal, PanelLeftClose, MousePointer2, Sparkles, Hand } from 'lucide-react';
 
 export default function App() {
   const [toolMode, setToolMode] = useState<ToolMode>('smart-ref');
@@ -30,18 +31,21 @@ export default function App() {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
 
 
-  // Zoom Helpers
-  const handleZoomIn = () => {
-    setTransform(prev => ({ ...prev, scale: Math.min(2.5, prev.scale * 1.2) }));
+  const canvasHost = useRef<HTMLDivElement>(null);
+  const [messages, setMessages] = useState<PromptMessage[]>([]);
+  const zoomAtCenter = (factor: number) => {
+    const rect = canvasHost.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTransform(prev => zoomAtPoint(prev, factor, rect.width / 2, rect.height / 2));
   };
-
-  const handleZoomOut = () => {
-    setTransform(prev => ({ ...prev, scale: Math.max(0.15, prev.scale * 0.8) }));
-  };
-
-  const handleZoomFit = () => {
-    setTransform({ x: 30, y: 10, scale: 0.46 });
-  };
+  const handleZoomIn = () => zoomAtCenter(1.2);
+  const handleZoomOut = () => zoomAtCenter(1 / 1.2);
+  const handleZoomFit = useCallback(() => {
+    const rect = canvasHost.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTransform(fitWorkspace(rect.width, rect.height));
+  }, []);
+  useEffect(() => { handleZoomFit(); }, [handleZoomFit]);
 
   // Selection Acceptance -> Attach to prompt bar
   const handleAcceptReference = useCallback(() => {
@@ -76,7 +80,7 @@ export default function App() {
   const handleSelectTask = (task: ResearchTask) => {
     setActiveTaskId(task.id);
     setActivePanelTab('research');
-    setLeftOpen(true);
+    setIsTasksOpen(true);
   };
 
   // Global Scope Change Handler (works from PropertiesPanel or anywhere)
@@ -162,64 +166,63 @@ export default function App() {
     }
   };
 
-  const [leftOpen, setLeftOpen] = useState(() => window.innerWidth > 1000);
-  const [leftWidth, setLeftWidth] = useState(260);
-  const leftTab = activePanelTab === 'research' ? 'research' : 'layers';
+  const [panelWidth, setPanelWidth] = useState(300);
   const openSection = (tab: 'layers' | 'research' | 'properties') => {
-    if (tab === 'properties') { setIsTasksOpen(v => !v); if (window.innerWidth < 1000) setLeftOpen(false); return; }
+    setIsTasksOpen(open => tab === activePanelTab ? !open : true);
     setActivePanelTab(tab);
-    { setLeftOpen(v => activePanelTab === tab ? !v : true); if (window.innerWidth < 1000) setIsTasksOpen(false); }
   };
-  const resizeLeft = (e: React.PointerEvent<HTMLDivElement>) => {
+  const resizePanel = (e: React.PointerEvent<HTMLDivElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
-    const startX = e.clientX, width = leftWidth;
-    e.currentTarget.onpointermove = event => setLeftWidth(Math.max(230, Math.min(360, width + event.clientX - startX)));
-    e.currentTarget.onpointerup = () => { e.currentTarget.onpointermove = null; };
+    const startX = e.clientX, width = panelWidth;
+    e.currentTarget.onpointermove = event => setPanelWidth(Math.max(260, Math.min(380, width + event.clientX - startX)));
+    const finish = () => { e.currentTarget.onpointermove = null; };
+    e.currentTarget.onpointerup = finish;
+    e.currentTarget.onpointercancel = finish;
+  };
+  const receiveMessages = (next: PromptMessage[]) => {
+    setMessages(prev => [...prev, ...next]);
+    setActivePanelTab('properties');
+    setIsTasksOpen(true);
   };
 
   return (
     <div className="app-shell flex flex-col h-dvh w-full overflow-hidden text-zinc-800 bg-white font-sans">
       <TopBar toolMode={toolMode} setToolMode={setToolMode} scale={transform.scale}
         onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} onZoomFit={handleZoomFit}
-        isTasksOpen={leftOpen && leftTab === 'research'}
-        setIsTasksOpen={() => { setActivePanelTab('research'); setLeftOpen(v => leftTab === 'research' ? !v : true); }}
+        isTasksOpen={isTasksOpen && activePanelTab === 'research'}
+        setIsTasksOpen={() => openSection('research')}
         inferredRef={inferredRef} onShowHelp={() => setIsHelpOpen(true)} />
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
         <nav aria-label="Workspace sections" className="navigation-rail">
           <div className="flex flex-col gap-2">
             {([{ id: 'layers', label: 'Layers', icon: Layers }, { id: 'research', label: 'Research Tasks', icon: Zap }, { id: 'properties', label: 'Properties', icon: SlidersHorizontal }] as const).map(item => (
-              <button key={item.id} title={item.label} aria-label={item.label} aria-pressed={item.id === 'properties' ? isTasksOpen : leftOpen && leftTab === item.id}
-                onClick={() => openSection(item.id)} className={`rail-button ${(item.id === 'properties' ? isTasksOpen : leftOpen && leftTab === item.id) ? 'active' : ''}`}>
+              <button key={item.id} title={item.label} aria-label={item.label} aria-pressed={isTasksOpen && activePanelTab === item.id}
+                onClick={() => openSection(item.id)} className={`rail-button ${(isTasksOpen && activePanelTab === item.id) ? 'active' : ''}`}>
                 <item.icon size={20} /><span>{item.id === 'research' ? 'Tasks' : item.label}</span>
               </button>
             ))}
           </div>
-          <button className="rail-button" title={leftOpen ? 'Collapse left sidebar' : 'Expand left sidebar'} aria-label={leftOpen ? 'Collapse left sidebar' : 'Expand left sidebar'} onClick={() => { setLeftOpen(v => !v); if (window.innerWidth < 1000) setIsTasksOpen(false); }}>{leftOpen ? <PanelLeftClose size={20} /> : <PanelLeftOpen size={20} />}</button>
         </nav>
-        <aside className={`left-sidebar ${leftOpen ? '' : 'panel-hidden'}`} style={{ width: leftOpen ? leftWidth : 0 }} aria-label="Workspace navigation" inert={!leftOpen}>
-          <div className="panel-heading"><span>Mobile Commerce</span><button title="Collapse left sidebar" aria-label="Collapse left sidebar" onClick={() => setLeftOpen(false)}><PanelLeftClose size={16} /></button></div>
-          <div className="panel-tabs" role="tablist" aria-label="Navigation panels">
-            <button role="tab" aria-selected={leftTab === 'layers'} onClick={() => setActivePanelTab('layers')}>Layers</button>
-            <button role="tab" aria-selected={leftTab === 'research'} onClick={() => setActivePanelTab('research')}>Research Tasks <span>5</span></button>
-          </div>
-          <div className="flex-1 min-h-0" hidden={leftTab !== 'layers'}><LayersPanel nodes={nodes} inferredRef={inferredRef} onSelectNode={handleSelectNode} /></div>
-          <div className="flex-1 min-h-0" hidden={leftTab !== 'research'}><ResearchPanel activeTaskId={activeTaskId} onSelectTask={handleSelectTask} inferredRef={inferredRef} nodes={nodes} toolMode={toolMode} onClose={() => setLeftOpen(false)} /></div>
-          <div role="separator" aria-label="Resize left sidebar" aria-orientation="vertical" aria-valuenow={leftWidth} aria-valuemin={230} aria-valuemax={360} tabIndex={0} className="panel-resizer" onPointerDown={resizeLeft} onKeyDown={e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); setLeftWidth(v => Math.max(230, Math.min(360, v + (e.key === 'ArrowRight' ? 10 : -10)))); } }} />
-        </aside>
-        <main className="workspace flex-1 min-w-0 relative overflow-hidden" aria-label="Design canvas">
-          <div className="workspace-caption"><span>Mobile Commerce Workspace</span><span>6 artboards</span></div>
+        <main className="workspace flex flex-col flex-1 min-w-0 relative overflow-hidden" aria-label="Design canvas">
+          <div ref={canvasHost} className="canvas-surface relative flex-1 min-h-0">
           <Canvas toolMode={toolMode} setToolMode={setToolMode} selectionState={selectionState} setSelectionState={setSelectionState} inferredRef={inferredRef} setInferredRef={setInferredRef} onAcceptReference={handleAcceptReference} nodes={nodes} transform={transform} setTransform={setTransform} />
-          <PromptBar attachedRef={attachedRef} onClearRef={handleClearAttachedRef} onApplyAIAction={handleApplyAIAction} />
+          </div>
+          <div className="workspace-dock">
           <div className="floating-toolbar" role="toolbar" aria-label="Canvas tools">
             {([{ mode: 'pointer', name: 'Select', key: 'V', icon: MousePointer2 }, { mode: 'smart-ref', name: 'Smart Reference', key: 'S', icon: Sparkles }, { mode: 'pan', name: 'Pan', key: 'H', icon: Hand }] as const).map(tool => <button key={tool.mode} title={`${tool.name} (${tool.key})`} aria-pressed={toolMode === tool.mode} onClick={() => setToolMode(tool.mode)}><tool.icon size={18} /><span>{tool.name}</span><kbd>{tool.key}</kbd></button>)}
           </div>
-          {!isTasksOpen && <button className="inspector-toggle" title="Open Properties" aria-label="Open Properties" onClick={() => { setIsTasksOpen(true); if (window.innerWidth < 1000) setLeftOpen(false); }}><PanelRightOpen size={18} /></button>}
+          <PromptBar attachedRef={attachedRef} onClearRef={handleClearAttachedRef} onApplyAIAction={handleApplyAIAction} onMessages={receiveMessages} />
+          </div>
         </main>
-        <aside className={`right-sidebar ${isTasksOpen ? '' : 'panel-hidden'}`} aria-label="Properties" inert={!isTasksOpen}>
-          <div className="panel-heading"><span>Properties</span><button title="Collapse Properties" aria-label="Collapse Properties" onClick={() => setIsTasksOpen(false)}><PanelRightClose size={16} /></button></div>
-          <div className="inspector-document"><span className="document-eyebrow">WORKSPACE</span><strong>Mobile Commerce</strong><span>6 screens · Smart Reference Prototype</span></div>
-          <div className="flex-1 min-h-0"><PropertiesPanel inferredRef={inferredRef} nodes={nodes} onBatchColorChange={handleBatchColor} onBatchDiscount={handleBatchDiscount} onScopeChange={handleGlobalScopeChange} /></div>
-          <div className="panel-footer"><Sparkles size={14} /><span>{inferredRef ? `${inferredRef.selectedIds.length} layers selected` : 'Select an element to inspect'}</span></div>
+        <aside className={`right-sidebar research-sidebar ${isTasksOpen ? '' : 'panel-hidden'}`} style={{ width: isTasksOpen ? panelWidth : 0 }} aria-label="Workspace panel" inert={!isTasksOpen}>
+          <div className="panel-heading"><span>{activePanelTab === 'research' ? 'Research Tasks' : activePanelTab === 'layers' ? 'Layers' : 'Properties'}</span><button title="Close panel" aria-label="Close panel" onClick={() => setIsTasksOpen(false)}><PanelLeftClose size={16} /></button></div>
+          <div className="flex-1 min-h-0" hidden={activePanelTab !== 'layers'}><LayersPanel nodes={nodes} inferredRef={inferredRef} onSelectNode={handleSelectNode} /></div>
+          <div className="flex-1 min-h-0" hidden={activePanelTab !== 'research'}><ResearchPanel activeTaskId={activeTaskId} onSelectTask={handleSelectTask} inferredRef={inferredRef} nodes={nodes} toolMode={toolMode} onClose={() => setIsTasksOpen(false)} /></div>
+          <div className="flex flex-col flex-1 min-h-0" hidden={activePanelTab !== 'properties'}>
+            <div className="flex-1 min-h-0"><PropertiesPanel inferredRef={inferredRef} nodes={nodes} onBatchColorChange={handleBatchColor} onBatchDiscount={handleBatchDiscount} onScopeChange={handleGlobalScopeChange} /></div>
+            {messages.length > 0 && <section className="reference-results" aria-label="Reference conversation" aria-live="polite"><h3>Reference conversation</h3>{messages.map((message, index) => <div key={index} className={`reference-message ${message.role}`}><span>{message.role === 'user' ? 'You' : 'Smart Reference'}</span><p>{message.text}</p></div>)}</section>}
+          </div>
+          <div role="separator" aria-label="Resize workspace panel" aria-orientation="vertical" aria-valuenow={panelWidth} aria-valuemin={260} aria-valuemax={380} tabIndex={0} className="panel-resizer" onPointerDown={resizePanel} onKeyDown={e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); setPanelWidth(v => Math.max(260, Math.min(380, v + (e.key === 'ArrowRight' ? 10 : -10)))); } }} />
         </aside>
       </div>
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />

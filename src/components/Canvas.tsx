@@ -1,9 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Point, UIElement, ToolMode, SelectionState, InferredReference, Interpretation, ScopeLevel } from '../types';
+import { zoomAtPoint } from '../workspace';
 import { SCREEN_CONFIGS, SCREEN_W, SCREEN_H, START_Y } from '../data';
 import { inferSelection, getBoundingBox, expandScope, rectIntersect, generateScopeInterpretations } from '../utils';
-import { Check, Sparkles, X, ArrowRight, MousePointer2, ChevronDown } from 'lucide-react';
+import { Check, Sparkles, X, MousePointer2, ChevronDown } from 'lucide-react';
 
 interface CanvasProps {
   toolMode: ToolMode;
@@ -31,6 +32,14 @@ export default function Canvas({
   setTransform
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [viewport, setViewport] = useState({ width: 800, height: 600 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => setViewport({ width: el.clientWidth, height: el.clientHeight }));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const [isPanning, setIsPanning] = useState(false);
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -50,9 +59,10 @@ export default function Canvas({
   // Keyboard navigation & shortcuts (Figma standard)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).tagName === 'INPUT') return;
+      if ((e.target as HTMLElement).closest('input, textarea, [contenteditable=true]')) return;
 
       if (e.code === 'Space' && !e.repeat) {
+        e.preventDefault();
         setIsSpacePressed(true);
       }
       if (e.key === 'v' || e.key === 'V') {
@@ -115,8 +125,8 @@ export default function Canvas({
         // Zoom
         const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
         setTransform(prev => {
-          const newScale = Math.min(Math.max(0.15, prev.scale * zoomFactor), 2.5);
-          return { ...prev, scale: newScale };
+          const rect = el.getBoundingClientRect();
+          return zoomAtPoint(prev, zoomFactor, e.clientX - rect.left, e.clientY - rect.top);
         });
       } else {
         // Pan
@@ -395,7 +405,7 @@ export default function Canvas({
     : '';
 
   // Active highlights
-  const activeCandidate = hoveredInterpretation || activeInterpretation;
+  const activeCandidate = hoveredInterpretation || inferredRef?.activeInterpretation;
   const activeIds = activeCandidate ? activeCandidate.selectedIds : (inferredRef?.selectedIds || []);
   const exemplarIds = activeCandidate ? activeCandidate.exemplarIds : (inferredRef?.exemplarIds || []);
 
@@ -406,6 +416,69 @@ export default function Canvas({
     w: Math.max(...currentPath.map(p => p.x)) - Math.min(...currentPath.map(p => p.x)),
     h: Math.max(...currentPath.map(p => p.y)) - Math.min(...currentPath.map(p => p.y))
   } : null;
+
+  // Frame children share the screen's rounded clipping boundary, while world coordinates stay unchanged.
+  const renderNode = (node: UIElement, frame?: UIElement): React.ReactNode => {
+            const isScreen = node.type === 'screen';
+            const isSelected = activeIds.includes(node.id);
+            const isExemplar = exemplarIds.includes(node.id);
+            const isHovered = hoveredNodeId === node.id && toolMode === 'pointer';
+
+            return (
+              <div
+                key={node.id}
+                data-canvas-node={node.id}
+                onPointerDown={(e) => !isScreen && handleNodePointerDown(e, node)}
+                onMouseEnter={() => !isScreen && setHoveredNodeId(node.id)}
+                onMouseLeave={() => !isScreen && setHoveredNodeId(null)}
+                className={`absolute transition-opacity duration-150 ${
+                  isScreen 
+                    ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none' 
+                    : 'pointer-events-auto flex items-center justify-center text-center overflow-hidden cursor-pointer'
+                } ${isHovered && !isSelected ? 'ring-1 ring-[#0d99ff] ring-offset-1 ring-offset-transparent' : ''}`}
+                style={{
+                  left: node.x - (frame?.x || 0),
+                  top: node.y - (frame?.y || 0),
+                  width: node.w,
+                  height: node.h,
+                  backgroundColor: node.bg || 'transparent',
+                  color: node.color || '#18181b',
+                  borderRadius: node.radius || 0,
+                  border: isScreen ? 'none' : node.border || 'none',
+                  fontSize: node.fontSize,
+                  fontWeight: node.fontWeight as any,
+                  opacity: (selectionState === 'preview' || selectionState === 'disambiguating') && activeIds.length > 0 && !isSelected && !isScreen
+                    ? 0.35
+                    : 1
+                }}
+              >
+                {isScreen && <div className="absolute inset-0 pointer-events-none z-20" style={{ border: node.border, borderRadius: node.radius }} />}
+                {/* Screen Mock Status Bar */}
+                {isScreen && (
+                  <div className="absolute top-0 inset-x-0 h-11 px-6 flex items-center justify-between text-zinc-800 text-xs font-semibold select-none pointer-events-none z-10">
+                    <span>9:41</span>
+                    <div className="w-20 h-4.5 bg-black rounded-full mx-auto" />
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span>5G</span>
+                      <div className="w-5 h-2.5 rounded-sm border border-zinc-200 p-0.5 flex items-center">
+                        <div className="w-full h-full bg-zinc-800 rounded-2xs" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isScreen && nodes.filter(child => child.type !== 'screen' && child.screen === node.screen).map(child => renderNode(child, node))}
+
+                {/* Text / Label */}
+                {!isScreen && (
+                  <span title={node.text} className={`truncate pointer-events-none select-none ${node.role === 'price' || node.role === 'originalPrice' ? 'tabular-nums' : 'px-1'}`}>
+                    {node.text || ''}
+                  </span>
+                )}
+              </div>
+            );
+
+  };
 
   return (
     <div 
@@ -427,7 +500,8 @@ export default function Canvas({
             transition={{ duration: 0.15 }}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            className="selection-context absolute top-3.5 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center pointer-events-auto select-none"
+            className={`selection-context ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
+            style={{ left: Math.max(12, Math.min(viewport.width - Math.min(440, viewport.width - 24) - 12, (boundingBox ? boundingBox.x * transform.scale + transform.x : 12))), top: Math.max(12, Math.min(viewport.height - 200, (boundingBox ? (boundingBox.y + boundingBox.h) * transform.scale + transform.y + 12 : 12))) }}
           >
             {/* The Main Pill Bar */}
             <div className="bg-white/95  border border-zinc-200/80 text-zinc-900 px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-3 text-xs ring-1 ring-zinc-200">
@@ -443,7 +517,7 @@ export default function Canvas({
               </div>
 
               {/* Suggestions / Alternatives Dropdown Button (Smart Ref) */}
-              {interpretations.length > 1 && (
+              {inferredRef.selectionMethod === 'smart-ref' && interpretations.length > 1 && (
                 <button
                   onPointerDown={(e) => { e.stopPropagation(); setShowAlternatives(prev => !prev); }}
                   className={`px-2 py-0.5 rounded-md text-[11px] font-medium border flex items-center gap-1 transition-colors ${
@@ -458,10 +532,10 @@ export default function Canvas({
                 </button>
               )}
 
-              <span className="text-zinc-700">|</span>
+              <span className="context-divider text-zinc-300">|</span>
 
               {/* THE SINGLE AUTHORITY SCOPE TOGGLE: TOUCHED, SCREEN, ALL SCREENS */}
-              <div className="flex items-center gap-1 bg-zinc-50 p-0.5 rounded-lg border border-zinc-200">
+              <div className="context-scope flex items-center gap-1 bg-zinc-50 p-0.5 rounded-lg border border-zinc-200">
                 <button
                   onPointerDown={(e) => { e.stopPropagation(); handleScopeChange('exemplars'); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
@@ -471,7 +545,7 @@ export default function Canvas({
                   }`}
                   title="Restrict to directly touched elements"
                 >
-                  Touched ({exemplarIds.length})
+                  Touched ({inferredRef.exemplarIds.length})
                 </button>
 
                 <button
@@ -533,7 +607,7 @@ export default function Canvas({
               ========================================================================
             */}
             <AnimatePresence>
-              {showAlternatives && interpretations.length > 0 && (
+              {inferredRef.selectionMethod === 'smart-ref' && showAlternatives && interpretations.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -582,10 +656,11 @@ export default function Canvas({
 
       <div 
         ref={containerRef}
-        className="absolute inset-0 origin-top-left"
+        className="absolute inset-0 origin-top-left touch-none"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
+        onPointerCancel={() => { setIsPanning(false); setCurrentPath([]); setRectStart(null); setSelectionState('idle'); }}
       >
         <div 
           style={{ 
@@ -605,90 +680,25 @@ export default function Canvas({
             }}
           />
 
-          {/* Section Headers & Inter-Screen Flow Connectors */}
+          {/* Frame Headers */}
           <div className="absolute pointer-events-none z-0">
-            {SCREEN_CONFIGS.map((cfg, idx) => (
+            {SCREEN_CONFIGS.map(cfg => (
               <div 
                 key={cfg.name} 
                 className="absolute"
-                style={{ left: cfg.x, top: START_Y - 50, width: SCREEN_W }}
+                style={{ left: cfg.x, top: START_Y - 24, width: SCREEN_W }}
               >
                 <div className="flex items-center justify-between text-zinc-600 font-mono text-xs">
                   <span className="font-semibold text-zinc-800">{cfg.label}</span>
-                  <span className="text-[11px] text-zinc-500 font-sans">{cfg.desc}</span>
                 </div>
 
-                {/* Flow Arrow to next screen */}
-                {idx < SCREEN_CONFIGS.length - 1 && (
-                  <div 
-                    className="absolute top-8 left-[390px] flex items-center gap-1.5 text-zinc-600 font-mono text-[11px]"
-                    style={{ width: 100 }}
-                  >
-                    <div className="h-0.5 flex-1 bg-zinc-100" />
-                    <ArrowRight className="w-3.5 h-3.5 text-zinc-600" />
-                  </div>
-                )}
+
               </div>
             ))}
           </div>
 
           {/* Render All UI Nodes with Real Conventional Selection Handlers */}
-          {nodes.map(node => {
-            const isScreen = node.type === 'screen';
-            const isSelected = activeIds.includes(node.id);
-            const isExemplar = exemplarIds.includes(node.id);
-            const isHovered = hoveredNodeId === node.id && toolMode === 'pointer';
-
-            return (
-              <div
-                key={node.id}
-                onPointerDown={(e) => !isScreen && handleNodePointerDown(e, node)}
-                onMouseEnter={() => !isScreen && setHoveredNodeId(node.id)}
-                onMouseLeave={() => !isScreen && setHoveredNodeId(null)}
-                className={`absolute transition-opacity duration-150 ${
-                  isScreen 
-                    ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none' 
-                    : 'flex items-center justify-center text-center overflow-hidden cursor-pointer'
-                } ${isHovered && !isSelected ? 'ring-1 ring-[#0d99ff] ring-offset-1 ring-offset-transparent' : ''}`}
-                style={{
-                  left: node.x,
-                  top: node.y,
-                  width: node.w,
-                  height: node.h,
-                  backgroundColor: node.bg || 'transparent',
-                  color: node.color || '#18181b',
-                  borderRadius: node.radius || 0,
-                  border: node.border || 'none',
-                  fontSize: node.fontSize,
-                  fontWeight: node.fontWeight as any,
-                  opacity: (selectionState === 'preview' || selectionState === 'disambiguating') && activeIds.length > 0 && !isSelected && !isScreen
-                    ? 0.35
-                    : 1
-                }}
-              >
-                {/* Screen Mock Status Bar */}
-                {isScreen && (
-                  <div className="absolute top-0 inset-x-0 h-11 px-6 flex items-center justify-between text-zinc-800 text-xs font-semibold select-none pointer-events-none z-10">
-                    <span>9:41</span>
-                    <div className="w-20 h-4.5 bg-black rounded-full mx-auto" />
-                    <div className="flex items-center gap-1.5 text-[10px]">
-                      <span>5G</span>
-                      <div className="w-5 h-2.5 rounded-sm border border-zinc-200 p-0.5 flex items-center">
-                        <div className="w-full h-full bg-zinc-800 rounded-2xs" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Text / Label */}
-                {!isScreen && (
-                  <span className="truncate px-1 pointer-events-none select-none">
-                    {node.text || ''}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {nodes.filter(node => node.type === 'screen' || !node.screen).map(node => renderNode(node))}
 
           {/* Individual Selection Ring Overlays */}
           <AnimatePresence>
@@ -822,18 +832,6 @@ export default function Canvas({
         </div>
       </div>
       
-      {/* Bottom Right Canvas Pan/Zoom Controls HUD */}
-      <div className="canvas-shortcuts absolute top-3 left-4 right-4 flex items-center gap-2 pointer-events-none z-20">
-        <div className="bg-white/90  border border-zinc-200 text-zinc-600 px-2 py-1 rounded-md flex items-center gap-2 text-[10px]">
-          <span><strong className="text-zinc-700">Shift + Click:</strong> Multi-Select</span>
-          <span className="text-zinc-700">·</span>
-          <span><strong className="text-zinc-700">Space + Drag:</strong> Pan</span>
-          <span className="text-zinc-700">·</span>
-          <span><strong className="text-zinc-700">S:</strong> Smart Ref</span>
-          <span className="text-zinc-700">·</span>
-          <span><strong className="text-zinc-700">V:</strong> Select</span>
-        </div>
-      </div>
     </div>
   );
 }

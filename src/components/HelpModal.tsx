@@ -11,7 +11,7 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white border border-zinc-200 rounded-2xl shadow-lg max-w-lg w-full overflow-hidden text-zinc-700 text-xs">
+      <div className="bg-white border border-zinc-200 rounded-2xl shadow-lg max-w-lg w-full max-h-[90dvh] overflow-y-auto text-zinc-700 text-xs">
         
         {/* Header */}
         <div className="p-4 border-b border-zinc-200 bg-zinc-50 flex items-center justify-between">
@@ -87,6 +87,14 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
           </div>
         </div>
 
+        <section className="px-5 pb-5" aria-label="Keyboard shortcuts">
+          <h4 className="font-semibold mb-2">Keyboard & canvas shortcuts</h4>
+          <dl className="grid grid-cols-2 gap-2 text-[11px]">
+            <dt>Select</dt><dd>V</dd><dt>Smart Reference</dt><dd>S</dd><dt>Pan</dt><dd>H · Space + drag · Middle drag</dd>
+            <dt>Multi-select</dt><dd>Shift + click / marquee</dd><dt>Select all</dt><dd>⌘ / Ctrl + A</dd><dt>Attach reference</dt><dd>Enter</dd>
+            <dt>Clear selection</dt><dd>Escape</dd><dt>Zoom at cursor</dt><dd>⌘ / Ctrl + scroll</dd><dt>Pan canvas</dt><dd>Scroll / trackpad</dd>
+          </dl>
+        </section>
         {/* Footer */}
         <div className="p-3 bg-zinc-50 border-t border-zinc-200 flex justify-end">
           <button

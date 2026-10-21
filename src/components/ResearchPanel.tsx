@@ -119,13 +119,7 @@ export default function ResearchPanel({
           >
             <ChevronUp className="w-3.5 h-3.5" />
           </button>
-          <button
-            onClick={onClose}
-            className="p-1 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 rounded transition-colors"
-            title="Close panel"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+
         </div>
       </div>
 
