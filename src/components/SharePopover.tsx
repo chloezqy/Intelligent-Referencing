@@ -1,3 +1,4 @@
+import ComparisonContext from './ComparisonContext';
 import React, { useEffect, useRef, useState } from 'react';
 import { ReferenceDraft, ReferenceIntent, INTENTS } from '../collaboration';
 import { UIElement } from '../types';
@@ -6,13 +7,14 @@ import { requestId, useCollaboration } from '../useCollaboration';
 import { sharePopoverLayout, shareActionLabel } from '../referencePresentation';
 import PropertyComparison from './PropertyComparison';
 interface Props {
+  onComparisonPurpose:(value:string)=>void;onRefreshComparison:()=>void;comparisonChanged:boolean;
   draft:ReferenceDraft; nodes:UIElement[]; camera:CanvasTransform;
   collaboration:ReturnType<typeof useCollaboration>; visible:boolean; onVisible:(open:boolean)=>void;
   note:string; intent:ReferenceIntent; onNote:(value:string)=>void; onIntent:(value:ReferenceIntent)=>void;
   selectionCount:number; onReplace:()=>void; onCancel:()=>void; onShared:(id:string)=>void;
   onRoom:()=>void; onLocate:()=>void;
 }
-export default function SharePopover({draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,selectionCount,onReplace,onCancel,onShared,onRoom,onLocate}:Props){
+export default function SharePopover({onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,selectionCount,onReplace,onCancel,onShared,onRoom,onLocate}:Props){
   const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null),pin=useRef<HTMLButtonElement>(null);
   const [viewport,setViewport]=useState({width:800,height:600}),[height,setHeight]=useState(320),[sendId,setSendId]=useState(requestId);
   const label=shareActionLabel(c.session?.userId),target=c.session?.userId==='B'?'A':'B';
@@ -38,13 +40,14 @@ export default function SharePopover({draft,nodes,camera,collaboration:c,visible
         <p className="share-target-label" title={draft.label}>{draft.label}</p>
         <div className="share-target-meta"><span>{draft.elementIds.length} {draft.elementIds.length===1?'object':'objects'}</span><button type="button" onClick={onLocate}>Locate</button></div>
         {layout.offscreen&&<p className="subtle">Targets are offscreen. Choose Locate to return to them.</p>}
-        <label>Intended action<select aria-label="Intended action" value={intent} onChange={e=>onIntent(e.target.value as ReferenceIntent)}>{INTENTS.map(value=><option key={value}>{value}</option>)}</select></label>
+        {draft.comparison&&<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/>{comparisonChanged&&<p className="subtle">Selections changed. Saved targets remain fixed. <button type="button" onClick={onRefreshComparison}>Refresh comparison</button></p>}<PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded={true}/></>}
+        <label>Intended action<select aria-label="Intended action" disabled={!!draft.comparison} value={intent} onChange={e=>onIntent(e.target.value as ReferenceIntent)}>{INTENTS.map(value=><option key={value}>{value}</option>)}</select></label>
         {intent==='Look at this'&&<p className="subtle">User {target} will receive a View invitation. Their canvas moves only when they choose View.</p>}
         <label>Note (optional)<textarea aria-label="Reference note" value={note} maxLength={2000} onChange={e=>onNote(e.target.value)} placeholder="Why does the other person need to look?" rows={2}/></label>
-        <details className="share-target-options"><summary>Targets and comparison</summary><p className="subtle">{draft.scope} scope{draft.research?` · Research level ${draft.research.level}`:''}. Targets stay fixed until you replace them.</p><button type="button" disabled={!selectionCount} onClick={onReplace}>Replace targets with current selection</button><PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded={false}/></details>
+        <details className="share-target-options"><summary>Targets and comparison</summary><p className="subtle">{draft.scope} scope{draft.research?` · Research level ${draft.research.level}`:''}. Targets stay fixed until you replace them.</p><button type="button" disabled={!selectionCount||!!draft.comparison} onClick={onReplace}>Replace targets with current selection</button>{!draft.comparison&&<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded={false}/>}</details>
         {!c.session||!c.room?<p className="subtle">Create or join a room first. <button type="button" onClick={onRoom}>Open shared workspace</button></p>:!c.room.members.some(m=>m.userId===target)?<p className="subtle">Invite User {target} before sending. <button type="button" onClick={onRoom}>Open room</button></p>:!c.room.members.some(m=>m.userId===target&&m.online)?<p className="subtle">User {target} is offline. They can open this request when they return.</p>:null}
         {c.error&&<p className="connection-error" role="alert">{c.error}</p>}
-        <div className="action-row"><button className="primary-action" disabled={c.busy||!c.connected||!c.room||c.room.members.length<2} type="submit">{c.busy?'Sending…':`Send to User ${target}`}</button><button type="button" onClick={onCancel}>Cancel draft</button></div>
+        <div className="action-row"><button className="primary-action" disabled={c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&!draft.comparison.purpose.trim()} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':`Send to User ${target}`}</button><button type="button" onClick={onCancel}>Cancel draft</button></div>
       </form>
     </div>}
   </div>;

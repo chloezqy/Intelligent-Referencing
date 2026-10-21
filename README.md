@@ -146,3 +146,13 @@ Select objects and choose **Bring User A/B here**. This opens a **Look at this**
 ### Collaborator cursors
 
 When both users are connected to the same room, each sees the other’s cursor over the canvas: purple for User A and teal for User B. Cursors track design coordinates, so each person can pan and zoom independently. They disappear when the pointer leaves the canvas, the tab loses focus, the participant disconnects, or updates become stale. Cursor positions are temporary presence data and are not saved in the room history.
+
+### Compare what both users are selecting
+
+Each participant sees the other’s current selection with a dashed outline and user label. These are live selections, separate from saved reference pins. Both users need to be online and have selected objects before **Compare with User A/B’s selection** becomes available.
+
+Choose Compare to freeze both selections in the pin popup. **Context suggestions · rule-based** describes their relationship and offers possible purposes, such as visual or wording consistency for primary buttons. Choose a purpose or write your own, add a note, and press **Share comparison**. This uses metadata rules, not a real AI model.
+
+The property table labels objects by the user who selected them; objects selected by both carry both labels. Changes to live selections never alter the draft or conversation. **Refresh comparison** explicitly captures the latest selections while retaining your purpose and note. Draft snapshots expire after one hour or a server restart; refresh the comparison if prompted. Saved comparisons and replies survive refresh and server restarts. The other user can open the reference, locate both sets of targets, and reply or mark it reviewed.
+
+Manual Compare references within your own selection still work. All five research levels retain their existing completion checks. No design edits or viewports are synchronized.

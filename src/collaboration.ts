@@ -6,6 +6,7 @@ export interface SharedReference {
   elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel;
   label: string; intent: ReferenceIntent; message: string; createdAt: string;
   status: 'open' | 'reviewed';
+  comparison?: ComparisonContext;
   research?: { level: 4 | 5; attemptId: string };
   reviewedAt?: string;
   archivedAt?: string;
@@ -19,8 +20,10 @@ export interface RoomSnapshot {
   references: SharedReference[];
 }
 export interface Session { code: string; userId: UserId; token: string }
-export interface ReferenceDraft { elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel; label: string; research?: { level: 4 | 5; attemptId: string } }
+export interface ReferenceDraft { comparison?:ComparisonContext; elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel; label: string; research?: { level: 4 | 5; attemptId: string } }
 export const DOCUMENT_ID = 'mobile-commerce-v1';
 export const INTENTS: ReferenceIntent[] = ['Review', 'Compare', 'Help', 'Look at this'];
 
 export interface CollaboratorCursor { userId:UserId; x:number; y:number; visible:boolean; at:number }
+export interface SelectionPresence {userId:UserId;elementIds:string[];exemplarIds:string[];scope:ScopeLevel;method:'conventional'|'smart-ref';revision:number}
+export interface ComparisonContext {snapshotId:string;selections:Record<UserId,SelectionPresence>;purpose:string;interpretation:import('./comparisonContext').ContextInterpretation}

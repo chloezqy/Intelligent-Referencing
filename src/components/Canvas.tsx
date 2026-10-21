@@ -1,3 +1,4 @@
+import { selectionActionLayout } from '../selectionActionLayout';
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Point, UIElement, ToolMode, SelectionState, InferredReference, Interpretation, ScopeLevel } from '../types';
@@ -22,6 +23,9 @@ interface CanvasProps {
   setSelectionState: (state: SelectionState) => void;
   inferredRef: InferredReference | null;
   setInferredRef: (ref: InferredReference | null) => void;
+  onCompare:()=>void;
+  compareReady:boolean;
+  compareHint:string;
   onAcceptReference: (intent?:ReferenceIntent) => void;
   nodes: UIElement[];
   transform: { x: number; y: number; scale: number };
@@ -29,7 +33,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  shareLabel, sharing,
+  shareLabel, sharing,onCompare,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -43,13 +47,18 @@ export default function Canvas({
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
+  const [actionAnchor,setActionAnchor]=useState<Point|null>(null);
+  const [detailsOpen,setDetailsOpen]=useState(false);
+  const [actionSurface,setActionSurface]=useState<HTMLDivElement|null>(null);
+  const [actionSize,setActionSize]=useState({width:292,height:196});
+  useEffect(()=>{if(!actionSurface)return;const measure=()=>setActionSize({width:actionSurface.offsetWidth,height:actionSurface.offsetHeight});measure();const observer=new ResizeObserver(measure);observer.observe(actionSurface);return()=>observer.disconnect();},[actionSurface]);
   const [pinChooserOpen, setPinChooserOpen] = useState(false);
   const [selectionPopupDismissed, setSelectionPopupDismissed] = useState(false);
   useEffect(()=>{setSelectionPopupDismissed(false);},[inferredRef]);
   useEffect(()=>{if(sharing||pinChooserOpen)setSelectionPopupDismissed(true);},[sharing,pinChooserOpen]);
   useEffect(()=>{
     const dismiss=(event:PointerEvent)=>{
-      if(!(event.target as Element).closest('.selection-context'))setSelectionPopupDismissed(true);
+      if(!(event.target as Element).closest('.selection-context')){setSelectionPopupDismissed(true);setDetailsOpen(false);}
     };
     document.addEventListener('pointerdown',dismiss,true);
     return()=>document.removeEventListener('pointerdown',dismiss,true);
@@ -187,6 +196,7 @@ export default function Canvas({
     if (e.button === 1 || isSpacePressed || toolMode === 'pan') return;
 
     if (toolMode === 'pointer') {
+      setActionAnchor(getCanvasCoords(e));
       e.stopPropagation();
       
       const newClicks = clicksCounter + 1;
@@ -297,6 +307,8 @@ export default function Canvas({
       } catch {}
       return;
     }
+
+    if(selectionState==='rect-selecting'||selectionState==='drawing')setActionAnchor(getCanvasCoords(e));
 
     // Conventional Marquee Box finished
     if (selectionState === 'rect-selecting' && rectStart && currentPath.length === 2) {
@@ -526,17 +538,21 @@ export default function Canvas({
       <AnimatePresence>
         {!sharing && !pinChooserOpen && !selectionPopupDismissed && (selectionState === 'preview' || selectionState === 'disambiguating') && inferredRef && activeIds.length > 0 && (
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
+            ref={setActionSurface}
+            role="region" aria-label={`Actions for ${inferredRef.label}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            className={`selection-context ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
-            style={{ left: Math.max(12, Math.min(viewport.width - Math.min(440, viewport.width - 24) - 12, (boundingBox ? boundingBox.x * transform.scale + transform.x : 12))), top: Math.max(12, Math.min(viewport.height - 200, (boundingBox ? (boundingBox.y + boundingBox.h) * transform.scale + transform.y + 12 : 12))) }}
+            className={`selection-context action-context ${detailsOpen?'details-expanded':''} ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
+            style={selectionActionLayout(boundingBox,transform,viewport,actionSize,actionAnchor)}
           >
-            {/* The Main Pill Bar */}
-            <div className="bg-white/95  border border-zinc-200/80 text-zinc-900 px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-3 text-xs ring-1 ring-zinc-200">
+            {!detailsOpen&&<ReferenceActions onMore={()=>{setDetailsOpen(true);setShowAlternatives(true);}} onCompare={onCompare} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onAction={onAcceptReference}/>}
+            {/* Expanded selection details replace the action stack. */}
+            <div hidden={!detailsOpen} className="selection-details bg-white/95 border border-zinc-200/80 text-zinc-900 px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-3 text-xs">
+              <button type="button" className="details-back" onClick={()=>{setDetailsOpen(false);setShowAlternatives(false);}}>Back to actions</button>
               
               {/* Selection Identity & Label */}
               <div className="flex items-center gap-1.5 font-semibold text-zinc-900 max-w-[200px] sm:max-w-[260px] truncate">
@@ -551,7 +567,7 @@ export default function Canvas({
               {/* Suggestions / Alternatives Dropdown Button (Smart Ref) */}
               {inferredRef.selectionMethod === 'smart-ref' && interpretations.length > 1 && (
                 <button
-                  onPointerDown={(e) => { e.stopPropagation(); setShowAlternatives(prev => !prev); }}
+                  onClick={(e) => { e.stopPropagation(); setShowAlternatives(prev => !prev); }}
                   className={`px-2 py-0.5 rounded-md text-[11px] font-medium border flex items-center gap-1 transition-colors ${
                     showAlternatives
                       ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
@@ -569,7 +585,7 @@ export default function Canvas({
               {/* THE SINGLE AUTHORITY SCOPE TOGGLE: TOUCHED, SCREEN, ALL SCREENS */}
               <div className="context-scope flex items-center gap-1 bg-zinc-50 p-0.5 rounded-lg border border-zinc-200">
                 <button
-                  onPointerDown={(e) => { e.stopPropagation(); handleScopeChange('exemplars'); }}
+                  onClick={(e) => { e.stopPropagation(); handleScopeChange('exemplars'); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                     inferredRef.scope === 'exemplars'
                       ? 'bg-zinc-100 text-zinc-900 font-semibold shadow-xs'
@@ -581,7 +597,7 @@ export default function Canvas({
                 </button>
 
                 <button
-                  onPointerDown={(e) => { e.stopPropagation(); handleScopeChange('screen'); }}
+                  onClick={(e) => { e.stopPropagation(); handleScopeChange('screen'); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                     inferredRef.scope === 'screen'
                       ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
@@ -593,7 +609,7 @@ export default function Canvas({
                 </button>
 
                 <button
-                  onPointerDown={(e) => { e.stopPropagation(); handleScopeChange('document'); }}
+                  onClick={(e) => { e.stopPropagation(); handleScopeChange('document'); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 ${
                     inferredRef.scope === 'document'
                       ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
@@ -606,7 +622,7 @@ export default function Canvas({
                 </button>
               </div>
 
-              <ReferenceActions shareLabel={shareLabel} onAction={onAcceptReference}/>
+
 
             </div>
 
@@ -617,13 +633,13 @@ export default function Canvas({
               ========================================================================
             */}
             <AnimatePresence>
-              {inferredRef.selectionMethod === 'smart-ref' && showAlternatives && interpretations.length > 0 && (
+              {detailsOpen && inferredRef.selectionMethod === 'smart-ref' && showAlternatives && interpretations.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 6, scale: 0.98 }}
                   transition={{ duration: 0.12 }}
-                  className="mt-2 bg-white/98  border border-zinc-200/90 rounded-xl shadow-lg p-1.5 w-80 text-zinc-800"
+                  className="interpretation-details mt-2 bg-white/98 border border-zinc-200/90 rounded-xl shadow-lg p-1.5 w-80 text-zinc-800"
                 >
                   <div className="px-2 py-1 flex items-center justify-between text-[10px] text-zinc-600 uppercase font-mono tracking-wider border-b border-zinc-200 pb-1 mb-1">
                     <span>Inferred Interpretations</span>

@@ -1,7 +1,7 @@
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { DOCUMENT_ID, INTENTS, RoomSnapshot, SharedReference, UserId } from '../src/collaboration';
+import { ComparisonContext, DOCUMENT_ID, INTENTS, RoomSnapshot, SharedReference, UserId } from '../src/collaboration';
 import { MOCK_NODES } from '../src/data';
 interface Member { userId: UserId; tokenHash: string }
 interface Room { code: string; documentId: string; revision: number; members: Member[]; references: SharedReference[] }
@@ -55,7 +55,7 @@ export class RoomStore {
     const r = this.room(code);
     return { code, documentId: r.documentId, revision: r.revision, members: r.members.map(m => ({ userId: m.userId, online: online(m.userId) })), references: structuredClone(r.references) };
   }
-  share(code: string, user: UserId, body: any) {
+  share(code: string, user: UserId, body: any, comparison?:ComparisonContext) {
     const elementIds = unique(body.elementIds, 182), exemplarIds = unique(body.exemplarIds, 182);
     if (!elementIds.length || elementIds.some(id => !this.validIds.has(id)) || exemplarIds.some(id => !elementIds.includes(id))) throw new ApiError(400, 'Choose existing objects; exemplars must belong to the reference.');
     if (!INTENTS.includes(body.intent) || !['exemplars', 'screen', 'document', 'flow'].includes(body.scope)) throw new ApiError(400, 'Invalid intent or scope.');
@@ -68,7 +68,7 @@ export class RoomStore {
     const duplicate = r.references.find(ref => ref.id === body.requestId);
     if (duplicate) { if (duplicate.sourceUser !== user) throw new ApiError(409, 'Request ID already used.'); return duplicate.id; }
     if (r.references.length >= 200) throw new ApiError(409, 'This prototype supports up to 200 references per room.');
-    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', responses: [], activity: [], ...(research ? { research } : {}) }); room.revision++; });
+    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', responses: [], activity: [], ...(comparison?{comparison}:{}), ...(research ? { research } : {}) }); room.revision++; });
     return body.requestId;
   }
   respond(code: string, user: UserId, id: string, body: any) {

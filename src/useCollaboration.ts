@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ApiResponseError, readApiJson, requireEventStream, parseRoomEvent } from './apiResponse';
-import { CollaboratorCursor, ReferenceDraft, ReferenceIntent, RoomSnapshot, Session } from './collaboration';
+import { SelectionPresence, ComparisonContext, CollaboratorCursor, ReferenceDraft, ReferenceIntent, RoomSnapshot, Session } from './collaboration';
 export function requestId() {
   const bytes = crypto.getRandomValues(new Uint8Array(16)); bytes[6] = bytes[6] & 15 | 64; bytes[8] = bytes[8] & 63 | 128;
   const hex = [...bytes].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -12,6 +12,7 @@ export function useCollaboration() {
   const [session, setSession] = useState<Session | null>(null);
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [connected, setConnected] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const [selections,setSelections]=useState<Partial<Record<'A'|'B',SelectionPresence>>>({});
   const [cursors,setCursors]=useState<Partial<Record<'A'|'B',CollaboratorCursor>>>({});
   const [initialCode] = useState(roomFromUrl);
   async function api(path: string, body?: unknown, identity = session) {
@@ -56,7 +57,8 @@ export function useCollaboration() {
               const event = buffer.slice(0,index); buffer = buffer.slice(index+2);
               const data = event.split('\n').find(line => line.startsWith('data: '));
               if (data && !controller.signal.aborted) {
-                if(event.split('\n').includes('event: cursor')){
+                if(event.split('\n').includes('event: selection')){setSelections(JSON.parse(data.slice(6)));}
+                else if(event.split('\n').includes('event: cursor')){
                   const cursor=JSON.parse(data.slice(6));
                   if(['A','B'].includes(cursor.userId)&&Number.isFinite(cursor.x)&&Number.isFinite(cursor.y)&&typeof cursor.visible==='boolean'&&Number.isFinite(cursor.at))setCursors(previous=>({...previous,[cursor.userId]:cursor}));
                 }else setRoom(parseRoomEvent(data.slice(6), endpoint));
@@ -73,12 +75,14 @@ export function useCollaboration() {
       }
     }
     connect();
-    return () => { controller.abort(); setConnected(false); setCursors({}); };
+    return () => { controller.abort(); setConnected(false); setCursors({}); setSelections({}); };
   }, [session]);
   async function action<T>(fn: () => Promise<T>): Promise<T | undefined> {
     setBusy(true); setError(''); try { return await fn(); } catch (err) { setError(err instanceof Error ? err.message : 'Unable to connect.'); return undefined; } finally { setBusy(false); }
   }
-  return { session, room, cursors, connected, busy, error, initialCode,
+  return { session, room, selections, cursors, connected, busy, error, initialCode,
+    publishSelection: async (body:Omit<SelectionPresence,'userId'|'revision'>) => {if(!session||!connected)return;await api(`/rooms/${session.code}/selection`,body);},
+    comparisonDraft: () => action(async()=>{if(!session||!connected)throw new Error('Reconnect before comparing.');return await api(`/rooms/${session.code}/comparison-drafts`,{revisions:{A:selections.A?.revision,B:selections.B?.revision}}) as unknown as ComparisonContext;}),
     cursor: async (x:number,y:number,visible:boolean) => {if(!session||!connected)return;try{await api(`/rooms/${session.code}/cursor`,{x,y,visible});}catch{/* Ephemeral presence never interrupts reference actions. */}},
     create: () => action(async () => { const identity = await api('/rooms', {}, null); remember(identity); return identity; }),
     join: (input: string) => action(async () => {

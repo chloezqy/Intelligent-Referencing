@@ -17,7 +17,7 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
   const base=`http://127.0.0.1:${(server.address() as any).port}`;
   const api=async(path:string,body?:unknown,session?:Session)=>{const res=await fetch(base+'/api'+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',...(session?{Authorization:`Bearer ${session.token}`}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:res.status,body:await res.json()};};
   const controllers:AbortController[]=[];
-  const stream=async(s:Session)=>{const controller=new AbortController();controllers.push(controller);const response=await fetch(`${base}/api/rooms/${s.code}/events`,{headers:{Authorization:`Bearer ${s.token}`},signal:controller.signal});assert.equal(response.status,200);const reader=response.body!.getReader(),decoder=new TextDecoder();let buffer='';return {close:()=>controller.abort(),wait:async(predicate:(snapshot:RoomSnapshot)=>boolean,cursorEvent=false)=>{const timeout=setTimeout(()=>controller.abort(),8000);try{while(true){let end:number;while((end=buffer.indexOf('\n\n'))!==-1){const event=buffer.slice(0,end);buffer=buffer.slice(end+2);const data=event.split('\n').find(s=>s.startsWith('data: '));if(data){const snap=JSON.parse(data.slice(6));if(event.includes('event: cursor')!==cursorEvent)continue;if(predicate(snap))return snap;}}const read=await reader.read();assert.equal(read.done,false);buffer+=decoder.decode(read.value,{stream:true});}}finally{clearTimeout(timeout);}}};};
+  const stream=async(s:Session)=>{const controller=new AbortController();controllers.push(controller);const response=await fetch(`${base}/api/rooms/${s.code}/events`,{headers:{Authorization:`Bearer ${s.token}`},signal:controller.signal});assert.equal(response.status,200);const reader=response.body!.getReader(),decoder=new TextDecoder();let buffer='';return {close:()=>controller.abort(),wait:async(predicate:(snapshot:RoomSnapshot)=>boolean,cursorEvent:boolean|string=false)=>{const timeout=setTimeout(()=>controller.abort(),8000);try{while(true){let end:number;while((end=buffer.indexOf('\n\n'))!==-1){const event=buffer.slice(0,end);buffer=buffer.slice(end+2);const data=event.split('\n').find(s=>s.startsWith('data: '));if(data){const snap=JSON.parse(data.slice(6));const kind=event.split('\n').find(line=>line.startsWith('event: '))?.slice(7)||'';if(kind!==(cursorEvent===true?'cursor':cursorEvent||''))continue;if(predicate(snap))return snap;}}const read=await reader.read();assert.equal(read.done,false);buffer+=decoder.decode(read.value,{stream:true});}}finally{clearTimeout(timeout);}}};};
   try {
     const created=await api('/rooms',{}),a=created.body as Session;assert.equal(created.status,201);assert.equal(a.userId,'A');
     assert.equal((await api(`/rooms/${a.code}`)).status,401);
@@ -93,6 +93,33 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     const recovered=new RoomStore(file);assert.equal(recovered.authorize(a.code,a.token),'A');assert.equal(recovered.authorize(b.code,b.token),'B');
     assert.equal(recovered.snapshot(a.code,()=>false).references[0].responses[0].message,'Reviewed the prices.');
     assert.equal((await api(`/rooms/${a.code}/elements`,{},a)).status,404);
+    const selectionPath=`/rooms/${a.code}/selection`,draftPath=`/rooms/${a.code}/comparison-drafts`;
+    const selection={elementIds:['hc1-cta'],exemplarIds:['hc1-cta'],scope:'exemplars',method:'conventional'};
+    assert.equal((await api(selectionPath,selection)).status,401);
+    assert.equal((await api(selectionPath,{...selection,elementIds:['missing']},a)).status,400);
+    assert.equal((await api(selectionPath,{...selection,userId:'B'},a)).status,200);
+    let presence=await sbAgain.wait((s:any)=>s.A?.elementIds[0]==='hc1-cta','selection');
+    assert.equal((presence as any).A.userId,'A');
+    assert.equal((await api(draftPath,{revisions:{}},a)).status,409);
+    assert.equal((await api(selectionPath,{...selection,elementIds:['sc1-cta'],exemplarIds:['sc1-cta'],method:'smart-ref'},b)).status,200);
+    presence=await sa.wait((s:any)=>s.A?.elementIds.length&&s.B?.elementIds.length,'selection');
+    const revisions={A:(presence as any).A.revision,B:(presence as any).B.revision};
+    assert.equal((await api(draftPath,{revisions:{...revisions,B:0}},a)).status,409);
+    const frozen=await api(draftPath,{revisions},a);assert.equal(frozen.status,201);
+    assert.equal(frozen.body.interpretation.provenance,'rule-based');
+    assert.equal((await api(selectionPath,{...selection,elementIds:[],exemplarIds:[]},b)).status,200);
+    const comparisonId=randomUUID(),comparisonPayload={...payload,requestId:comparisonId,research:undefined,elementIds:['hc1-cta','sc1-cta'],exemplarIds:['hc1-cta','sc1-cta'],comparison:{...frozen.body,purpose:'Wording consistency',selections:{}}};
+    assert.equal((await api(`/rooms/${a.code}/references`,comparisonPayload,b)).status,409); // Another participant cannot use A's draft.
+    assert.equal((await api(`/rooms/${a.code}/references`,{...comparisonPayload,elementIds:['hc1-cta']},a)).status,400);
+    assert.equal((await api(`/rooms/${a.code}/references`,comparisonPayload,a)).status,201);
+    const savedComparison=new RoomStore(file).snapshot(a.code,()=>false).references.find(r=>r.id===comparisonId)!;
+    assert.deepEqual(savedComparison.comparison!.selections.B.elementIds,['sc1-cta']); // Server snapshot ignores supplied ownership and survives changed selections.
+    assert.equal(savedComparison.comparison!.purpose,'Wording consistency');
+    assert.equal((await api(`/rooms/${a.code}/references`,comparisonPayload,a)).status,201);
+    const replay=await stream(a);
+    const replayPresence=await replay.wait((s:any)=>!!s.A,'selection');assert.deepEqual((replayPresence as any).A.elementIds,['hc1-cta']);replay.close();
+    sbAgain.close();await sa.wait((s:any)=>!!s.A&&!s.B,'selection');
+    const reconnect=await stream(b);const presenceAfterReconnect=await reconnect.wait((s:any)=>!!s.A,'selection');assert.equal((presenceAfterReconnect as any).B,undefined);
     const hostile=await fetch(base+'/api/rooms',{method:'POST',headers:{Origin:'https://unrelated.example','Content-Type':'application/json'},body:'{}'});assert.equal(hostile.status,403);
   } finally { controllers.forEach(c=>c.abort());server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));rmSync(dir,{recursive:true,force:true}); }
 });
