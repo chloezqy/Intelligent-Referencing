@@ -7,6 +7,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { collaborationServer } from './app';
 import { RoomStore } from './store';
+import { evaluateAttempt } from '../src/research';
 import { RoomSnapshot, Session } from '../src/collaboration';
 
 test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and recover durable rooms', async () => {
@@ -26,7 +27,7 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     const sa=await stream(a),sb=await stream(b);
     await sa.wait(s=>s.members.every(m=>m.online)); await sb.wait(s=>s.members.every(m=>m.online));
     const referenceId=randomUUID();
-    const payload={requestId:referenceId,elementIds:['hc1-price','hc2-price'],exemplarIds:['hc1-price'],scope:'screen',label:'Product prices',intent:'Compare',message:'Please compare these.',sourceUser:'B',targetUser:'A'};
+    const payload={requestId:referenceId,elementIds:['hc1-price','hc2-price'],exemplarIds:['hc1-price'],scope:'screen',label:'Product prices',intent:'Compare',message:'Please compare these.',sourceUser:'B',targetUser:'A',research:{level:4,attemptId:randomUUID()}};
     assert.equal((await api(`/rooms/${a.code}/references`,payload,a)).status,201);
     const received=await sb.wait(s=>s.references.some(r=>r.id===referenceId));
     assert.equal(received.references[0].sourceUser,'A');assert.equal(received.references[0].targetUser,'B');
@@ -40,6 +41,22 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     const reply=await sa.wait(s=>s.references[0]?.responses.length===1);assert.equal(reply.references[0].responses[0].userId,'B');
     assert.equal((await api(`/rooms/${a.code}/references/${referenceId}/review`,{},b)).status,200);
     await sa.wait(s=>s.references[0]?.status==='reviewed');
+    const attempt={id:payload.research.attemptId,level:4 as const,startedAt:new Date().toISOString(),events:[]};
+    assert.equal(evaluateAttempt(attempt,store.snapshot(a.code,()=>true).references).complete,false);
+    assert.equal((await api(`/rooms/${a.code}/references/${referenceId}/activity`,{kind:'opened'},b)).status,200);
+    assert.equal((await api(`/rooms/${a.code}/references/${referenceId}/activity`,{kind:'located',elementIds:['not-a-target']},b)).status,400);
+    assert.equal((await api(`/rooms/${a.code}/references/${referenceId}/activity`,{kind:'located',elementIds:payload.elementIds},b)).status,200);
+    const evidence=await sa.wait(s=>!!s.references[0]?.activity?.some(e=>e.kind==='located'));
+    assert.equal(evaluateAttempt(attempt,evidence.references).complete,false); // Compare is the wrong Level 4 intent.
+    const compareId=randomUUID(),compareAttempt=randomUUID();
+    assert.equal((await api(`/rooms/${a.code}/references`,{...payload,requestId:compareId,elementIds:['hc1-cta','sc1-cta'],exemplarIds:['hc1-cta'],research:{level:5,attemptId:compareAttempt}},a)).status,201);
+    await sb.wait(s=>s.references.some(r=>r.id===compareId));
+    for(const kind of ['opened','located'])assert.equal((await api(`/rooms/${a.code}/references/${compareId}/activity`,{kind,elementIds:kind==='located'?['hc1-cta','sc1-cta']:[]},b)).status,200);
+    assert.equal((await api(`/rooms/${a.code}/references/${compareId}/responses`,{requestId:randomUUID(),message:'The CTA wording differs; please standardize it.'},b)).status,200);
+    const completed=await sa.wait(s=>s.references.some(r=>r.id===compareId&&r.responses.length>0));
+    assert.equal(evaluateAttempt({id:compareAttempt,level:5,startedAt:'now',events:[]},completed.references).complete,true);
+    const reopened=new RoomStore(file).snapshot(a.code,()=>false);
+    assert.equal(evaluateAttempt({id:compareAttempt,level:5,startedAt:'now',events:[]},reopened.references).complete,true);
     sb.close();await sa.wait(s=>s.members.some(m=>m.userId==='B'&&!m.online));
     const sbAgain=await stream(b);await sbAgain.wait(s=>s.references[0]?.status==='reviewed'&&s.members.every(m=>m.online));
     const recovered=new RoomStore(file);assert.equal(recovered.authorize(a.code,a.token),'A');assert.equal(recovered.authorize(b.code,b.token),'B');

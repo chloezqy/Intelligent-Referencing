@@ -8,6 +8,7 @@ import { inferSelection, getBoundingBox, expandScope, rectIntersect, generateSco
 import { Check, Sparkles, X, MousePointer2, ChevronDown } from 'lucide-react';
 
 interface CanvasProps {
+  onResearchEvent: (type:string)=>void;
   sharedReferences: SharedReference[];
   activeSharedId: string | null;
   onOpenShared: (id:string)=>void;
@@ -33,7 +34,7 @@ export default function Canvas({
   onAcceptReference,
   nodes,
   transform,
-  setTransform, sharedReferences, activeSharedId, onOpenShared
+  setTransform, onResearchEvent, sharedReferences, activeSharedId, onOpenShared
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
@@ -322,6 +323,7 @@ export default function Canvas({
 
     if (selectionState !== 'drawing') return;
 
+    onResearchEvent('gesture_attempt');
     // Smart Reference Gesture finished
     if (currentPath.length < 4) {
       setSelectionState('idle');
@@ -345,6 +347,7 @@ export default function Canvas({
       
       // Auto-commit the best match and open simplified alternatives dropdown
       const best = results[0];
+      onResearchEvent('gesture_interpreted');
       commitInterpretation(best, false);
       setSelectionState('disambiguating');
       setShowAlternatives(true);
@@ -365,6 +368,7 @@ export default function Canvas({
     });
 
     if (finalize) {
+      onResearchEvent('interpretation_choice');
       setSelectionState('preview');
       setShowAlternatives(false);
     }

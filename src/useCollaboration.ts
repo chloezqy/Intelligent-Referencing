@@ -83,6 +83,7 @@ export function useCollaboration() {
     }),
     respond: (id: string, message: string, responseId: string) => action(async () => { if (!session || !connected) throw new Error('Reconnect before responding.'); return api(`/rooms/${session.code}/references/${id}/responses`, { message, requestId: responseId }); }),
     review: (id: string) => action(async () => { if (!session || !connected) throw new Error('Reconnect before reviewing.'); return api(`/rooms/${session.code}/references/${id}/review`, {}); }),
+    activity: (id: string, kind: 'opened' | 'located', elementIds: string[] = []) => action(async () => { if (!session || !connected) throw new Error('Reconnect before opening or locating a reference.'); return api(`/rooms/${session.code}/references/${id}/activity`, { kind, elementIds }); }),
     invitation: session ? `${location.origin}/?room=${session.code}&join=1` : '',
   };
 }

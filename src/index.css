@@ -147,3 +147,9 @@ button:disabled { opacity:.45; }
 .reference-pin.reviewed:not(.selected) { opacity:.55; }
 
 .reference-targets { max-height:150px;overflow-y:auto;padding:8px 0;margin-bottom:8px;font-size:10px; }.reference-targets li { color:#888;padding:3px 0; }.reference-targets button { padding:4px 6px;margin-bottom:4px; }
+
+.task-levels { display:flex; gap:4px; margin-top:12px; }
+.task-levels button { flex:1; padding:8px 2px; }
+.task-levels button[aria-pressed="true"] { background:#eee9ff; border-color:#a78bfa; color:#6d28d9; }
+.task-checks { list-style:none; padding:0; margin:12px 0; display:grid; gap:10px; line-height:1.5; }
+.research-tasks h3 { line-height:1.5; }

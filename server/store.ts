@@ -1,4 +1,4 @@
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { DOCUMENT_ID, INTENTS, RoomSnapshot, SharedReference, UserId } from '../src/collaboration';
@@ -60,13 +60,15 @@ export class RoomStore {
     if (!elementIds.length || elementIds.some(id => !this.validIds.has(id)) || exemplarIds.some(id => !elementIds.includes(id))) throw new ApiError(400, 'Choose existing objects; exemplars must belong to the reference.');
     if (!INTENTS.includes(body.intent) || !['exemplars', 'screen', 'document', 'flow'].includes(body.scope)) throw new ApiError(400, 'Invalid intent or scope.');
     const label = text(body.label, 300), message = text(body.message, 2000);
+    if (body.research && (user !== 'A' || ![4,5].includes(body.research.level) || !/^[a-f0-9-]{36}$/i.test(body.research.attemptId || ''))) throw new ApiError(400, 'Invalid research attempt.');
+    const research = body.research ? { level: body.research.level as 4 | 5, attemptId: body.research.attemptId as string } : undefined;
     if (!/^[a-f0-9-]{36}$/i.test(body.requestId || '')) throw new ApiError(400, 'Invalid request ID.');
     const r = this.room(code), targetUser = user === 'A' ? 'B' : 'A';
     if (!r.members.some(m => m.userId === targetUser)) throw new ApiError(409, 'Invite the other user before sharing.');
     const duplicate = r.references.find(ref => ref.id === body.requestId);
     if (duplicate) { if (duplicate.sourceUser !== user) throw new ApiError(409, 'Request ID already used.'); return duplicate.id; }
     if (r.references.length >= 200) throw new ApiError(409, 'This prototype supports up to 200 references per room.');
-    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', responses: [] }); room.revision++; });
+    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', responses: [], activity: [], ...(research ? { research } : {}) }); room.revision++; });
     return body.requestId;
   }
   respond(code: string, user: UserId, id: string, body: any) {
@@ -75,6 +77,22 @@ export class RoomStore {
     this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.responses.some(r => r.id === body.requestId)) return; if (ref.responses.length >= 100) throw new ApiError(409, 'Response limit reached.'); ref.responses.push({ id: body.requestId, userId: user, message, createdAt: new Date().toISOString() }); room.revision++; });
   }
   review(code: string, user: UserId, id: string) {
-    this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.targetUser !== user) throw new ApiError(403, 'Only the recipient can mark a reference reviewed.'); if (ref.status !== 'reviewed') { ref.status = 'reviewed'; room.revision++; } });
+    this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.targetUser !== user) throw new ApiError(403, 'Only the recipient can mark a reference reviewed.'); if (ref.status !== 'reviewed') { ref.status = 'reviewed'; ref.reviewedAt = new Date().toISOString(); room.revision++; } });
   }
+  activity(code: string, user: UserId, id: string, body: any) {
+    if (!['opened', 'located'].includes(body.kind)) throw new ApiError(400, 'Invalid reference activity.');
+    const ids = unique(body.elementIds || [], 182);
+    this.transaction(rooms => {
+      const room = this.room(code, rooms), ref = room.references.find(r => r.id === id);
+      if (!ref) throw new ApiError(404, 'Reference not found.');
+      if (ids.some(id => !ref.elementIds.includes(id)) || (body.kind === 'located' && !ids.length)) throw new ApiError(400, 'Navigate to existing reference targets.');
+      const activity = ref.activity ||= [];
+      // Idempotent evidence bounded by users × targets, including reconnect retries.
+      const previous = activity.filter(e => e.userId === user && e.kind === body.kind);
+      if (body.kind === 'opened' ? previous.length > 0 : ids.every(id => previous.some(e => e.elementIds.includes(id)))) return;
+      activity.push({ id: randomUUID(), userId: user, kind: body.kind, elementIds: body.kind === 'opened' ? [] : ids, at: new Date().toISOString() });
+      room.revision++;
+    });
+  }
+
 }

@@ -6,6 +6,9 @@ export interface SharedReference {
   elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel;
   label: string; intent: ReferenceIntent; message: string; createdAt: string;
   status: 'open' | 'reviewed';
+  research?: { level: 4 | 5; attemptId: string };
+  reviewedAt?: string;
+  activity?: { id: string; userId: UserId; kind: 'opened' | 'located'; elementIds: string[]; at: string }[];
   responses: { id: string; userId: UserId; message: string; createdAt: string }[];
 }
 export interface RoomSnapshot {
@@ -14,6 +17,6 @@ export interface RoomSnapshot {
   references: SharedReference[];
 }
 export interface Session { code: string; userId: UserId; token: string }
-export interface ReferenceDraft { elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel; label: string }
+export interface ReferenceDraft { elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel; label: string; research?: { level: 4 | 5; attemptId: string } }
 export const DOCUMENT_ID = 'mobile-commerce-v1';
 export const INTENTS: ReferenceIntent[] = ['Review', 'Compare', 'Help', 'Look at this'];

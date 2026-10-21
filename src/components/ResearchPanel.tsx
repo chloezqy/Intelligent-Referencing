@@ -1,0 +1,25 @@
+import React from 'react';
+import { TASKS, TaskLevel } from '../research';
+import { useResearch } from '../useResearch';
+import { RoomSnapshot, Session } from '../collaboration';
+import { InferredReference } from '../types';
+interface Props { research: ReturnType<typeof useResearch>; room:RoomSnapshot|null; session:Session|null; connected:boolean; selection:InferredReference|null; onStart:()=>void; onShare:()=>void; onRoom:()=>void; onLocateTargets:(ids:string[])=>void }
+export default function ResearchPanel({research:r,room,session,connected,selection,onStart,onShare,onRoom,onLocateTargets}:Props){
+  const task=TASKS[r.log.level-1],collaborative=task.level>=4,online=connected&&room?.members.some(m=>m.userId==='B'&&m.online);
+  const completed=new Set(TASKS.filter(t=>[...r.log.attempts].reverse().find(a=>a.level===t.level)?.completedAt).map(t=>t.level));
+  const steps=r.attempt?.events.filter(e=>e.step).length||0;
+  return <div className="collab-panel research-tasks">
+    <section><h3>Research Tasks</h3><p>Five progressive levels · selection to shared context</p><div className="task-levels" role="group" aria-label="Research levels">{TASKS.map(t=><button key={t.level} aria-label={`Level ${t.level}`} aria-pressed={t.level===task.level} onClick={()=>r.setLevel(t.level)}>L{t.level}{completed.has(t.level)&&<span aria-label="Completed"> ✓</span>}</button>)}</div></section>
+    <section><p className="subtle">LEVEL {task.level} · {task.focus}</p><h3>{task.title}</h3><p>{task.instructions}</p>{task.targets.length>0&&<button onClick={()=>onLocateTargets(task.targets)}>Locate task area</button>}{task.targets.length>0&&<p className="subtle">Locate changes your viewport only; it does not select targets or complete the task.</p>}
+      {collaborative&&<><p role="status">{!session?'Create or join a room to continue.':session.userId==='B'?'You are User B. Open User A’s reference in References, locate it, then respond. Start this task as User A in the other client.':!connected?'Reconnecting. Collaboration evidence is pending.':online?(r.attempt?.completedAt?'User B is online. Required collaboration verified.':'User B is online. Waiting for actual reference interactions.'):'User B is not connected. Invite them or wait for reconnection.'}</p><button onClick={onRoom}>Open shared workspace</button></>}
+      <div className="action-row"><button className="primary-action" disabled={collaborative&&session?.userId!=='A'} onClick={onStart}>{r.attempt?'Reset task':'Start task'}</button>{r.attempt?.completedAt&&task.level<5&&<button onClick={()=>r.setLevel((task.level+1) as TaskLevel)}>Next Task</button>}</div>
+      {!r.attempt&&<p>Start the task before interacting. Reset creates a new attempt and keeps the earlier research log.</p>}
+    </section>
+    {r.attempt&&<section aria-live="polite"><h3>{r.attempt.completedAt?'Task complete':'Task in progress'}</h3><ul className="task-checks">{r.result?.checks.map(check=><li key={check.label}><span aria-label={check.done?'Satisfied':'Pending'}>{check.done?'✓':'○'}</span> {check.label}</li>)}</ul><p className="subtle">{steps} interaction steps · {r.attempt.events.filter(e=>e.type==='gesture_attempt').length} gesture attempts · {r.attempt.events.filter(e=>e.type==='interpretation_correction').length} corrections</p>
+      {task.level===3&&!r.attempt.completedAt&&<button disabled={!selection?.selectedIds.length} onClick={()=>r.record('interpretation_review',{ids:[...(selection?.selectedIds||[])],method:selection?.selectionMethod})}>Confirm reviewed selection</button>}
+      {collaborative&&!r.attempt.completedAt&&<button disabled={!selection?.selectedIds.length||session?.userId!=='A'} onClick={onShare}>Share task reference</button>}
+      {r.result?.reference&&<p className="subtle">Evidence from reference {r.result.reference.id.slice(0,8)}. All recipient actions must concern this same reference.</p>}
+    </section>}
+    <section><h3>Research log</h3><p>{completed.size}/5 levels completed · {r.log.attempts.length} attempts in this browser identity.</p><button onClick={r.exportLog}>Export research events</button><p className="subtle">Selection, gesture and task events stay in this browser. Reference opening, navigation, replies and acknowledgment are recorded by the room server and synchronized. Steps count selections, gestures, corrections, reviews and reference actions from both users. Automatic inference results are excluded. They are not efficiency scores.</p>{r.storageError&&<p role="alert">{r.storageError}</p>}</section>
+  </div>;
+}
