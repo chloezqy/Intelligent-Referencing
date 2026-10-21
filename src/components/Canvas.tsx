@@ -43,6 +43,18 @@ export default function Canvas({
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
+  const [pinChooserOpen, setPinChooserOpen] = useState(false);
+  const [selectionPopupDismissed, setSelectionPopupDismissed] = useState(false);
+  useEffect(()=>{setSelectionPopupDismissed(false);},[inferredRef]);
+  useEffect(()=>{if(sharing||pinChooserOpen)setSelectionPopupDismissed(true);},[sharing,pinChooserOpen]);
+  useEffect(()=>{
+    const dismiss=(event:PointerEvent)=>{
+      if(!(event.target as Element).closest('.selection-context'))setSelectionPopupDismissed(true);
+    };
+    document.addEventListener('pointerdown',dismiss,true);
+    return()=>document.removeEventListener('pointerdown',dismiss,true);
+  },[]);
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -504,7 +516,7 @@ export default function Canvas({
       className={`relative w-full h-full overflow-clip bg-[#e8e8e8] select-none
         ${isPanning || isSpacePressed ? 'cursor-grab' : toolMode === 'smart-ref' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
-      <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} onOpen={onOpenShared}/>
+      <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* 
         ========================================================================
         SINGLE CONSISTENT TOP CONTEXTUAL SCOPE & SELECTION BAR (Fixed at Top Center)
@@ -512,7 +524,7 @@ export default function Canvas({
         ========================================================================
       */}
       <AnimatePresence>
-        {!sharing && (selectionState === 'preview' || selectionState === 'disambiguating') && inferredRef && activeIds.length > 0 && (
+        {!sharing && !pinChooserOpen && !selectionPopupDismissed && (selectionState === 'preview' || selectionState === 'disambiguating') && inferredRef && activeIds.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: -16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -594,22 +606,8 @@ export default function Canvas({
                 </button>
               </div>
 
-              <ReferenceActions shareLabel={shareLabel} count={inferredRef.selectedIds.length} onAction={onAcceptReference}/>
+              <ReferenceActions shareLabel={shareLabel} onAction={onAcceptReference}/>
 
-              {/* Clear Selection (Esc) */}
-              <button
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  setSelectionState('idle');
-                  setInferredRef(null);
-                  setCurrentPath([]);
-                  setShowAlternatives(false);
-                }}
-                className="p-1 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900 rounded-md transition-colors"
-                title="Clear selection (Esc)"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
             </div>
 
             {/* 

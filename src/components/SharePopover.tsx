@@ -33,7 +33,7 @@ export default function SharePopover({draft,nodes,camera,collaboration:c,visible
   return <div ref={host} className="draft-share-layer absolute inset-0 pointer-events-none" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     <button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>
     {visible&&<div ref={popup} role="dialog" aria-label={label} className="share-popover pointer-events-auto" style={layout.popup}>
-      <header><h3>{label}</h3><button type="button" aria-label="Close share popup" onClick={()=>{onVisible(false);pin.current?.focus({preventScroll:true});}}>×</button></header>
+      <header><h3>{label}</h3></header>
       <form onSubmit={async e=>{e.preventDefault();const result=await c.share(draft,intent,note,sendId);if(result)onShared(result.id);}}>
         <p className="share-target-label" title={draft.label}>{draft.label}</p>
         <div className="share-target-meta"><span>{draft.elementIds.length} {draft.elementIds.length===1?'object':'objects'}</span><button type="button" onClick={onLocate}>Locate</button></div>

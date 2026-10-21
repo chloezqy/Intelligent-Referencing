@@ -3,9 +3,11 @@ import { SharedReference } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
 import { layoutReferencePins, orderedReferences, referenceShortLabel, pinChooserBounds } from '../referencePresentation';
-interface Props { references:SharedReference[]; nodes:UIElement[]; camera:CanvasTransform; viewport:{width:number;height:number}; activeId:string|null; onOpen:(id:string)=>void }
-export default function ReferencePins({references,nodes,camera,viewport,activeId,onOpen}:Props){
+interface Props { references:SharedReference[]; nodes:UIElement[]; camera:CanvasTransform; viewport:{width:number;height:number}; activeId:string|null; dismissChooser:boolean; onChooserChange:(open:boolean)=>void; onOpen:(id:string)=>void }
+export default function ReferencePins({references,nodes,camera,viewport,activeId,dismissChooser,onChooserChange,onOpen}:Props){
   const [chooser,setChooser]=useState<string|null>(null),host=useRef<HTMLDivElement>(null),lastTrigger=useRef<HTMLButtonElement|null>(null);
+  useEffect(()=>{onChooserChange(!!chooser);},[chooser,onChooserChange]);
+  useEffect(()=>{if(dismissChooser)setChooser(null);},[dismissChooser]);
   const pins=useMemo(()=>layoutReferencePins(references,nodes,camera,viewport,activeId),[references,nodes,camera,viewport,activeId]);
   const ordered=useMemo(()=>orderedReferences(references),[references]);
   const byId=new Map(references.map(r=>[r.id,r]));
@@ -20,7 +22,7 @@ export default function ReferencePins({references,nodes,camera,viewport,activeId
   },[chooser]);
   useEffect(()=>{if(chooser&&!selected)setChooser(null);},[chooser,selected]);
   const open=(id:string)=>{setChooser(null);onOpen(id);};
-  return <div ref={host} className="shared-pins absolute inset-0 pointer-events-none z-30" aria-label="Shared reference pins">
+  return <div ref={host} className="shared-pins absolute inset-0 pointer-events-none" aria-label="Shared reference pins">
     {pins.map(pin=>{
       const refs=pin.referenceIds.map(id=>byId.get(id)!),active=refs.some(r=>r.id===activeId),reviewed=refs.every(r=>r.status==='reviewed');
       const display=refs.find(r=>r.id===activeId)||refs[0],mixed=refs.some(r=>r.sourceUser!==display.sourceUser);
@@ -31,7 +33,7 @@ export default function ReferencePins({references,nodes,camera,viewport,activeId
       </button>;
     })}
     {selected&&<div role="dialog" aria-label="Shared reference conversations" className="pin-chooser pointer-events-auto" style={pinChooserBounds(selected,viewport)} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
-      <div className="pin-chooser-heading"><strong>Shared references</strong><button type="button" aria-label="Close conversation chooser" onClick={()=>{setChooser(null);lastTrigger.current?.focus({preventScroll:true});}}>×</button></div>
+      <div className="pin-chooser-heading"><strong>Shared references</strong></div>
       <div className="pin-chooser-list">{selected.referenceIds.map(id=>{const ref=byId.get(id)!;return <button type="button" className="pin-conversation" aria-label={`Open ${ref.sourceUser}${ordered.findIndex(r=>r.id===ref.id)+1} · ${referenceShortLabel(ref)} · ${ref.status==='reviewed'?'Reviewed':'Awaiting review'}`} key={id} onClick={()=>open(id)}><span className={`chooser-author user-${ref.sourceUser}`} aria-hidden="true">{ref.sourceUser}</span><span className="chooser-label">{referenceShortLabel(ref)}<small>{ref.sourceUser}{ordered.findIndex(r=>r.id===ref.id)+1} · {ref.elementIds.length} objects · {new Date(ref.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</small></span><span className={`chooser-status ${ref.status}`}>{ref.status==='reviewed'?'Reviewed':'Awaiting'}</span></button>;})}</div>
     </div>}
   </div>;

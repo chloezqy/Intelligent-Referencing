@@ -203,7 +203,10 @@ button:disabled { opacity:.45; }
 .archive-reference { margin-bottom:12px; }.collab-panel button:disabled { opacity:.5; }
 
 /* Compose beside the object; saved conversations remain in References. */
-.draft-share-layer { z-index:45; }
+.draft-share-layer { z-index:auto; }
+/* Keep every canvas popup above saved and unsent pins in one stacking context. */
+.shared-pins > .reference-pin,.draft-share-layer > .reference-pin { z-index:30; }
+.shared-pins > .pin-chooser,.draft-share-layer > .share-popover { z-index:60; }
 .share-draft-pin { outline:2px solid var(--participant-color);outline-offset:2px;font-size:17px; }
 .share-popover { position:absolute;overflow-y:auto;overscroll-behavior:contain;border:1px solid #ddd8e9;border-radius:10px;background:white;box-shadow:0 6px 22px #0002;font-size:12px; }
 .share-popover > header { display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px 8px;border-bottom:1px solid #eee; }
