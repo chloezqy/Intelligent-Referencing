@@ -1,13 +1,16 @@
+import { DeploymentOptions } from './deployment';
 import { randomUUID } from 'node:crypto';
 import { MOCK_NODES } from '../src/data';
 import { ruleBasedInterpreter } from '../src/comparisonContext';
 import express from 'express';
 import { RoomStore, ApiError } from './store';
 import { ComparisonContext, SelectionPresence, UserId } from '../src/collaboration';
-export function collaborationServer(store: RoomStore) {
+export function collaborationServer(store: RoomStore,options:DeploymentOptions={trustProxyHops:0}) {
   const app = express();
   app.disable('x-powered-by');
-  app.use('/api', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); res.setHeader('Referrer-Policy', 'no-referrer'); next(); });
+  app.set('trust proxy',options.trustProxyHops);
+  app.use((_req,res,next)=>{res.set({'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY'});next();});
+  app.use('/api', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store, no-transform'); res.setHeader('Referrer-Policy', 'no-referrer'); next(); });
   app.use(express.json({ limit: '24kb' }));
   app.use('/api', (req, _res, next) => { if (req.method === 'POST' && (!req.body || typeof req.body !== 'object' || Array.isArray(req.body))) return next(new ApiError(400, 'Expected a JSON object.')); next(); });
   const clients = new Map<string, Set<{ user: UserId; response: express.Response }>>();
@@ -17,7 +20,10 @@ export function collaborationServer(store: RoomStore) {
   app.use('/api', (req, _res, next) => {
     // Same-origin browser requests only; bearer tokens remain in authorization headers.
     const origin = req.get('origin');
-    if (origin && new URL(origin).host !== req.get('host')) return next(new ApiError(403, 'Use this server’s workspace URL.'));
+    if(origin){let parsed:URL;try{parsed=new URL(origin);}catch{return next(new ApiError(403,'Invalid request origin.'));}
+      const allowed=options.publicOrigin||`${req.protocol}://${req.get('host')}`;
+      if(parsed.origin!==allowed||origin!==parsed.origin)return next(new ApiError(403,'Use this server’s workspace URL.'));
+    }
     if (req.method !== 'GET' && !/^\/rooms\/[a-f0-9]{24}\/cursor$/.test(req.path)) {
       const key = req.ip || 'local', now = Date.now();
       if (limits.size > 10000) for (const [k, v] of limits) if (v.until < now) limits.delete(k);
@@ -62,12 +68,13 @@ export function collaborationServer(store: RoomStore) {
     if(typeof visible!=='boolean'||!Number.isFinite(x)||!Number.isFinite(y)||Math.abs(x)>1000000||Math.abs(y)>1000000)throw new ApiError(400,'Invalid cursor position.');
     cursorEvent(code,{userId,x,y,visible,at:now});res.json({ok:true});
   }));
-  app.get('/api/health', (_req, res) => res.json({ ok: true, backend: 'express-sse', persistence: 'server-disk' }));
+  app.get('/api/health', (_req, res) => res.status(app.locals.shuttingDown?503:200).json({ ok: true, backend: 'express-sse', persistence: 'server-disk' }));
   app.post('/api/rooms', route((_req, res) => res.status(201).json(store.create())));
   app.post('/api/rooms/:code/join', route((req, res) => { const session = store.join(String(req.params.code), req.body.token); broadcast(session.code); res.json(session); }));
   app.get('/api/rooms/:code', route((req, res) => { auth(req); res.json(store.snapshot(String(req.params.code), user => online(String(req.params.code), user))); }));
   app.get('/api/rooms/:code/events', route((req, res) => {
     const user = auth(req), code = String(req.params.code);
+    if([...(clients.get(code)||[])].filter(c=>c.user===user).length>=8)throw new ApiError(429,'Too many active room connections for this user. Close unused tabs.');
     res.status(200).set({ 'Content-Type': 'text/event-stream', 'Connection': 'keep-alive', 'X-Accel-Buffering': 'no' }); res.flushHeaders();
     const set = clients.get(code) || new Set(); const client = { user, response: res }; set.add(client); clients.set(code, set);
     res.write('retry: 1500\n\n'); broadcast(code); selectionEvent(code);
@@ -85,6 +92,8 @@ export function collaborationServer(store: RoomStore) {
       if(!Array.isArray(req.body.elementIds)||ids.length!==req.body.elementIds.length||ids.some(id=>!req.body.elementIds.includes(id)))throw new ApiError(400,'Comparison targets must match the frozen selections.');
     }
     const id = store.share(code, user, req.body,comparison); broadcast(code); res.status(201).json({ id }); }));
+  app.post('/api/rooms/:code/references/:id/attention',route((req,res)=>{const user=auth(req),code=String(req.params.code);store.inviteAttention(code,user,String(req.params.id),req.body.requestId);broadcast(code);res.json({ok:true});}));
+  app.post('/api/rooms/:code/references/:id/attention/:invitationId/view',route((req,res)=>{const user=auth(req),code=String(req.params.code);store.viewAttention(code,user,String(req.params.id),String(req.params.invitationId));broadcast(code);res.json({ok:true});}));
   app.post('/api/rooms/:code/references/:id/responses', route((req, res) => { const user = auth(req), code = String(req.params.code); store.respond(code, user, String(req.params.id), req.body); broadcast(code); res.json({ ok: true }); }));
   app.post('/api/rooms/:code/references/:id/review', route((req, res) => { const user = auth(req), code = String(req.params.code); store.review(code, user, String(req.params.id)); broadcast(code); res.json({ ok: true }); }));
   app.post('/api/rooms/:code/references/:id/activity', route((req, res) => { const user = auth(req), code = String(req.params.code); store.activity(code, user, String(req.params.id), req.body); broadcast(code); res.json({ ok: true }); }));

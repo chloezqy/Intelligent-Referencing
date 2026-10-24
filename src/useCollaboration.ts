@@ -91,10 +91,12 @@ export function useCollaboration() {
       let recovery = token(); try { recovery = sessionStorage.getItem(`sr-join-${code}`) || recovery; sessionStorage.setItem(`sr-join-${code}`, recovery); } catch { /* Retry identity is held in this request. */ }
       const identity = await api(`/rooms/${code}/join`, { token: recovery }, null); remember(identity); return identity;
     }),
-    share: (draft: ReferenceDraft, intent: ReferenceIntent, message: string, id: string) => action(async () => {
+    share: (draft: ReferenceDraft, intent: ReferenceIntent, message: string, id: string,inviteNow=false) => action(async () => {
       if (!session || !connected) throw new Error('Reconnect before sharing.');
-      return api(`/rooms/${session.code}/references`, { ...draft, intent, message, requestId: id });
+      return api(`/rooms/${session.code}/references`, { ...draft, intent, message, requestId: id,inviteNow });
     }),
+    inviteAttention:(id:string,requestId:string)=>action(async()=>{if(!session||!connected)throw new Error('Reconnect before inviting.');return api(`/rooms/${session.code}/references/${id}/attention`,{requestId});}),
+    viewAttention:(id:string,invitationId:string)=>action(async()=>{if(!session||!connected)throw new Error('Reconnect before viewing.');return api(`/rooms/${session.code}/references/${id}/attention/${invitationId}/view`,{});}),
     respond: (id: string, message: string, responseId: string) => action(async () => { if (!session || !connected) throw new Error('Reconnect before responding.'); return api(`/rooms/${session.code}/references/${id}/responses`, { message, requestId: responseId }); }),
     review: (id: string) => action(async () => { if (!session || !connected) throw new Error('Reconnect before reviewing.'); return api(`/rooms/${session.code}/references/${id}/review`, {}); }),
     activity: (id: string, kind: 'opened' | 'located', elementIds: string[] = []) => action(async () => { if (!session || !connected) throw new Error('Reconnect before opening or locating a reference.'); return api(`/rooms/${session.code}/references/${id}/activity`, { kind, elementIds }); }),

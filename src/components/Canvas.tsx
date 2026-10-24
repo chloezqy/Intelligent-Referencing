@@ -1,6 +1,7 @@
+import {interpretationLevel} from '../semanticInterpretation';
 import { isSelectionDrag, selectionDragKind } from '../selectionInteraction';
 import { selectionActionLayout } from '../selectionActionLayout';
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Point, UIElement, ToolMode, SelectionState, InferredReference, Interpretation, ScopeLevel } from '../types';
 import ReferencePins from './ReferencePins';
@@ -51,8 +52,8 @@ export default function Canvas({
   const [actionAnchor,setActionAnchor]=useState<Point|null>(null);
   const [detailsOpen,setDetailsOpen]=useState(false);
   const [actionSurface,setActionSurface]=useState<HTMLDivElement|null>(null);
-  const [actionSize,setActionSize]=useState({width:292,height:196});
-  useEffect(()=>{if(!actionSurface)return;const measure=()=>setActionSize({width:actionSurface.offsetWidth,height:actionSurface.offsetHeight});measure();const observer=new ResizeObserver(measure);observer.observe(actionSurface);return()=>observer.disconnect();},[actionSurface]);
+  const collapsedActionSize=useRef({width:320,height:196});
+  const [actionPosition,setActionPosition]=useState({left:8,top:8});
   const [pinChooserOpen, setPinChooserOpen] = useState(false);
   const [selectionPopupDismissed, setSelectionPopupDismissed] = useState(false);
   useEffect(()=>{setSelectionPopupDismissed(false);},[inferredRef]);
@@ -248,7 +249,7 @@ export default function Canvas({
       inferenceTimer.current=null;
       const results=inferSelection(pending.path,nodes);
       if(!results.length){setSelectionState(pending.previous?'preview':'idle');setCurrentPath([]);return;}
-      setInterpretations(results);onResearchEvent('gesture_interpreted');commitInterpretation(results[0],false);setSelectionState('disambiguating');setShowAlternatives(true);
+      setInterpretations(results);onResearchEvent('gesture_interpreted');commitInterpretation(results[0],false);setSelectionState('preview');setShowAlternatives(false);setDetailsOpen(false);setCurrentPath([]);
     },300);
   };
 
@@ -322,6 +323,16 @@ export default function Canvas({
   const exemplarIds = activeCandidate ? activeCandidate.exemplarIds : (inferredRef?.exemplarIds || []);
 
   const boundingBox = activeIds.length > 0 ? getBoundingBox(activeIds, nodes) : null;
+  // Re-anchor only on appearance or actual canvas navigation, never accordion changes.
+  useLayoutEffect(()=>{
+    if(!actionSurface)return;
+    if(!detailsOpen)collapsedActionSize.current={width:actionSurface.offsetWidth,height:actionSurface.offsetHeight};
+    const width=Math.min(inferredRef?.selectionMethod==='smart-ref'?320:336,Math.max(0,viewport.width-16));
+    // Reserve a small scrollable adjustment area when first choosing an edge-safe anchor.
+    const height=Math.min(Math.max(0,viewport.height-16),collapsedActionSize.current.height+72);
+    setActionPosition(selectionActionLayout(boundingBox,transform,viewport,{width,height},actionAnchor));
+  },[actionSurface,transform.x,transform.y,transform.scale,viewport.width,viewport.height,actionAnchor]);
+  const actionAvailableHeight=Math.max(0,viewport.height-actionPosition.top-8);
   const gestureBB = currentPath.length > 0 ? {
     x: Math.min(...currentPath.map(p => p.x)),
     y: Math.min(...currentPath.map(p => p.y)),
@@ -411,140 +422,25 @@ export default function Canvas({
             role="region" aria-label={`Actions for ${inferredRef.label}`}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            exit={{ opacity: 0, transition:{duration:0} }}
             transition={{ duration: 0.15 }}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            className={`selection-context action-context ${detailsOpen?'details-expanded':''} ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
-            style={selectionActionLayout(boundingBox,transform,viewport,actionSize,actionAnchor)}
+            className={`selection-context action-context ${inferredRef.selectionMethod==='smart-ref'?'gesture-context':''} ${detailsOpen?'details-expanded':''} ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
+            style={{...actionPosition,width:Math.min(inferredRef.selectionMethod==='smart-ref'?320:336,Math.max(0,viewport.width-16)),maxHeight:actionAvailableHeight,'--adjustment-space':`${Math.max(0,actionAvailableHeight-collapsedActionSize.current.height-1)}px`} as React.CSSProperties}
           >
-            {!detailsOpen&&<ReferenceActions onMore={()=>{setDetailsOpen(true);setShowAlternatives(true);}} onCompare={onCompare} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onAction={onAcceptReference}/>}
-            {/* Expanded selection details replace the action stack. */}
-            <div hidden={!detailsOpen} className="selection-details bg-white/95 border border-zinc-200/80 text-zinc-900 px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-3 text-xs">
-              <button type="button" className="details-back" onClick={()=>{setDetailsOpen(false);setShowAlternatives(false);}}>Back to actions</button>
-              
-              {/* Selection Identity & Label */}
-              <div className="flex items-center gap-1.5 font-semibold text-zinc-900 max-w-[200px] sm:max-w-[260px] truncate">
-                {inferredRef.selectionMethod === 'smart-ref' ? (
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                ) : (
-                  <MousePointer2 className="w-3.5 h-3.5 text-[#0d99ff] shrink-0" />
-                )}
-                <span className="truncate">{inferredRef.label}</span>
-              </div>
+            {inferredRef.selectionMethod==='smart-ref'&&<header className="interpretation-summary"><strong>{inferredRef.label}</strong><span>{inferredRef.activeInterpretation?interpretationLevel(inferredRef.activeInterpretation):'geometric'} · rule-based</span></header>}
+            {(!detailsOpen||inferredRef.selectionMethod==='smart-ref')&&<ReferenceActions hideMore={inferredRef.selectionMethod==='smart-ref'} onMore={()=>{setDetailsOpen(true);setShowAlternatives(false);}} onCompare={onCompare} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onAction={onAcceptReference}/>}
+            {(inferredRef.selectionMethod==='smart-ref'||detailsOpen)&&<div className={`interpretation-dropdown ${detailsOpen?'is-expanded':''}`}>
+            <button type="button" className="interpretation-toggle" aria-controls="interpretation-adjustments" aria-expanded={detailsOpen} onClick={()=>setDetailsOpen(v=>!v)}><span>{inferredRef.selectionMethod==='smart-ref'?'Adjust interpretation':'Selection details'}</span><ChevronDown size={14} aria-hidden="true" className={detailsOpen?'rotate-180':''}/></button>
+            {detailsOpen&&<div id="interpretation-adjustments" className="interpretation-adjustments">
+              {inferredRef.selectionMethod!=='smart-ref'&&<strong>{inferredRef.label}</strong>}
+              <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'Screen'},{scope:'document',label:'All screens'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={inferredRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
+              {inferredRef.selectionMethod==='smart-ref'&&interpretations.length>1&&<details><summary>Alternative interpretations ({interpretations.length})</summary><div className="interpretation-options">{interpretations.map(interp=><button type="button" key={interp.id} aria-pressed={inferredRef.activeInterpretation?.id===interp.id} onMouseEnter={()=>setHoveredInterpretation(interp)} onMouseLeave={()=>setHoveredInterpretation(null)} onClick={()=>{commitInterpretation(interp,true);setHoveredInterpretation(null);}}><strong>{interp.label}</strong><small>{interpretationLevel(interp)} · rule-based</small></button>)}</div></details>}
+              <p className="subtle">Click or Shift-click objects to correct the selection. Scope changes apply immediately.</p>
+            </div>}
+            </div>}
 
-              {/* Suggestions / Alternatives Dropdown Button (Smart Ref) */}
-              {inferredRef.selectionMethod === 'smart-ref' && interpretations.length > 1 && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); setShowAlternatives(prev => !prev); }}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-medium border flex items-center gap-1 transition-colors ${
-                    showAlternatives
-                      ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-                      : 'bg-zinc-100/80 border-zinc-200 text-zinc-600 hover:text-zinc-900'
-                  }`}
-                  title="View alternative smart interpretations"
-                >
-                  <span>Inferred ({interpretations.length})</span>
-                  <ChevronDown className={`w-3 h-3 transition-transform ${showAlternatives ? 'rotate-180' : ''}`} />
-                </button>
-              )}
-
-              <span className="context-divider text-zinc-300">|</span>
-
-              {/* THE SINGLE AUTHORITY SCOPE TOGGLE: TOUCHED, SCREEN, ALL SCREENS */}
-              <div className="context-scope flex items-center gap-1 bg-zinc-50 p-0.5 rounded-lg border border-zinc-200">
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleScopeChange('exemplars'); }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                    inferredRef.scope === 'exemplars'
-                      ? 'bg-zinc-100 text-zinc-900 font-semibold shadow-xs'
-                      : 'text-zinc-600 hover:text-zinc-900'
-                  }`}
-                  title="Restrict to directly touched elements"
-                >
-                  Touched ({inferredRef.exemplarIds.length})
-                </button>
-
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleScopeChange('screen'); }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                    inferredRef.scope === 'screen'
-                      ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
-                      : 'text-zinc-600 hover:text-zinc-900'
-                  }`}
-                  title="Match items across current screen"
-                >
-                  Screen
-                </button>
-
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleScopeChange('document'); }}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors flex items-center gap-1 ${
-                    inferredRef.scope === 'document'
-                      ? 'bg-indigo-600 text-zinc-900 font-semibold shadow-xs'
-                      : 'text-indigo-600 hover:bg-indigo-50/60'
-                  }`}
-                  title="Expand to all matching items across all 6 screens!"
-                >
-                  <Sparkles className="w-2.5 h-2.5" />
-                  <span>All Screens</span>
-                </button>
-              </div>
-
-
-
-            </div>
-
-            {/* 
-              ========================================================================
-              SIMPLIFIED INFERRED INTERPRETATIONS POPOVER
-              Clean, compact list of candidate options — zero text walls, no duplicate toggles
-              ========================================================================
-            */}
-            <AnimatePresence>
-              {detailsOpen && inferredRef.selectionMethod === 'smart-ref' && showAlternatives && interpretations.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 6, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 6, scale: 0.98 }}
-                  transition={{ duration: 0.12 }}
-                  className="interpretation-details mt-2 bg-white/98 border border-zinc-200/90 rounded-xl shadow-lg p-1.5 w-80 text-zinc-800"
-                >
-                  <div className="px-2 py-1 flex items-center justify-between text-[10px] text-zinc-600 uppercase font-mono tracking-wider border-b border-zinc-200 pb-1 mb-1">
-                    <span>Inferred Interpretations</span>
-                    <span className="text-zinc-500 font-sans lowercase">click to select</span>
-                  </div>
-
-                  <div className="flex flex-col gap-0.5">
-                    {interpretations.map((interp) => {
-                      const isSelected = activeInterpretation?.id === interp.id;
-                      return (
-                        <button
-                          key={interp.id}
-                          onPointerDown={(e) => e.stopPropagation()}
-                          onMouseEnter={() => setHoveredInterpretation(interp)}
-                          onMouseLeave={() => setHoveredInterpretation(null)}
-                          onClick={() => {
-                            commitInterpretation(interp, true);
-                            setShowAlternatives(false);
-                          }}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left text-xs transition-colors ${
-                            isSelected
-                              ? 'bg-indigo-50/80 text-zinc-900 border border-indigo-700/60 font-medium'
-                              : 'text-zinc-700 hover:bg-zinc-100/80 hover:text-zinc-900'
-                          }`}
-                        >
-                          <span className="truncate pr-2">{interp.label}</span>
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-zinc-100 border border-zinc-200 text-zinc-600 shrink-0">
-                            {interp.selectedIds.length} items
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>

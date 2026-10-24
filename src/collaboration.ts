@@ -6,6 +6,7 @@ export interface SharedReference {
   elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel;
   label: string; intent: ReferenceIntent; message: string; createdAt: string;
   status: 'open' | 'reviewed';
+  attention?:AttentionRequest[];
   comparison?: ComparisonContext;
   research?: { level: 4 | 5; attemptId: string };
   reviewedAt?: string;
@@ -27,3 +28,5 @@ export const INTENTS: ReferenceIntent[] = ['Review', 'Compare', 'Help', 'Look at
 export interface CollaboratorCursor { userId:UserId; x:number; y:number; visible:boolean; at:number }
 export interface SelectionPresence {userId:UserId;elementIds:string[];exemplarIds:string[];scope:ScopeLevel;method:'conventional'|'smart-ref';revision:number}
 export interface ComparisonContext {snapshotId:string;selections:Record<UserId,SelectionPresence>;purpose:string;interpretation:import('./comparisonContext').ContextInterpretation}
+
+export interface AttentionRequest {id:string;sourceUser:UserId;targetUser:UserId;createdAt:string;viewedAt?:string}

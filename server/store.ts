@@ -1,7 +1,7 @@
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { ComparisonContext, DOCUMENT_ID, INTENTS, RoomSnapshot, SharedReference, UserId } from '../src/collaboration';
+import { AttentionRequest, ComparisonContext, DOCUMENT_ID, INTENTS, RoomSnapshot, SharedReference, UserId } from '../src/collaboration';
 import { MOCK_NODES } from '../src/data';
 interface Member { userId: UserId; tokenHash: string }
 interface Room { code: string; documentId: string; revision: number; members: Member[]; references: SharedReference[] }
@@ -60,6 +60,7 @@ export class RoomStore {
     if (!elementIds.length || elementIds.some(id => !this.validIds.has(id)) || exemplarIds.some(id => !elementIds.includes(id))) throw new ApiError(400, 'Choose existing objects; exemplars must belong to the reference.');
     if (!INTENTS.includes(body.intent) || !['exemplars', 'screen', 'document', 'flow'].includes(body.scope)) throw new ApiError(400, 'Invalid intent or scope.');
     const label = text(body.label, 300), message = text(body.message, 2000);
+    if(body.inviteNow!==undefined&&typeof body.inviteNow!=='boolean')throw new ApiError(400,'Invalid view invitation.');
     if (body.research && (user !== 'A' || ![4,5].includes(body.research.level) || !/^[a-f0-9-]{36}$/i.test(body.research.attemptId || ''))) throw new ApiError(400, 'Invalid research attempt.');
     const research = body.research ? { level: body.research.level as 4 | 5, attemptId: body.research.attemptId as string } : undefined;
     if (!/^[a-f0-9-]{36}$/i.test(body.requestId || '')) throw new ApiError(400, 'Invalid request ID.');
@@ -68,8 +69,22 @@ export class RoomStore {
     const duplicate = r.references.find(ref => ref.id === body.requestId);
     if (duplicate) { if (duplicate.sourceUser !== user) throw new ApiError(409, 'Request ID already used.'); return duplicate.id; }
     if (r.references.length >= 200) throw new ApiError(409, 'This prototype supports up to 200 references per room.');
-    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', responses: [], activity: [], ...(comparison?{comparison}:{}), ...(research ? { research } : {}) }); room.revision++; });
+    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', responses: [], activity: [], attention:body.inviteNow?[{id:body.requestId,sourceUser:user,targetUser,createdAt:new Date().toISOString()}]:[], ...(comparison?{comparison}:{}), ...(research ? { research } : {}) }); room.revision++; });
     return body.requestId;
+  }
+  inviteAttention(code:string,user:UserId,id:string,requestId:unknown){
+    if(typeof requestId!=='string'||!/^[a-f0-9-]{36}$/i.test(requestId))throw new ApiError(400,'Invalid invitation ID.');
+    this.transaction(rooms=>{const room=this.room(code,rooms),ref=room.references.find(r=>r.id===id);if(!ref)throw new ApiError(404,'Reference not found.');if(ref.archivedAt)throw new ApiError(409,'Restore this reference before inviting.');
+      const requests=ref.attention||=[];const previous=requests.find(r=>r.id===requestId);if(previous){if(previous.sourceUser!==user)throw new ApiError(409,'Invitation ID already used.');return;}
+      if(requests.length>=50)throw new ApiError(409,'Invitation limit reached for this reference.');
+      requests.push({id:requestId,sourceUser:user,targetUser:user==='A'?'B':'A',createdAt:new Date().toISOString()});room.revision++;
+    });
+  }
+  viewAttention(code:string,user:UserId,id:string,invitationId:string){
+    this.transaction(rooms=>{const room=this.room(code,rooms),ref=room.references.find(r=>r.id===id);if(!ref)throw new ApiError(404,'Reference not found.');if(ref.archivedAt)throw new ApiError(409,'Restore this reference first.');
+      const invitation=ref.attention?.find(r=>r.id===invitationId);if(!invitation)throw new ApiError(404,'Invitation not found.');if(invitation.targetUser!==user)throw new ApiError(403,'Only the invited user can acknowledge viewing.');
+      if(!invitation.viewedAt){invitation.viewedAt=new Date().toISOString();room.revision++;}
+    });
   }
   respond(code: string, user: UserId, id: string, body: any) {
     const message = text(body.message, 2000);

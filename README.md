@@ -120,7 +120,7 @@ For developers helping you run or extend the prototype, see the [technical setup
 
 ## Compare and discuss objects
 
-Select two or more objects, then choose **Compare** in the small selection toolbar. A compact share popup opens beneath a temporary pin on the selected objects. Expand **Targets and comparison** to inspect the comparison before sending. Nothing is sent until you press **Send**. You can also choose **Ask for review**, or use **More → Ask for help**. For one object, Review, Help and Share are available directly.
+Use **Compare with User A/B** to compare both users’ frozen selections. Or choose **Share to User A/B** and select the Compare intended action to compare objects within your own selection. The existing property table remains deterministic. No reference is sent until you press Send or Share comparison.
 
 The comparison lists the sample objects’ actual text, dimensions, colors, corner radius, available typography and screen positions. Differences appear first; expand **Matching properties** to see what is the same. **Not specified** means that the sample data does not contain that property. This is a rule-based property comparison, not an AI opinion or a command to change the design.
 
@@ -130,18 +130,18 @@ These interactions adapt the object pins, contextual actions and comparison pres
 
 ## Keep references tidy
 
-Click a single reference pin to open its conversation in **References**. If a pin represents several overlapping references, it opens a small list with short labels, reference numbers, times and statuses. Full messages and replies appear only after you choose a reference, inside the References panel.
+Click a single reference pin to open its pin-attached conversation. If a pin represents several overlapping references, it opens a small list with short labels, reference numbers, times and statuses. Full messages and replies appear only after you choose a reference, inside that same conversation popup.
 
-To clear an old test reference from the canvas, open it and choose **Archive reference**. It disappears from both users’ pins and active lists immediately. Find it under **Archived** and choose **Restore reference** to bring it back. Either participant can archive or restore. Archiving preserves the original targets, notes, replies and task history; it does not count as a review. Archived conversations are read-only until restored.
+To clear an old test reference from the canvas, open it and choose **Remove pin**. It disappears from both users’ pins and active lists immediately. Find it under **Archived** and choose **Restore pin** to bring it back. Either participant can archive or restore. Archiving preserves the original targets, notes, replies and task history; it does not count as a review. Archived conversations are read-only until restored.
 
 
 ### Share beneath the pin
 
-The share action names the recipient: **Share to User A** or **Share to User B**. Its compact popup contains the intended action, note and Send button. It opens beneath the object’s temporary pin when space allows, otherwise moves above it to stay inside the canvas. Closing the popup keeps the unsent request; click its **+** pin to reopen it, or choose **Resume share popup** in References. **Cancel draft** discards it. Saved references and replies continue to use the existing References panel.
+The share action names the recipient: **Share to User A** or **Share to User B**. Its compact popup contains the intended action, note and Send button. It opens beneath the object’s temporary pin when space allows, otherwise moves above it to stay inside the canvas. Closing the popup keeps the unsent request; click its **+** pin to reopen it, or choose **Resume share popup** in References. **Cancel draft** discards it. Saved references remain listed in References; full conversations open beside their pins.
 
 ### Bring another user to your selection
 
-Select objects and choose **Bring User A/B here**. This opens a **Look at this** request with fixed targets; press **Send** to deliver it. The recipient gets a small notification with **View** and **Later**. View zooms to the objects and opens the conversation. It never moves their canvas before they choose View. The sender can see a “viewed the referenced elements” receipt in the conversation; this records a visit, not continuous live viewing. Later hides the notification for the current page visit; the saved reference remains in References. Offline recipients receive it when they reconnect.
+Choose **Share to User A/B** and optionally check **Invite User A/B to view now**. Leave it unchecked for asynchronous sharing, even if the other user is online. The invitation belongs to the same reference. You can later open that conversation and choose **Invite User A/B to view** without creating another reference or losing replies. Each invitation has a separate viewed receipt. The recipient chooses **View** before their canvas moves, or **Later** to dismiss the notification for this page visit. Old Look at this invitations remain readable.
 
 ### Collaborator cursors
 
@@ -160,3 +160,15 @@ Manual Compare references within your own selection still work. All five researc
 ### One selection tool
 
 **Select (V or S)** handles both ordinary selection and rough gestures. Click selects one object; Shift-click adds or removes it. Drag more than 6 screen pixels to draw a rough gesture, even when starting on an object. Shift-drag adds objects using a precise box. Small pointer movements remain clicks. Selection changes commit on release, and gesture results commit after interpretation; pending strokes do not change the other participant’s selection view. Cancelled strokes retain your previous selection. **Hand (H)**, Space-drag, and middle-button drag pan the canvas.
+
+## Hosting online
+
+Deployment preparation is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). The recommended setup is one Render Node web service serving the frontend and existing Express/SSE backend together, with a persistent disk and a single instance. `render.yaml` provides the configuration. No public service has been deployed by these repository changes.
+
+Use `npm run verify:production` to check the production build, realtime sharing, and persistent restart recovery locally before deploying.
+
+### Progressive rough gesture interpretation
+
+A gesture shows one compact popup naming the best inferred selection. The default is usable immediately; there is no extra confirmation step. **Adjust interpretation** opens scopes and a collapsed list of alternative interpretations inside the same popup. Share and Compare stay connected to that selection. Ordinary clicks keep the lightweight action pills, with secondary details under •••.
+
+Interpretations are labeled **geometric** (directly touched targets), **structural** (hierarchy/components), or **semantic** (functional relationships), and currently all are **rule-based**. These labels do not mean an AI model was called. Level 3 retains its explicit reviewed-selection step as research instrumentation, not a normal interaction requirement.

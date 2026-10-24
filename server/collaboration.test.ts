@@ -120,6 +120,22 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     const replayPresence=await replay.wait((s:any)=>!!s.A,'selection');assert.deepEqual((replayPresence as any).A.elementIds,['hc1-cta']);replay.close();
     sbAgain.close();await sa.wait((s:any)=>!!s.A&&!s.B,'selection');
     const reconnect=await stream(b);const presenceAfterReconnect=await reconnect.wait((s:any)=>!!s.A,'selection');assert.equal((presenceAfterReconnect as any).B,undefined);
+    const beforeInvitations=store.snapshot(a.code,()=>true).references.length;
+    const invitationId=randomUUID(),attentionPath=`/rooms/${a.code}/references/${comparisonId}/attention`;
+    assert.equal((await api(attentionPath,{requestId:invitationId})).status,401);
+    assert.equal((await api(attentionPath,{requestId:invitationId},a)).status,200);
+    const invitation=await reconnect.wait(s=>!!s.references.find(r=>r.id===comparisonId)?.attention?.length);
+    assert.equal(invitation.references.find(r=>r.id===comparisonId)!.attention![0].sourceUser,'A');
+    const revision=store.snapshot(a.code,()=>true).revision;
+    assert.equal((await api(attentionPath,{requestId:invitationId},a)).status,200);assert.equal(store.snapshot(a.code,()=>true).revision,revision);
+    assert.equal((await api(`${attentionPath}/${invitationId}/view`,{},a)).status,403);
+    assert.equal((await api(`${attentionPath}/${invitationId}/view`,{},b)).status,200);
+    assert.equal((await api(attentionPath,{requestId:randomUUID()},a)).status,200);
+    const attentionRef=new RoomStore(file).snapshot(a.code,()=>false).references.find(r=>r.id===comparisonId)!;
+    assert.equal(attentionRef.attention!.length,2);assert.ok(attentionRef.attention![0].viewedAt);assert.equal(attentionRef.attention![1].viewedAt,undefined);
+    assert.equal(store.snapshot(a.code,()=>true).references.length,beforeInvitations);
+    const inviteShareId=randomUUID();assert.equal((await api(`/rooms/${a.code}/references`,{...payload,requestId:inviteShareId,inviteNow:true},a)).status,201);
+    assert.equal(store.snapshot(a.code,()=>true).references.find(r=>r.id===inviteShareId)!.attention![0].id,inviteShareId);
     const hostile=await fetch(base+'/api/rooms',{method:'POST',headers:{Origin:'https://unrelated.example','Content-Type':'application/json'},body:'{}'});assert.equal(hostile.status,403);
   } finally { controllers.forEach(c=>c.abort());server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));rmSync(dir,{recursive:true,force:true}); }
 });

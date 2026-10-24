@@ -1,0 +1,21 @@
+# One paid Node service + persistent disk. Applying this file creates billable resources.
+services:
+  - type: web
+    name: smart-reference
+    runtime: node
+    plan: starter
+    numInstances: 1
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ROOM_DATA_DIR
+        value: /var/data/smart-reference
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+    disk:
+      name: smart-reference-rooms
+      mountPath: /var/data
+      sizeGB: 1
