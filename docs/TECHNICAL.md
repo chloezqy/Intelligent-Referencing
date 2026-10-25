@@ -4,9 +4,9 @@ Standalone is now default. `collaborationMode()` selects realtime for `?mode=rea
 
 - `src/collaborationClient.ts`: transport-independent component contract.
 - `src/useCollaboration.ts`: mode facade plus preserved `useRealtimeCollaboration`; inactive realtime mode does not restore identities or start SSE.
-- `src/useDemoCollaboration.ts`: local browser adapter with no network calls; local session A, no cursors, fixed B selection. One 1.2-second scenario timer per pending shared request creates a labeled B response and recorded simulated open/locate/review. Pending scenarios resume on refresh; retries deduplicate.
+- `src/useDemoCollaboration.ts`: local browser adapter with no network calls; manual A/B session switcher, no cursors and no scenario timers. Share remains pending until the recipient perspective manually opens/locates/replies/reviews. Actions use the current local actor and enforce recipient-only review.
 - `src/demoCollaboration.ts`: pure share/snapshot/scenario helpers. Demo references carry `simulated:true`; existing real server schema and storage remain unchanged.
-- Demo storage: `sr-demo-v1`; research storage: `sr-research-demo-v1-A`. Research exports and new attempts include mode; Levels 4–5 remain strict but display demo completion. They do not represent human coordination evidence. Reset clears only these demo records.
+- Demo storage: `sr-demo-v1`; research storage: `sr-research-demo-v1-A` / `sr-research-demo-v1-B`. Perspective, per-user camera/selection and dismissed nudges have separate `sr-demo-*` keys. Research exports and new attempts include mode; Levels 4–5 remain strict but display demo completion. They do not represent human coordination evidence. Reset clears only these demo records.
 - Browser storage is origin-specific and last-write persistence, not multi-tab synchronization. No server tokens or real rooms are copied into demo data. Disabled storage yields an explicit warning and memory-only use.
 - `npm run dev:standalone` / `preview:standalone` serve only Vite/static assets. `npm run dev`, build, start, realtime APIs, SSE and production persistence verification remain available.
 

@@ -21,7 +21,7 @@ export function orderedReferences(references: SharedReference[]) {
 /** Screen-space markers; positions always derive from saved object IDs, never local selection. */
 export function layoutReferencePins(references: SharedReference[], nodes: UIElement[], camera: CanvasTransform, viewport: {width:number;height:number}, activeId: string | null): PinCluster[] {
   const byId=new Map(nodes.map(node=>[node.id,node]));
-  const anchors=orderedReferences(references).filter(ref=>!ref.archivedAt).flatMap(ref=>[...new Set(ref.elementIds)].sort(compareText).flatMap(elementId=>{
+  const anchors=orderedReferences(references).filter(ref=>!ref.archivedAt&&ref.status!=='reviewed').flatMap(ref=>[...new Set(ref.elementIds)].sort(compareText).flatMap(elementId=>{
     const node=byId.get(elementId);if(!node)return [];
     const x=(node.x+node.w)*camera.scale+camera.x, y=node.y*camera.scale+camera.y;
     if(x<PIN_SIZE/2||y<PIN_SIZE/2||x>viewport.width-PIN_SIZE/2||y>viewport.height-PIN_SIZE/2)return [];

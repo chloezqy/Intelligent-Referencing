@@ -22,7 +22,7 @@ test('Nearby object pins cluster without creating a second conversation and expa
 });
 test('Overlapping conversations deduplicate reference IDs; active anchor wins; ordering is stable',()=>{
  const n=MOCK_NODES.find(n=>n.id==='hc1-cta')!,nodes=[{...n,id:'one',x:100,w:20},{...n,id:'two',x:110,w:20}];
- const refs=[reference('b',['one']),reference('a',['two','one'],'reviewed')];
+ const refs=[reference('b',['one']),reference('a',['two','one'])];
  const pins=layoutReferencePins(refs,nodes,camera,viewport,'b');assert.equal(pins.length,1);assert.deepEqual(pins[0].referenceIds,['a','b']);assert.equal(pins[0].x,120);assert.equal(pins[0].anchors.filter(a=>a.active).length,1);
  assert.deepEqual(layoutReferencePins([...refs].reverse(),nodes,camera,viewport,'b'),pins);
  assert.deepEqual(orderedReferences(refs).map(r=>r.id),['a','b']);
@@ -89,4 +89,13 @@ test('The share popup follows a frozen target and stays within the viewport, fli
  assert.deepEqual(moved.pin,{x:210,y:115});
  const bottom=sharePopoverLayout(['anchor'],[{...simple[0],y:500}],camera,{width:800,height:600},250)!;assert.ok(bottom.popup.top<bottom.pin.y);
  assert.equal(sharePopoverLayout(['missing'],MOCK_NODES,camera,viewport),null);
+});
+
+test('Reviewing removes object pins without deleting or archiving the conversation',()=>{
+ const ref=reference('review',['hc1-cta','sc1-cta']);
+ assert.equal(layoutReferencePins([ref],MOCK_NODES,camera,viewport,null).length,2);
+ const reviewed={...ref,status:'reviewed' as const};
+ assert.equal(layoutReferencePins([reviewed],MOCK_NODES,camera,viewport,ref.id).length,0);
+ assert.equal(reviewed.archivedAt,undefined);assert.deepEqual(reviewed.elementIds,ref.elementIds);
+ assert.equal(orderedReferences([reviewed]).length,1);
 });

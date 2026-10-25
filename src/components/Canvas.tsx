@@ -15,6 +15,7 @@ import { Check, Sparkles, X, MousePointer2, ChevronDown } from 'lucide-react';
 interface CanvasProps {
   shareLabel:string;
   sharing:boolean;
+  onSelectionStart:()=>void;
   onResearchEvent: (type:string)=>void;
   sharedReferences: SharedReference[];
   activeSharedId: string | null;
@@ -35,7 +36,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  shareLabel, sharing,onCompare,compareReady,compareHint,
+  shareLabel, sharing,onSelectionStart,onCompare,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -210,11 +211,12 @@ export default function Canvas({
     const pending=pendingPointer.current;if(!pending||pending.id!==e.pointerId)return;
     pending.screenPoints.push({x:e.clientX,y:e.clientY});pending.path.push(getCanvasCoords(e));
     if(!pending.dragging&&isSelectionDrag(pending.screenStart,pending.screenPoints)){
-      pending.dragging=true;setSelectionState(selectionDragKind(pending.shift));setShowAlternatives(false);setDetailsOpen(false);
+      onSelectionStart();pending.dragging=true;setSelectionState(selectionDragKind(pending.shift));setShowAlternatives(false);setDetailsOpen(false);
     }
     if(pending.dragging){setRectStart(pending.start);setCurrentPath(pending.shift?[pending.start,pending.path[pending.path.length-1]]:[...pending.path]);}
   };
   const commitClick=(node:UIElement|null,shift:boolean,previous:InferredReference|null)=>{
+    onSelectionStart();
     if(!node){if(!shift){setInferredRef(null);setSelectionState('idle');}return;}
     const count=clicksCounter+1;setClicksCounter(count);
     const ids=shift?(previous?.selectedIds.includes(node.id)?previous.selectedIds.filter(id=>id!==node.id):[...(previous?.selectedIds||[]),node.id]):[node.id];

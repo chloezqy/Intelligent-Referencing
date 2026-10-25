@@ -15,16 +15,16 @@ The prototype uses six example mobile shopping screens: Home, Search, Product De
 - Open a received reference, find its targets, and reply or mark it reviewed.
 - Work through five research tasks that progress from selection to collaboration.
 
-**Standalone demo is the default:** User A works locally with an explicitly simulated User B. Real collaboration remains available in References → Workspace mode, or with `?mode=realtime`; existing room links also open real-time mode. In that mode two actual people receive references and replies live. **The interpretation is rule-based:** the prototype uses where you draw and information already attached to the sample elements. It does not currently use an external AI model.
+**Standalone demo is the default:** Switch between User A and User B locally; both perspectives are manually controlled in one browser. Real collaboration remains available in References → Workspace mode, or with `?mode=realtime`; existing room links also open real-time mode. In that mode two actual people receive references and replies live. **The interpretation is rule-based:** the prototype uses where you draw and information already attached to the sample elements. It does not currently use an external AI model.
 
 ## Find your way around
 
 | Area | What it does |
 | --- | --- |
 | Top bar | Access the shared room, zoom controls, Fit view and Help. |
-| Left icon rail | Open Layers, References, Selection or Tasks. Each panel opens beside the icons. |
+| Left icon rail | Open Layers, References or Tasks. Each panel opens beside the icons. |
 | Layers | Browse the items that make up the sample screens. |
-| Selection | Inspect your current selection and change its scope. |
+| Refine Selection | Inspect selected elements and change scope from the canvas action button. |
 | References | Create or join a room, share references, and read or reply to requests. |
 | Tasks | Choose a research level, read instructions and check progress. |
 | Center canvas | Explore the six mobile screens. Pan and zoom to inspect their contents. |
@@ -79,7 +79,7 @@ Open **Tasks** and choose **Start task** before attempting a level.
 | **4 · Shared Review Request** | As A, reference at least two related objects and send B a Review request with a note about design consistency. | B opens that reference, locates every target, and replies or marks it reviewed. |
 | **5 · Collaborative Design Comparison** | As A, select the first product button on Home and the first on Search. Send B a Compare request with a context note. | The reference contains exactly those two buttons; B opens it, locates both and replies or marks it reviewed. |
 
-For Levels 4–5, demo mode uses scripted User B activity and labels completion as a demo scenario. Its research records are separate from real participant records. In real-time mode, A manages the task and B participates through References. Create a room before starting these levels. Offline real participants are never silently replaced by simulation.
+For Levels 4–5, demo mode uses manually controlled A/B perspectives and labels completion as a demo scenario. Its research records are separate from real participant records. In real-time mode, A manages the task and B participates through References. Create a room before starting these levels. Offline real participants are never silently replaced by simulation.
 
 You can switch levels without resetting them. **Next Task** appears after completion. **Reset task** starts a fresh attempt, so previous shared references cannot complete it. **Locate task area** only changes your view—it does not select anything or complete a task.
 
@@ -95,7 +95,13 @@ Refreshing normally restores your identity, task history and shared references. 
 
 ## Standalone demo
 
-The default workspace needs no collaboration backend. Select or gesture, share a reference, then open its pin or References entry. Simulated User B opens, locates and acknowledges it once after a short delay. Replies are scripted and clearly labeled; no AI model is involved. Cross-user Compare uses B’s fixed first Search product CTA. Your viewport never moves automatically.
+The default workspace needs no collaboration backend. Use the top-bar **User A / User B** switcher to demonstrate both sides manually:
+
+1. As A, select or gesture and share a reference. Optionally check Invite to view now.
+2. Switch to B. The incoming nudge offers **View reference** or **Later**. Only View navigates; switching never moves B to A’s targets automatically.
+3. Open the existing conversation, reply and mark reviewed. Switch back to A to see the result.
+
+Each perspective retains its own camera and selection. References, nudge dismissal and cameras recover on refresh. No replies, review events or collaborator cursors are generated automatically. For cross-user Compare, manually select targets in both perspectives first. This remains simulated collaboration in one browser, not real participant research evidence; no AI model is involved.
 
 Use **References → Reset demo** to clear demo references and demo research history. Real rooms and their research records remain untouched. Demo state stays in this browser and origin; it is not shared across devices or tabs and is not evidence from another participant.
 
@@ -143,7 +149,7 @@ The comparison lists the sample objects’ actual text, dimensions, colors, corn
 
 After sharing, both people see pins attached to the referenced objects. Pins move with the design when you pan or zoom. Nearby pins combine into a count to keep the canvas clear: click the count to open its conversation, or choose a conversation if several overlap. All pins belonging to a reference open the same discussion. A check mark indicates reviewed status. Opening a pin highlights its targets without moving your view; **Locate referenced elements** moves your view when you choose.
 
-These interactions adapt the object pins, contextual actions and comparison presentation from [Prototype 3](https://github.com/Rok1006/AI_Widget_Referencing/tree/main/src/prototypes/03-cross-application). The new React implementation uses Smart Reference’s real rooms and saved object IDs. Demo mode uses a new small, deterministic User B scenario; it does not import the old prototype’s scripted collaborator, automatic style matching or editing tools. Public backend deployment is still separate work.
+These interactions adapt the object pins, contextual actions and comparison presentation from [Prototype 3](https://github.com/Rok1006/AI_Widget_Referencing/tree/main/src/prototypes/03-cross-application). The new React implementation uses Smart Reference’s real rooms and saved object IDs. Demo mode supports manual A/B perspectives; it does not import the old prototype’s scripted collaborator, automatic style matching or editing tools. Public backend deployment is still separate work.
 
 ## Keep references tidy
 
@@ -198,3 +204,13 @@ In the Share popup's **Note** field, type `@` to search the participants who hav
 References are always visible to the room. Without mentions, sharing adds the reference to the room list. Mentioning `@User A` or `@User B` adds a targeted in-app notification for that participant when you press Send; mentioning yourself does not notify you. Opening a mention notification opens the existing conversation without moving the viewport. **Invite to view now** remains a separate optional invitation with explicit navigation acceptance.
 
 This prototype still supports only User A and User B. Mentions do not create accounts, invite arbitrary people, change access permissions, or alter the existing other-participant review assignment. Offline participants can receive the saved notification when they reconnect. Existing references retain their prior notification behavior.
+
+
+### Comparison inspector
+
+Compare drafts and saved Compare conversations open in the right-side inspector. Purpose, property differences, note and mentions stay together; the Share button stays visible in its footer. Close preserves an unsent draft—open References and choose Resume to continue. Selecting another object or starting a new selection gesture cancels that draft entirely, removing its temporary pin and Resume action. Ordinary Review/Help/Look at this requests still use compact pin popups. Refine Selection and Adjust interpretation retain selection scope controls; the redundant Selection navigation icon is removed.
+
+The inspector can be resized from its left edge, including with arrow keys when the divider is focused. On narrow windows it overlays the right edge. Opening or resizing it does not pan or zoom; Locate remains explicit.
+
+
+Reviewed references keep their conversations in References but no longer show canvas pins. The recipient’s Mark reviewed control sits below Send response. Reference navigation is available through the incoming View reference nudge; the conversation omits redundant locate, invite and remove-pin controls.

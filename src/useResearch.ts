@@ -6,7 +6,7 @@ import { evaluateAttempt, ResearchAttempt, ResearchEvent, sameIds, TaskLevel } f
 interface Log { level: TaskLevel; attempts: ResearchAttempt[] }
 const load=(key:string):Log=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');if(value?.attempts&&[1,2,3,4,5].includes(value.level))return value;}catch{}return {level:1,attempts:[]};};
 export function useResearch(room:RoomSnapshot|null, session:Session|null,mode:'demo'|'realtime'='realtime'){
-  const key=mode==='demo'?'sr-research-demo-v1-A':`sr-research-v1-${session?`${session.code}-${session.userId}`:'solo'}`;
+  const key=mode==='demo'?`sr-research-demo-v1-${session?.userId||'A'}`:`sr-research-v1-${session?`${session.code}-${session.userId}`:'solo'}`;
   const [state,setState]=useState(()=>({key,log:load(key)}));
   const log=state.key===key?state.log:load(key);
   const [storageError,setStorageError]=useState('');

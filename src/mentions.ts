@@ -15,4 +15,4 @@ export function insertMention(text:string,start:number,end:number,userId:UserId)
  const token=`@User ${userId} `;return {text:text.slice(0,start)+token+text.slice(end),caret:start+token.length};
 }
 export function unreadMention(reference:SharedReference,user?:UserId){return !!user&&!!reference.notificationRecipients?.includes(user)&&!reference.archivedAt&&!reference.activity?.some(e=>e.userId===user&&e.kind==='opened');}
-export function needsReferenceNotification(reference:SharedReference,user?:UserId){return reference.notificationRecipients===undefined?reference.targetUser===user&&reference.status==='open'&&!reference.archivedAt:unreadMention(reference,user);}
+export function needsReferenceNotification(reference:SharedReference,user?:UserId){return reference.simulated?!!user&&reference.targetUser===user&&!reference.archivedAt&&!reference.activity?.some(e=>e.userId===user&&e.kind==='opened'):reference.notificationRecipients===undefined?reference.targetUser===user&&reference.status==='open'&&!reference.archivedAt:unreadMention(reference,user);}

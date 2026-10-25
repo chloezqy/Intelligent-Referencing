@@ -15,6 +15,7 @@ export interface CollaborationClient {
  review(id:string):Promise<unknown>;
  activity(id:string,kind:'opened'|'located',elementIds?:string[]):Promise<unknown>;
  archive(id:string,archived:boolean):Promise<unknown>;
+ setPerspective?(user: 'A'|'B'):void;
  resetDemo?():void;
 }
 export function collaborationMode(search:string):CollaborationMode {

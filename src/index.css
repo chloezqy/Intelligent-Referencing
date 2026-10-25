@@ -310,3 +310,32 @@ button:disabled { opacity:.45; }
 .mention-options strong {display:block;font-size:11px;font-weight:500;}.mention-options small {display:block;font-size:10px;color:#777;}
 .mention-avatar {width:26px;height:26px;flex-shrink:0;display:grid;place-items:center;border-radius:50%;background:var(--participant-color);color:white;font-size:11px;}
 .mention-options i {width:6px;height:6px;border-radius:50%;background:#aaa;margin-left:auto;}.mention-options i.online {background:#4d9a71;}.mention-options p {font-size:11px;color:#777;padding:8px;}
+/* Compare occupies the right edge; the existing navigation panels stay left. */
+.comparison-inspector {order:4;position:relative;display:flex;flex-direction:column;flex-shrink:0;min-width:0;max-width:45%;background:white;border-left:1px solid #e5e5e5;z-index:65;}
+.comparison-inspector[hidden] {display:none;}
+.comparison-inspector-content {flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
+.inspector-resizer {position:absolute;left:-3px;top:0;bottom:0;width:6px;cursor:col-resize;touch-action:none;}
+.inspector-resizer:focus-visible {outline:2px solid #7560cf;}
+.inspector-share-host,.inspector-composer {min-height:0;height:100%;display:flex;flex-direction:column;}
+.inspector-composer>header,.inspector-composer>p {padding:12px 16px;margin:0;flex-shrink:0;}
+.inspector-composer form {min-height:0;flex:1;display:flex;flex-direction:column;}
+.inspector-composer .share-form-body {overflow-y:auto;min-height:0;flex:1;padding:0 16px 16px;}
+.inspector-composer .share-form-footer {flex-shrink:0;padding:12px 16px;border-top:1px solid #e5e5e5;background:white;margin:0;}
+.inspector-composer label {display:block;font-size:12px;margin:10px 0;}
+.inspector-composer input:not([type=checkbox]),.inspector-composer select,.inspector-composer textarea {width:100%;border:1px solid #ddd;border-radius:6px;padding:8px;}
+.inspector-composer button {font-size:12px;}
+.inspector-composer .invite-now {display:flex;gap:8px;align-items:center;}
+.inspector-conversation {overflow-y:auto;min-height:0;flex:1;}
+.inspector-composer .property-comparison {min-width:0;}
+@media(max-width:899px){.comparison-inspector{position:absolute;right:0;top:0;bottom:0;max-width:100%;box-shadow:-8px 0 24px #0001;}}
+.inspector-composer {font-size:12px;}
+.inspector-composer h3 {font-size:12px;font-weight:600;}
+.inspector-composer p {line-height:1.5;overflow-wrap:anywhere;}
+.inspector-composer .subtle {font-size:10px;color:#888;margin:6px 0;}
+.inspector-composer .share-target-label {font-size:12px;font-weight:500;margin-top:10px;}
+.inspector-composer button {border:1px solid #ddd;border-radius:5px;padding:7px 9px;}
+.inspector-composer button:disabled {opacity:.5;cursor:not-allowed;}
+.inspector-composer .primary-action {color:#6352b8;background:#eeedff;border-color:#d5ccf4;}
+.inspector-composer textarea {min-height:58px;resize:vertical;max-height:120px;}
+.inspector-composer :is(button,select,textarea):focus-visible {outline:2px solid #7965c6;outline-offset:2px;}
+.reference-detail .review-action {margin-top:10px;}
