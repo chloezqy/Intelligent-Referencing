@@ -15,7 +15,7 @@ The prototype uses six example mobile shopping screens: Home, Search, Product De
 - Open a received reference, find its targets, and reply or mark it reviewed.
 - Work through five research tasks that progress from selection to collaboration.
 
-**The collaboration is real:** two people connect to the same room and receive references and replies live. **The interpretation is rule-based:** the prototype uses where you draw and information already attached to the sample elements. It does not currently use an external AI model.
+**Standalone demo is the default:** User A works locally with an explicitly simulated User B. Real collaboration remains available in References → Workspace mode, or with `?mode=realtime`; existing room links also open real-time mode. In that mode two actual people receive references and replies live. **The interpretation is rule-based:** the prototype uses where you draw and information already attached to the sample elements. It does not currently use an external AI model.
 
 ## Find your way around
 
@@ -47,7 +47,7 @@ You can select and reference the sample content, but you cannot currently move, 
 
 ### User A: create and send
 
-1. Open **References** or the room control in the top bar.
+1. Open **References** or the room control in the top bar and choose **Real-time collaboration** in Workspace mode.
 2. Choose **Create room as User A**.
 3. Copy the invitation link and send it to the other person.
 4. Select or gesture across the objects you want to discuss, then choose **Share to User A/B**.
@@ -79,7 +79,7 @@ Open **Tasks** and choose **Start task** before attempting a level.
 | **4 · Shared Review Request** | As A, reference at least two related objects and send B a Review request with a note about design consistency. | B opens that reference, locates every target, and replies or marks it reviewed. |
 | **5 · Collaborative Design Comparison** | As A, select the first product button on Home and the first on Search. Send B a Compare request with a context note. | The reference contains exactly those two buttons; B opens it, locates both and replies or marks it reviewed. |
 
-For Levels 4–5, A manages the task and B participates through References. Create a room before starting these levels. If B is offline, the panel tells you; it does not substitute a simulated person.
+For Levels 4–5, demo mode uses scripted User B activity and labels completion as a demo scenario. Its research records are separate from real participant records. In real-time mode, A manages the task and B participates through References. Create a room before starting these levels. Offline real participants are never silently replaced by simulation.
 
 You can switch levels without resetting them. **Next Task** appears after completion. **Reset task** starts a fresh attempt, so previous shared references cannot complete it. **Locate task area** only changes your view—it does not select anything or complete a task.
 
@@ -92,6 +92,23 @@ Completion checks recorded actions and selected objects. It does not judge the q
 - **Research export:** choose **Export research events** in Tasks to download a record of attempts, selection methods, gestures, corrections and collaboration actions.
 
 Refreshing normally restores your identity, task history and shared references. Keeping server records after a restart requires retaining the server’s data folder. Task logs remain local to each participant’s browser.
+
+## Standalone demo
+
+The default workspace needs no collaboration backend. Select or gesture, share a reference, then open its pin or References entry. Simulated User B opens, locates and acknowledges it once after a short delay. Replies are scripted and clearly labeled; no AI model is involved. Cross-user Compare uses B’s fixed first Search product CTA. Your viewport never moves automatically.
+
+Use **References → Reset demo** to clear demo references and demo research history. Real rooms and their research records remain untouched. Demo state stays in this browser and origin; it is not shared across devices or tabs and is not evidence from another participant.
+
+To run without the Node collaboration server:
+
+```sh
+npm run dev:standalone
+# Or serve the production build:
+npm run build
+npm run preview:standalone
+```
+
+Both commands use port **3000** by default; stop other servers using that port first. A static host can serve `dist/` directly. Real-time mode on a static-only host will need the existing Node server; it does not silently fall back to simulation.
 
 ## Open the prototype locally
 
@@ -126,7 +143,7 @@ The comparison lists the sample objects’ actual text, dimensions, colors, corn
 
 After sharing, both people see pins attached to the referenced objects. Pins move with the design when you pan or zoom. Nearby pins combine into a count to keep the canvas clear: click the count to open its conversation, or choose a conversation if several overlap. All pins belonging to a reference open the same discussion. A check mark indicates reviewed status. Opening a pin highlights its targets without moving your view; **Locate referenced elements** moves your view when you choose.
 
-These interactions adapt the object pins, contextual actions and comparison presentation from [Prototype 3](https://github.com/Rok1006/AI_Widget_Referencing/tree/main/src/prototypes/03-cross-application). The new React implementation uses Smart Reference’s real rooms and saved object IDs. It does not include the old prototype’s scripted User B, automatic style matching or editing tools. Public backend deployment is still separate work.
+These interactions adapt the object pins, contextual actions and comparison presentation from [Prototype 3](https://github.com/Rok1006/AI_Widget_Referencing/tree/main/src/prototypes/03-cross-application). The new React implementation uses Smart Reference’s real rooms and saved object IDs. Demo mode uses a new small, deterministic User B scenario; it does not import the old prototype’s scripted collaborator, automatic style matching or editing tools. Public backend deployment is still separate work.
 
 ## Keep references tidy
 
@@ -169,6 +186,15 @@ Use `npm run verify:production` to check the production build, realtime sharing,
 
 ### Progressive rough gesture interpretation
 
-A gesture shows one compact popup naming the best inferred selection. The default is usable immediately; there is no extra confirmation step. **Adjust interpretation** opens scopes and a collapsed list of alternative interpretations inside the same popup. Share and Compare stay connected to that selection. Ordinary clicks keep the lightweight action pills, with secondary details under •••.
+A gesture shows one compact popup naming the best inferred selection. The default is usable immediately; there is no extra confirmation step. **Adjust interpretation** opens scopes and a collapsed list of alternative interpretations inside the same popup. Share and Compare stay connected to that selection. Ordinary clicks keep the lightweight action pills, with selected elements and scope controls under **Refine Selection**.
 
 Interpretations are labeled **geometric** (directly touched targets), **structural** (hierarchy/components), or **semantic** (functional relationships), and currently all are **rule-based**. These labels do not mean an AI model was called. Level 3 retains its explicit reviewed-selection step as research instrumentation, not a normal interaction requirement.
+
+
+### Mentioning a room participant
+
+In the Share popup's **Note** field, type `@` to search the participants who have joined the room. Choose a result with the mouse or use Up/Down and Enter; Escape dismisses the suggestions without closing the draft. You can mention both participants in one note. Initials and online/offline status reflect the actual room members.
+
+References are always visible to the room. Without mentions, sharing adds the reference to the room list. Mentioning `@User A` or `@User B` adds a targeted in-app notification for that participant when you press Send; mentioning yourself does not notify you. Opening a mention notification opens the existing conversation without moving the viewport. **Invite to view now** remains a separate optional invitation with explicit navigation acceptance.
+
+This prototype still supports only User A and User B. Mentions do not create accounts, invite arbitrary people, change access permissions, or alter the existing other-participant review assignment. Offline participants can receive the saved notification when they reconnect. Existing references retain their prior notification behavior.

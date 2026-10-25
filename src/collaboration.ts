@@ -2,10 +2,13 @@ import { ScopeLevel } from './types';
 export type UserId = 'A' | 'B';
 export type ReferenceIntent = 'Review' | 'Compare' | 'Help' | 'Look at this';
 export interface SharedReference {
+  simulated?: boolean;
   id: string; sourceUser: UserId; targetUser: UserId;
   elementIds: string[]; exemplarIds: string[]; scope: ScopeLevel;
   label: string; intent: ReferenceIntent; message: string; createdAt: string;
   status: 'open' | 'reviewed';
+  mentions?:UserId[];
+  notificationRecipients?:UserId[];
   attention?:AttentionRequest[];
   comparison?: ComparisonContext;
   research?: { level: 4 | 5; attemptId: string };

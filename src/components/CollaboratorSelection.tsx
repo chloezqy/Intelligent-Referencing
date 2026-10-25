@@ -1,8 +1,8 @@
+import type {CollaborationClient} from '../collaborationClient';
 import React, { useEffect, useRef, useState } from 'react';
-import { useCollaboration } from '../useCollaboration';
 import { InferredReference, UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
-interface Props {selection:InferredReference|null;nodes:UIElement[];camera:CanvasTransform;collaboration:ReturnType<typeof useCollaboration>}
+interface Props {selection:InferredReference|null;nodes:UIElement[];camera:CanvasTransform;collaboration:CollaborationClient}
 export default function CollaboratorSelection({selection,nodes,camera,collaboration:c}:Props){
  const latest=useRef({selection,c});latest.current={selection,c};
  const [error,setError]=useState('');
@@ -12,5 +12,5 @@ export default function CollaboratorSelection({selection,nodes,camera,collaborat
  },[]);
  const other=c.session?.userId==='A'?'B':'A',remote=c.selections[other];
  const visible=c.connected&&c.room?.members.some(m=>m.userId===other&&m.online);
- return <div className="collaborator-selection-layer" aria-hidden={!error}>{error&&<span className="selection-sync-error" role="status">{error}</span>}{visible&&remote&&nodes.filter(n=>remote.elementIds.includes(n.id)).map((n,i)=><div key={n.id} className={`collaborator-selection user-${other}`} style={{left:n.x*camera.scale+camera.x,top:n.y*camera.scale+camera.y,width:n.w*camera.scale,height:n.h*camera.scale}}>{i===0&&<span>User {other}’s selection · {remote.elementIds.length}</span>}</div>)}</div>;
+ return <div className="collaborator-selection-layer" aria-hidden={!error}>{error&&<span className="selection-sync-error" role="status">{error}</span>}{visible&&remote&&nodes.filter(n=>remote.elementIds.includes(n.id)).map((n,i)=><div key={n.id} className={`collaborator-selection user-${other}`} style={{left:n.x*camera.scale+camera.x,top:n.y*camera.scale+camera.y,width:n.w*camera.scale,height:n.h*camera.scale}}>{i===0&&<span>{c.mode==='demo'?'Simulated ':''}User {other}’s selection · {remote.elementIds.length}</span>}</div>)}</div>;
 }

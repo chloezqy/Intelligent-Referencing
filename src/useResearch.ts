@@ -5,8 +5,8 @@ import { requestId } from './useCollaboration';
 import { evaluateAttempt, ResearchAttempt, ResearchEvent, sameIds, TaskLevel } from './research';
 interface Log { level: TaskLevel; attempts: ResearchAttempt[] }
 const load=(key:string):Log=>{try{const value=JSON.parse(localStorage.getItem(key)||'null');if(value?.attempts&&[1,2,3,4,5].includes(value.level))return value;}catch{}return {level:1,attempts:[]};};
-export function useResearch(room:RoomSnapshot|null, session:Session|null){
-  const key=`sr-research-v1-${session?`${session.code}-${session.userId}`:'solo'}`;
+export function useResearch(room:RoomSnapshot|null, session:Session|null,mode:'demo'|'realtime'='realtime'){
+  const key=mode==='demo'?'sr-research-demo-v1-A':`sr-research-v1-${session?`${session.code}-${session.userId}`:'solo'}`;
   const [state,setState]=useState(()=>({key,log:load(key)}));
   const log=state.key===key?state.log:load(key);
   const [storageError,setStorageError]=useState('');
@@ -57,9 +57,9 @@ export function useResearch(room:RoomSnapshot|null, session:Session|null){
     });return changed?{...log,attempts}:log;
   });},[room,update]);
   useEffect(()=>{if(attempt&&!attempt.completedAt&&result?.complete&&attempt.level<=3)update(log=>({...log,attempts:log.attempts.map(a=>a.id===attempt.id&&!a.completedAt?{...a,completedAt:new Date().toISOString(),events:[...a.events,{id:requestId(),type:'task_complete',at:new Date().toISOString()}]}:a)}));},[attempt,result?.complete,update]);
-  return {log,attempt,result,storageError,record,recordSelection,
+  return {mode,log,attempt,result,storageError,record,recordSelection,
     setLevel:(level:TaskLevel)=>update(log=>({...log,level})),
-    start:()=>update(log=>{const at=new Date().toISOString();return {...log,attempts:[...log.attempts,{id:requestId(),level:log.level,startedAt:at,events:[{id:requestId(),type:'task_start',at}]}].slice(-100)};}),
-    exportLog:()=>{const blob=new Blob([JSON.stringify({version:1,room:room?.code,user:session?.userId||'local',...log},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='smart-reference-research.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),0);},
+    start:()=>update(log=>{const at=new Date().toISOString();return {...log,attempts:[...log.attempts,{id:requestId(),mode,level:log.level,startedAt:at,events:[{id:requestId(),type:'task_start',at}]}].slice(-100)};}),
+    exportLog:()=>{const blob=new Blob([JSON.stringify({version:1,mode,evidence:mode==='demo'?'simulated collaboration; not real participant evidence':'real participant interactions',room:room?.code,user:session?.userId||'local',...log},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='smart-reference-research.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),0);},
   };
 }

@@ -1,3 +1,4 @@
+import {mentionedUsers} from '../src/mentions';
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -66,10 +67,11 @@ export class RoomStore {
     if (!/^[a-f0-9-]{36}$/i.test(body.requestId || '')) throw new ApiError(400, 'Invalid request ID.');
     const r = this.room(code), targetUser = user === 'A' ? 'B' : 'A';
     if (!r.members.some(m => m.userId === targetUser)) throw new ApiError(409, 'Invite the other user before sharing.');
+    const mentions=mentionedUsers(message,r.members),notificationRecipients=mentions.filter(id=>id!==user);
     const duplicate = r.references.find(ref => ref.id === body.requestId);
     if (duplicate) { if (duplicate.sourceUser !== user) throw new ApiError(409, 'Request ID already used.'); return duplicate.id; }
     if (r.references.length >= 200) throw new ApiError(409, 'This prototype supports up to 200 references per room.');
-    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', responses: [], activity: [], attention:body.inviteNow?[{id:body.requestId,sourceUser:user,targetUser,createdAt:new Date().toISOString()}]:[], ...(comparison?{comparison}:{}), ...(research ? { research } : {}) }); room.revision++; });
+    this.transaction(rooms => { const room = this.room(code, rooms); room.references.push({ id: body.requestId, sourceUser: user, targetUser, elementIds, exemplarIds, scope: body.scope, label, intent: body.intent, message, createdAt: new Date().toISOString(), status: 'open', mentions,notificationRecipients,responses: [], activity: [], attention:body.inviteNow?[{id:body.requestId,sourceUser:user,targetUser,createdAt:new Date().toISOString()}]:[], ...(comparison?{comparison}:{}), ...(research ? { research } : {}) }); room.revision++; });
     return body.requestId;
   }
   inviteAttention(code:string,user:UserId,id:string,requestId:unknown){

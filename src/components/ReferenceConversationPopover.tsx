@@ -1,11 +1,11 @@
+import type {CollaborationClient} from '../collaborationClient';
 import React, { useEffect, useRef, useState } from 'react';
 import { SharedReference } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
 import { sharePopoverLayout } from '../referencePresentation';
-import { useCollaboration } from '../useCollaboration';
 import ReferenceConversation from './ReferenceConversation';
-interface Props {reference:SharedReference;nodes:UIElement[];camera:CanvasTransform;collaboration:ReturnType<typeof useCollaboration>;onClose:()=>void;onLocate:(ref:SharedReference)=>void;onClear:()=>void}
+interface Props {reference:SharedReference;nodes:UIElement[];camera:CanvasTransform;collaboration:CollaborationClient;onClose:()=>void;onLocate:(ref:SharedReference)=>void;onClear:()=>void}
 export default function ReferenceConversationPopover({reference,nodes,camera,collaboration,onClose,onLocate,onClear}:Props){
  const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null);
  const [viewport,setViewport]=useState({width:800,height:600}),[height,setHeight]=useState(360);

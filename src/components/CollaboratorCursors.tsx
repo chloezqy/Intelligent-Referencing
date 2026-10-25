@@ -1,7 +1,7 @@
+import type {CollaborationClient} from '../collaborationClient';
 import React, { useEffect, useRef, useState } from 'react';
 import { CanvasTransform } from '../workspace';
-import { useCollaboration } from '../useCollaboration';
-interface Props {camera:CanvasTransform;collaboration:ReturnType<typeof useCollaboration>}
+interface Props {camera:CanvasTransform;collaboration:CollaborationClient}
 export default function CollaboratorCursors({camera,collaboration:c}:Props){
  const host=useRef<HTMLDivElement>(null),latest=useRef({camera,c});latest.current={camera,c};
  const [now,setNow]=useState(Date.now());

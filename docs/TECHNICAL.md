@@ -1,3 +1,19 @@
+## Standalone and realtime modes
+
+Standalone is now default. `collaborationMode()` selects realtime for `?mode=realtime` or an existing `?room=...` link, unless `mode=demo` is explicit. References contains a mode selector. Switching modes reloads the workspace and discards unsent drafts.
+
+- `src/collaborationClient.ts`: transport-independent component contract.
+- `src/useCollaboration.ts`: mode facade plus preserved `useRealtimeCollaboration`; inactive realtime mode does not restore identities or start SSE.
+- `src/useDemoCollaboration.ts`: local browser adapter with no network calls; local session A, no cursors, fixed B selection. One 1.2-second scenario timer per pending shared request creates a labeled B response and recorded simulated open/locate/review. Pending scenarios resume on refresh; retries deduplicate.
+- `src/demoCollaboration.ts`: pure share/snapshot/scenario helpers. Demo references carry `simulated:true`; existing real server schema and storage remain unchanged.
+- Demo storage: `sr-demo-v1`; research storage: `sr-research-demo-v1-A`. Research exports and new attempts include mode; Levels 4–5 remain strict but display demo completion. They do not represent human coordination evidence. Reset clears only these demo records.
+- Browser storage is origin-specific and last-write persistence, not multi-tab synchronization. No server tokens or real rooms are copied into demo data. Disabled storage yields an explicit warning and memory-only use.
+- `npm run dev:standalone` / `preview:standalone` serve only Vite/static assets. `npm run dev`, build, start, realtime APIs, SSE and production persistence verification remain available.
+
+No model is connected. The existing `SemanticProvider` layer is unchanged and remains the future model integration point.
+
+The remaining deployment and authenticated collaboration sections describe **realtime mode**.
+
 # Smart Reference — shared referencing
 
 Two actual browser clients share object-anchored references, intent, notes, responses, and review status. Canvas camera and selection stay local. Gesture interpretation uses geometric intersection and authored semantic metadata; it does not call an AI model. The commerce document is read-only.

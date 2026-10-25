@@ -136,6 +136,16 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     assert.equal(store.snapshot(a.code,()=>true).references.length,beforeInvitations);
     const inviteShareId=randomUUID();assert.equal((await api(`/rooms/${a.code}/references`,{...payload,requestId:inviteShareId,inviteNow:true},a)).status,201);
     assert.equal(store.snapshot(a.code,()=>true).references.find(r=>r.id===inviteShareId)!.attention![0].id,inviteShareId);
+    const mentionId=randomUUID();
+    assert.equal((await api(`/rooms/${a.code}/references`,{...payload,requestId:mentionId,message:'@User B compare with @User A. @User B',mentions:['C'],notificationRecipients:['A']},a)).status,201);
+    const mentionSnapshot=await reconnect.wait(s=>s.references.some(r=>r.id===mentionId));const mentionRef=mentionSnapshot.references.find(r=>r.id===mentionId)!;
+    assert.deepEqual(mentionRef.mentions,['B','A']);assert.deepEqual(mentionRef.notificationRecipients,['B']);assert.equal(mentionRef.attention!.length,0);
+    for(const message of ['Room-wide share','@User A self note','@Jenny unknown person']){
+      const id=randomUUID();assert.equal((await api(`/rooms/${a.code}/references`,{...payload,requestId:id,message},a)).status,201);
+      assert.deepEqual(store.snapshot(a.code,()=>true).references.find(r=>r.id===id)!.notificationRecipients,[]);
+    }
+    const bMentionId=randomUUID();assert.equal((await api(`/rooms/${a.code}/references`,{...payload,research:undefined,requestId:bMentionId,message:'@User A please review'},b)).status,201);
+    const persistedMention=new RoomStore(file).snapshot(a.code,()=>false).references.find(r=>r.id===bMentionId)!;assert.deepEqual(persistedMention.notificationRecipients,['A']);
     const hostile=await fetch(base+'/api/rooms',{method:'POST',headers:{Origin:'https://unrelated.example','Content-Type':'application/json'},body:'{}'});assert.equal(hostile.status,403);
   } finally { controllers.forEach(c=>c.abort());server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));rmSync(dir,{recursive:true,force:true}); }
 });

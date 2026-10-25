@@ -2,7 +2,7 @@ import { MOCK_NODES } from './data';
 import { SharedReference } from './collaboration';
 export type TaskLevel = 1 | 2 | 3 | 4 | 5;
 export interface ResearchEvent { id: string; type: string; at: string; ids?: string[]; method?: string; actor?: string; referenceId?: string; step?: boolean }
-export interface ResearchAttempt { id: string; level: TaskLevel; startedAt: string; events: ResearchEvent[]; completedAt?: string }
+export interface ResearchAttempt { mode?:'demo'|'realtime'; id: string; level: TaskLevel; startedAt: string; events: ResearchEvent[]; completedAt?: string }
 const ids = (predicate: (n: typeof MOCK_NODES[number]) => boolean) => MOCK_NODES.filter(predicate).map(n => n.id);
 export const TASKS: {level: TaskLevel; title: string; instructions: string; targets: string[]; focus: string}[] = [
   {level:1,title:'Product Price Selection',instructions:'Select all 15 individual product prices across Home, Search, Detail, Favorites and Cart. Exclude cart totals, checkout totals and old prices. Use selection or semantic scope, then remove any extra matches.',targets:ids(n=>n.role==='price'&&(n.component==='ProductCard'||n.component==='CartItem'||n.id==='detail-price')),focus:'Semantic references across screens'},

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "node --import tsx server/index.ts",
     "build": "vite build",
+    "dev:standalone": "vite --host 0.0.0.0 --port 3000",
+    "preview:standalone": "vite preview --host 0.0.0.0 --port 3000",
     "preview": "NODE_ENV=production node --import tsx server/index.ts",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",

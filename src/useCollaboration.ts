@@ -8,7 +8,7 @@ export function requestId() {
 }
 const token = () => [...crypto.getRandomValues(new Uint8Array(32))].map(b => b.toString(16).padStart(2, '0')).join('');
 const roomFromUrl = () => new URL(location.href).searchParams.get('room') || '';
-export function useCollaboration() {
+export function useRealtimeCollaboration(enabled=true) {
   const [session, setSession] = useState<Session | null>(null);
   const [room, setRoom] = useState<RoomSnapshot | null>(null);
   const [connected, setConnected] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
@@ -27,7 +27,7 @@ export function useCollaboration() {
     setSession(identity); setRoom(null); setError('');
   }
   useEffect(() => {
-    if (!initialCode) return;
+    if (!enabled || !initialCode) return;
     try {
       const invitation = new URL(location.href).searchParams.has('join');
       const saved = sessionStorage.getItem(`sr-room-${initialCode}`) || (!invitation ? localStorage.getItem(`sr-room-${initialCode}`) : null);
@@ -35,7 +35,7 @@ export function useCollaboration() {
     } catch { setError('Browser storage is unavailable. Keep this tab open to retain your identity.'); }
   }, []);
   useEffect(() => {
-    if (!session) return;
+    if (!enabled || !session) return;
     const controller = new AbortController(); let retry = 1000;
     async function connect() {
       while (!controller.signal.aborted) {
@@ -80,7 +80,7 @@ export function useCollaboration() {
   async function action<T>(fn: () => Promise<T>): Promise<T | undefined> {
     setBusy(true); setError(''); try { return await fn(); } catch (err) { setError(err instanceof Error ? err.message : 'Unable to connect.'); return undefined; } finally { setBusy(false); }
   }
-  return { session, room, selections, cursors, connected, busy, error, initialCode,
+  return { mode: 'realtime' as const, session, room, selections, cursors, connected, busy, error, initialCode,
     publishSelection: async (body:Omit<SelectionPresence,'userId'|'revision'>) => {if(!session||!connected)return;await api(`/rooms/${session.code}/selection`,body);},
     comparisonDraft: () => action(async()=>{if(!session||!connected)throw new Error('Reconnect before comparing.');return await api(`/rooms/${session.code}/comparison-drafts`,{revisions:{A:selections.A?.revision,B:selections.B?.revision}}) as unknown as ComparisonContext;}),
     cursor: async (x:number,y:number,visible:boolean) => {if(!session||!connected)return;try{await api(`/rooms/${session.code}/cursor`,{x,y,visible});}catch{/* Ephemeral presence never interrupts reference actions. */}},
@@ -93,7 +93,7 @@ export function useCollaboration() {
     }),
     share: (draft: ReferenceDraft, intent: ReferenceIntent, message: string, id: string,inviteNow=false) => action(async () => {
       if (!session || !connected) throw new Error('Reconnect before sharing.');
-      return api(`/rooms/${session.code}/references`, { ...draft, intent, message, requestId: id,inviteNow });
+      return await api(`/rooms/${session.code}/references`, { ...draft, intent, message, requestId: id,inviteNow }) as unknown as import('./collaboration').SharedReference;
     }),
     inviteAttention:(id:string,requestId:string)=>action(async()=>{if(!session||!connected)throw new Error('Reconnect before inviting.');return api(`/rooms/${session.code}/references/${id}/attention`,{requestId});}),
     viewAttention:(id:string,invitationId:string)=>action(async()=>{if(!session||!connected)throw new Error('Reconnect before viewing.');return api(`/rooms/${session.code}/references/${id}/attention/${invitationId}/view`,{});}),
@@ -103,4 +103,13 @@ export function useCollaboration() {
     archive: (id: string, archived: boolean) => action(async () => { if (!session || !connected) throw new Error('Reconnect before archiving or restoring.'); return api(`/rooms/${session.code}/references/${id}/archive`, { archived }); }),
     invitation: session ? `${location.origin}/?room=${session.code}&join=1` : '',
   };
+}
+
+import {collaborationMode,CollaborationClient} from './collaborationClient';
+import {useDemoCollaboration} from './useDemoCollaboration';
+export function useCollaboration():CollaborationClient {
+ const mode=collaborationMode(location.search);
+ const realtime=useRealtimeCollaboration(mode==='realtime');
+ const demo=useDemoCollaboration(mode==='demo');
+ return mode==='demo'?demo:realtime;
 }
