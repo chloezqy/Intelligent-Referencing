@@ -252,7 +252,6 @@ button:disabled { opacity:.45; }
 .comparison-context h4 { font-weight:600;margin-bottom:4px; }.comparison-context ul { color:#777;margin:6px 0; }
 .comparison-participants { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0; }
 .comparison-context input { width:100%;border:1px solid #ddd;border-radius:4px;padding:6px;font-size:12px; }
-.purpose-suggestions { display:flex;flex-wrap:wrap;gap:4px; }.purpose-suggestions button { padding:4px 6px;border:1px solid #dedbe8;border-radius:4px; }.purpose-suggestions button[aria-pressed=true] {background:#eeedff;color:#6352b8;}
 .reference-actions button:disabled { opacity:.5;cursor:not-allowed; }
 
 /* Lightweight contextual action pills; details occupy the same single surface. */

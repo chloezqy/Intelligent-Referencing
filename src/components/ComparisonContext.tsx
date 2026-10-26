@@ -4,7 +4,7 @@ import { ComparisonContext as Context, UserId } from '../collaboration';
 import { UIElement } from '../types';
 interface Props {context:Context;nodes:UIElement[];user?:UserId;onPurpose?:(purpose:string)=>void;compact?:boolean;visual?:boolean}
 export function ComparisonPurpose({context,onPurpose}:{context:Context;onPurpose:(purpose:string)=>void}){
- return <><label>Comparison purpose<input aria-label="Comparison purpose" maxLength={300} value={context.purpose} onChange={e=>onPurpose(e.target.value)}/></label><div className="purpose-suggestions">{context.interpretation.purposes.map(p=><button type="button" key={p} aria-pressed={context.purpose===p} onClick={()=>onPurpose(p)}>{p}</button>)}</div></>;
+ return <label>Comparison purpose<input aria-label="Comparison purpose" maxLength={300} value={context.purpose} onChange={e=>onPurpose(e.target.value)}/></label>;
 }
 export default function ComparisonContext({context,nodes,user,onPurpose,compact=false,visual=false}:Props){
  if(visual)return <div className="visual-comparison-context">
