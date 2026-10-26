@@ -36,8 +36,8 @@ export interface AttentionRequest {id:string;sourceUser:UserId;targetUser:UserId
 
 
 /** Completed references belong in Archived without rewriting their review evidence. */
-export function referenceLists(references:SharedReference[]){
- const archived=(reference:SharedReference)=>!!reference.archivedAt||reference.status==='reviewed';
+export function referenceLists(references:SharedReference[],isPending?:(reference:SharedReference)=>boolean){
+ const archived=(reference:SharedReference)=>!!reference.archivedAt||reference.status==='reviewed'&&!isPending?.(reference);
  return {active:references.filter(reference=>!archived(reference)),archived:references.filter(archived)};
 }
 

@@ -15,4 +15,10 @@ export function insertMention(text:string,start:number,end:number,userId:UserId)
  const token=`@User ${userId} `;return {text:text.slice(0,start)+token+text.slice(end),caret:start+token.length};
 }
 export function unreadMention(reference:SharedReference,user?:UserId){return !!user&&!!reference.notificationRecipients?.includes(user)&&!reference.archivedAt&&!reference.activity?.some(e=>e.userId===user&&e.kind==='opened');}
-export function needsReferenceNotification(reference:SharedReference,user?:UserId){return reference.simulated?!!user&&reference.targetUser===user&&!reference.archivedAt&&!reference.activity?.some(e=>e.userId===user&&e.kind==='opened'):reference.notificationRecipients===undefined?reference.targetUser===user&&reference.status==='open'&&!reference.archivedAt:unreadMention(reference,user);}
+export function needsReferenceNotification(reference:SharedReference,user?:UserId){
+ if(!user||reference.archivedAt)return false;
+ if(reference.attention?.some(invitation=>invitation.targetUser===user&&!invitation.viewedAt))return true;
+ if(reference.status==='reviewed')return false;
+ if(reference.simulated||reference.notificationRecipients===undefined)return reference.targetUser===user&&!reference.activity?.some(event=>event.userId===user&&event.kind==='opened');
+ return unreadMention(reference,user);
+}

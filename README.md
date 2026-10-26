@@ -259,3 +259,9 @@ Tool choice, not trajectory classification, determines whether a drag moves or r
 In Compare → Sharing options, choose **Use as a design reference**. User A's frozen selection is the reference and User B's is the target. Select one or more categories (Typography, Spacing, Colors, Corner radius), then optionally add a note, mentions or a view invitation and explicitly Share. These are requested categories, not automatic edits or inferred spacing values. Other purposes hide these controls; Custom purpose preserves free text.
 
 The shared comparison stores optional `designReference: {direction: {referenceUser: 'A', targetUser: 'B'}, properties: [...]}` beside its existing purpose and frozen selections. Both demo storage and the realtime backend preserve it, and the recipient sees the saved direction/categories. Existing references without this field remain compatible; no migration or new AI request is required.
+
+### Recovering a dismissed collaboration nudge
+
+**Later** silences the currently known banner events only. The request remains unread in **References**, with its sender, targets/screens and intended action. The left References badge includes pending invitations and targeted unread requests. Unread items appear first; clicking one locates its saved targets and opens the same conversation. Opening records viewed activity; **Mark reviewed** remains a separate action.
+
+Banner dismissals persist in this browser by mode, room and A/B perspective (and synchronize between tabs). Realtime viewed receipts remain server-backed; demo receipts remain in local room storage. A new explicit invitation can nudge again, without creating another reference or clearing prior review evidence.

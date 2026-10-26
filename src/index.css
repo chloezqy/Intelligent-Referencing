@@ -472,3 +472,8 @@ button:disabled { opacity:.45; }
  .attention-notice > span {grid-column:1 / -1;}
  .attention-notice button {width:100%;}
 }
+
+.reference-list > button.unread-reference {background:#f7f4ff;border-color:#cfc3ef;box-shadow:inset 3px 0 #7965c6;}
+.reference-request-header {display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;}
+.reference-unread-label {display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;color:#75649f;white-space:nowrap;}
+.reference-unread-label i {width:6px;height:6px;border-radius:50%;background:#7965c6;}
