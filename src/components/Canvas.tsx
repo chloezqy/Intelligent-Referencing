@@ -1,6 +1,6 @@
+import {classifyTrajectory} from '../trajectory';
 import {useSemanticSuggestions} from '../useSemanticSuggestions';
 import {interpretationLevel} from '../semanticInterpretation';
-import { isSelectionDrag, selectionDragKind } from '../selectionInteraction';
 import { selectionActionLayout } from '../selectionActionLayout';
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -212,10 +212,12 @@ export default function Canvas({
     if(panPoint.current){const previous=panPoint.current;panPoint.current={x:e.clientX,y:e.clientY};setTransform(t=>({...t,x:t.x+e.clientX-previous.x,y:t.y+e.clientY-previous.y}));return;}
     const pending=pendingPointer.current;if(!pending||pending.id!==e.pointerId)return;
     pending.screenPoints.push({x:e.clientX,y:e.clientY});pending.path.push(getCanvasCoords(e));
-    if(!pending.dragging&&isSelectionDrag(pending.screenStart,pending.screenPoints)){
-      onSelectionStart();pending.dragging=true;setSelectionState(selectionDragKind(pending.shift));setShowAlternatives(false);setDetailsOpen(false);
+    const trajectory=classifyTrajectory(pending.screenPoints,{movable:false,shift:pending.shift});
+    if(!pending.dragging&&(trajectory==='reference'||trajectory==='box')){
+      onSelectionStart();pending.dragging=true;setSelectionState(trajectory==='box'?'rect-selecting':'drawing');setShowAlternatives(false);setDetailsOpen(false);
     }
     if(pending.dragging){setRectStart(pending.start);setCurrentPath(pending.shift?[pending.start,pending.path[pending.path.length-1]]:[...pending.path]);}
+
   };
   const commitClick=(node:UIElement|null,shift:boolean,previous:InferredReference|null)=>{
     onSelectionStart();
@@ -240,8 +242,9 @@ export default function Canvas({
     const end=getCanvasCoords(e);pending.path.push(end);pending.screenPoints.push({x:e.clientX,y:e.clientY});
     if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);
     setActionAnchor(end);setCurrentPath([]);setRectStart(null);
-    if(!pending.dragging&&!isSelectionDrag(pending.screenStart,pending.screenPoints)){commitClick(pending.node,pending.shift,pending.previous);return;}
-    if(pending.shift){
+    const intent=classifyTrajectory(pending.screenPoints,{movable:false,shift:pending.shift,final:true});
+    if(intent==='click'){commitClick(pending.node,pending.shift,pending.previous);return;}
+    if(intent==='box'){
       const r={x:Math.min(pending.start.x,end.x),y:Math.min(pending.start.y,end.y),w:Math.abs(end.x-pending.start.x),h:Math.abs(end.y-pending.start.y)};
       const hitIds=nodes.filter(n=>n.type!=='screen'&&rectIntersect(n,r)).map(n=>n.id);
       const ids=[...new Set([...(pending.previous?.selectedIds||[]),...hitIds])];

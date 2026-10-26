@@ -41,7 +41,7 @@ The bottom input helps you describe why your collaborator should look at the sel
 
 Use **Hand** or hold **Space** while dragging to move around the canvas. Use the zoom controls to look closer, and **Fit view** to find all six screens again. Help contains the keyboard shortcuts.
 
-You can select and reference the sample content, but you cannot currently move, resize, recolor or edit its text.
+You can select and reference the sample content, but objects are read-only. Movement, resize, recolor and text editing are not implemented.
 
 ## Try it with another person
 
@@ -242,3 +242,12 @@ Open browser DevTools → Network, select a product title such as **Nordic Loung
 Compare the normal rule-based alternatives with the AI’s proposed group. The offline evaluation fixture groups the lounge chair title, current price and Add to Bag button as purchase-decision information, while the current deterministic expansions do not return that exact cross-role group. This is a **mocked contract test, not demonstrated real-model quality**. The first approved live test is recorded in [AI live test](docs/AI_LIVE_TEST.md), including the real response ID and cached replay. For further evaluation: check grounded reasons, relevant IDs, unwanted extras, correction count and whether participants choose/ignore the suggestion before claiming improvement.
 
 Tests use injected fake Responses payloads, never a live model. They cover the fixture, invalid IDs, refusals, timeouts, limits, caching, stale responses and disabled configuration. Official API references: [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) and [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
+
+
+### Pointer trajectory experiment
+
+Select now runs a pure screen-pixel trajectory classifier (`src/trajectory.ts`): clicks stay within 6px; Shift-drag is always box selection; loops, curved paths and scribbles resolve to referencing. It considers travel distance, end displacement, straightness, accumulated turns, deviation and closure, filtering movement under 2px. Hand/Space/middle-button panning remains separate.
+
+Move intent requires at least 32px travel, 28px displacement and 120ms elapsed time, with straightness ≥0.96, deviation ≤3px and no sharp turns. Once a host visibly begins moving, it must pass the locked intent back to the classifier; the classifier never changes a locked move to a reference. Ambiguous strokes remain pending and fall back to reference on release.
+
+**The canvas is read-only.** Select drags create rough references again; object movement and Reset positions have been removed. The standalone trajectory classifier remains for future experiments. AI suggestions and shared references are unchanged.
