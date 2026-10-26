@@ -1,4 +1,4 @@
-import { UIElement } from './types';
+import { UIElement } from './types.js';
 
 export const INITIAL_NODES: UIElement[] = [];
 

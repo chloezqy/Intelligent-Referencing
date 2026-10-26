@@ -1,7 +1,7 @@
 import express from 'express';
 import type {ErrorRequestHandler} from 'express';
-import {SemanticError,semanticHandler} from './semantic';
-import type {SemanticOptions} from './semantic';
+import {SemanticError,semanticHandler} from './semantic.js';
+import type {SemanticOptions} from './semantic.js';
 
 /** Vercel-only policy; deployment access itself is controlled by Vercel Protection. */
 export function createVercelSemanticApp(options:Omit<SemanticOptions,'authorize'>={},env:NodeJS.ProcessEnv=process.env){

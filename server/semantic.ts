@@ -1,9 +1,9 @@
 import type {Express,Request,RequestHandler} from 'express';
 import {createHash} from 'node:crypto';
-import {MOCK_NODES} from '../src/data';
-import type {SemanticCandidate,SemanticRequest} from '../src/semanticInterpretation';
-import {validSemanticCandidate} from '../src/semanticInterpretation';
-import type {ScopeLevel} from '../src/types';
+import {MOCK_NODES} from '../src/data.js';
+import type {SemanticCandidate,SemanticRequest} from '../src/semanticInterpretation.js';
+import {validSemanticCandidate} from '../src/semanticInterpretation.js';
+import type {ScopeLevel} from '../src/types.js';
 export class SemanticError extends Error {details?:{model:string;responseId?:string;upstreamStatus:number;rejectedSuggestions?:{index:number;code:string}[]};constructor(public status:number,message:string){super(message);}}
 export function semanticContext(body:any):SemanticRequest{
  const valid=new Set(MOCK_NODES.filter(n=>n.type!=='screen').map(n=>n.id));

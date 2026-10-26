@@ -1,4 +1,4 @@
-import { Point, UIElement, Interpretation, ScopeLevel } from './types';
+import { Point, UIElement, Interpretation, ScopeLevel } from './types.js';
 
 // Check if a point is inside a polygon using ray casting
 export function pointInPolygon(point: Point, vs: Point[]): boolean {

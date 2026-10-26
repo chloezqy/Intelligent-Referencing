@@ -1,5 +1,5 @@
-import {Interpretation,UIElement,ScopeLevel} from './types';
-import {generateScopeInterpretations} from './utils';
+import {Interpretation,UIElement,ScopeLevel} from './types.js';
+import {generateScopeInterpretations} from './utils.js';
 export type InterpretationLevel='geometric'|'structural'|'semantic';
 export type InterpretationSource='rule-based'|'model';
 export interface SemanticRequest {contextId:string;selectedIds:string[];exemplarIds:string[];scope:ScopeLevel;elements:UIElement[];intent?:string;peer?:{userId:'A'|'B';elementIds:string[];revision:number}}

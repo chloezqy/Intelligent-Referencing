@@ -1,7 +1,7 @@
 // Offline deployment-contract smoke test. Never loads .env or calls OpenAI.
 import {build} from 'esbuild';
 import {execFileSync} from 'node:child_process';
-import {mkdtemp,readFile,readdir,rm} from 'node:fs/promises';
+import {mkdtemp,readFile,readdir,rm,symlink,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {createRequire} from 'node:module';
@@ -17,6 +17,13 @@ for(const name of await readdir(resolve('dist/assets'))){
 const directory=await mkdtemp(join(tmpdir(),'sr-vercel-'));
 let server;
 try{
+ // Preserve local imports: bundling alone hides native Node ESM resolution errors.
+ const esmDirectory=join(directory,'esm');
+ await build({entryPoints:['api/semantic/interpret.ts','server/vercelSemantic.ts','server/semantic.ts','src/data.ts','src/semanticInterpretation.ts','src/utils.ts','src/types.ts'],outbase:'.',outdir:esmDirectory,bundle:false,platform:'node',format:'esm',target:'node24',logLevel:'silent'});
+ await writeFile(join(esmDirectory,'package.json'),JSON.stringify({type:'module'}));
+ await symlink(resolve('node_modules'),join(esmDirectory,'node_modules'),'dir');
+ execFileSync(process.execPath,['--input-type=module','-e',`const {default:handler}=await import(${JSON.stringify(join(esmDirectory,'api/semantic/interpret.js'))}); if(typeof handler!=='function')throw new Error('Missing API handler');`],{stdio:'inherit'});
+ console.log('PASS: native Node ESM imports the unbundled API handler and its dependencies.');
  const outfile=join(directory,'function.cjs');
  await build({entryPoints:['api/semantic/interpret.ts'],bundle:true,platform:'node',format:'cjs',target:'node24',outfile,logLevel:'silent'});
  // Do not permit a paid call even if a developer has exported real credentials.
