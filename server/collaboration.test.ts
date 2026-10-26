@@ -115,6 +115,19 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     const savedComparison=new RoomStore(file).snapshot(a.code,()=>false).references.find(r=>r.id===comparisonId)!;
     assert.deepEqual(savedComparison.comparison!.selections.B.elementIds,['sc1-cta']); // Server snapshot ignores supplied ownership and survives changed selections.
     assert.equal(savedComparison.comparison!.purpose,'Wording consistency');
+    const designId=randomUUID(),designReference={direction:{referenceUser:'A',targetUser:'B'},properties:['typography','colors']};
+    const designPayload={...comparisonPayload,requestId:designId,comparison:{...comparisonPayload.comparison,purpose:'Use as a design reference',designReference},message:'@User B use A as reference',inviteNow:true};
+    for(const invalid of [{...designReference,properties:[]},{...designReference,properties:['unknown']},{...designReference,direction:{referenceUser:'B',targetUser:'A'}}]){
+      assert.equal((await api(`/rooms/${a.code}/references`,{...designPayload,comparison:{...designPayload.comparison,designReference:invalid}},a)).status,400);
+    }
+    assert.equal((await api(`/rooms/${a.code}/references`,designPayload,a)).status,201);
+    const receivedDesign=await sbAgain.wait(s=>s.references.some(r=>r.id===designId));
+    assert.deepEqual(receivedDesign.references.find(r=>r.id===designId)!.comparison!.designReference,designReference);
+    const savedDesign=new RoomStore(file).snapshot(a.code,()=>false).references.find(r=>r.id===designId)!;
+    assert.deepEqual(savedDesign.comparison!.designReference,designReference);
+    assert.deepEqual(savedDesign.comparison!.selections.B.elementIds,['sc1-cta']);
+    assert.deepEqual(savedDesign.notificationRecipients,['B']);assert.equal(savedDesign.attention!.length,1);
+
     assert.equal((await api(`/rooms/${a.code}/references`,comparisonPayload,a)).status,201);
     const replay=await stream(a);
     const replayPresence=await replay.wait((s:any)=>!!s.A,'selection');assert.deepEqual((replayPresence as any).A.elementIds,['hc1-cta']);replay.close();

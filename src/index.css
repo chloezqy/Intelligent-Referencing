@@ -449,3 +449,26 @@ button:disabled { opacity:.45; }
 }
 .comparison-sharing-options > h4 {font-size:12px;font-weight:500;color:#75649f;margin-bottom:8px;}
 .inspector-composer .share-form-body:focus-visible,.inspector-conversation:focus-visible {outline:2px solid #d5ccf4;outline-offset:-2px;}
+
+.design-reference-intent {margin:10px 0;padding:10px;border:1px solid #e3ddef;background:#faf9fd;border-radius:8px;min-width:0;}
+.design-reference-direction {display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;}
+.design-reference-intent fieldset {display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:10px;}
+.design-reference-intent legend {font-size:11px;font-weight:500;color:#615b6d;margin-bottom:5px;}
+.inspector-composer .design-reference-intent fieldset label {display:flex;align-items:center;gap:5px;font-size:11px;margin:3px 0;}
+.design-reference-intent input[type=checkbox] {accent-color:#75649f;}
+.design-reference-property-list {font-size:11px;color:#615b6d;margin:8px 0 0;}
+.design-reference-intent > h4 {font-size:11px;font-weight:600;color:#75649f;margin-bottom:8px;}
+
+.inspector-composer label.comparison-purpose-field,.comparison-purpose-field {display:flex;flex-direction:column;gap:7px;}
+.comparison-purpose-select {position:relative;display:block;width:100%;}
+.comparison-purpose-select select,.inspector-composer .comparison-purpose-select select {appearance:none;padding-right:36px;}
+.comparison-purpose-select > svg {position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:#615b6d;}
+
+/* Equal-sized notification actions, with softer corners and unbroken labels. */
+.attention-notice {width:min(560px,calc(100% - 24px));border-radius:16px;display:grid;grid-template-columns:minmax(0,1fr) repeat(2,112px);align-items:center;gap:10px;}
+.attention-notice button {width:112px;height:40px;padding:8px 10px;border-radius:10px;white-space:nowrap;display:flex;align-items:center;justify-content:center;line-height:18px;}
+@media (max-width:600px) {
+ .attention-notice {width:min(360px,calc(100% - 24px));grid-template-columns:repeat(2,minmax(0,1fr));}
+ .attention-notice > span {grid-column:1 / -1;}
+ .attention-notice button {width:100%;}
+}

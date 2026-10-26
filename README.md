@@ -253,3 +253,9 @@ The bottom toolbar now uses this order, keeping the same styling and icons:
 - **Hand (H):** pan. Space-drag and middle-button panning remain available.
 
 Tool choice, not trajectory classification, determines whether a drag moves or references. The 6px threshold still separates clicks from drags. Movement is memory-only, constrained to the authored screen, and carries descendants of moved parents. It is never synchronized; refresh restores positions. Pins and outlines follow local geometry. Switching tools or canceling rolls back an unfinished move. The old trajectory helper remains isolated experimental code and is no longer imported by Canvas.
+
+### Design-reference purpose in Compare
+
+In Compare → Sharing options, choose **Use as a design reference**. User A's frozen selection is the reference and User B's is the target. Select one or more categories (Typography, Spacing, Colors, Corner radius), then optionally add a note, mentions or a view invitation and explicitly Share. These are requested categories, not automatic edits or inferred spacing values. Other purposes hide these controls; Custom purpose preserves free text.
+
+The shared comparison stores optional `designReference: {direction: {referenceUser: 'A', targetUser: 'B'}, properties: [...]}` beside its existing purpose and frozen selections. Both demo storage and the realtime backend preserve it, and the recipient sees the saved direction/categories. Existing references without this field remain compatible; no migration or new AI request is required.

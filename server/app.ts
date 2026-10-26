@@ -5,7 +5,7 @@ import { MOCK_NODES } from '../src/data';
 import { ruleBasedInterpreter } from '../src/comparisonContext';
 import express from 'express';
 import { RoomStore, ApiError } from './store';
-import { ComparisonContext, SelectionPresence, UserId } from '../src/collaboration';
+import { ComparisonContext, SelectionPresence, UserId, validateDesignReference } from '../src/collaboration';
 export function collaborationServer(store: RoomStore,options:DeploymentOptions={trustProxyHops:0}) {
   const app = express();
   app.disable('x-powered-by');
@@ -90,6 +90,7 @@ export function collaborationServer(store: RoomStore,options:DeploymentOptions={
       const purpose=req.body.comparison.purpose;
       if(typeof purpose!=='string'||!purpose.trim()||purpose.length>300||req.body.intent!=='Compare')throw new ApiError(400,'Choose a comparison purpose.');
       comparison={...structuredClone(frozen.context),purpose:purpose.trim()};
+      try{const designReference=validateDesignReference(comparison.purpose,req.body.comparison.designReference,comparison.selections);if(designReference)comparison.designReference=designReference;}catch(error){throw new ApiError(400,(error as Error).message);}
       const ids=[...new Set([...comparison.selections.A.elementIds,...comparison.selections.B.elementIds])];
       if(!Array.isArray(req.body.elementIds)||ids.length!==req.body.elementIds.length||ids.some(id=>!req.body.elementIds.includes(id)))throw new ApiError(400,'Comparison targets must match the frozen selections.');
     }

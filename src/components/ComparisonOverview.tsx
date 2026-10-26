@@ -4,10 +4,10 @@ import type {UIElement} from '../types';
 import ComparisonContext from './ComparisonContext';
 import ReferencePreviewCard from './ReferencePreviewCard';
 import PropertyComparison from './PropertyComparison';
-interface Props {context?:Context;contextId:string;ids:string[];nodes:UIElement[];user?:UserId}
-export default function ComparisonOverview({context,contextId,ids,nodes,user}:Props){
+interface Props {context?:Context;contextId:string;ids:string[];nodes:UIElement[];user?:UserId;showDesignIntent?:boolean}
+export default function ComparisonOverview({context,contextId,ids,nodes,user,showDesignIntent=true}:Props){
  return <div className="comparison-overview">
-  {context?<ComparisonContext context={context} nodes={nodes} user={user} visual/>:<ReferencePreviewCard ids={ids} nodes={nodes}/>}
+  {context?<ComparisonContext context={context} nodes={nodes} user={user} visual showDesignIntent={showDesignIntent}/>:<ReferencePreviewCard ids={ids} nodes={nodes}/>}
   <PropertyComparison ownership={context} contextId={contextId} ids={ids} nodes={nodes} expanded visual/>
  </div>;
 }

@@ -5,7 +5,7 @@ import {mentionedUsers} from '../mentions';
 import ComparisonOverview from './ComparisonOverview';
 import ComparisonContext, {ComparisonPurpose} from './ComparisonContext';
 import React, { useEffect, useRef, useState } from 'react';
-import { ReferenceDraft, ReferenceIntent, INTENTS } from '../collaboration';
+import { ReferenceDraft, ReferenceIntent, INTENTS, DesignReference, DESIGN_REFERENCE_PURPOSE } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
 import { requestId } from '../useCollaboration';
@@ -13,14 +13,14 @@ import { sharePopoverLayout, shareActionLabel } from '../referencePresentation';
 import PropertyComparison from './PropertyComparison';
 interface Props {
  inspectorHost?:HTMLElement|null; inspector?:boolean;
-  onComparisonPurpose:(value:string)=>void;onRefreshComparison:()=>void;comparisonChanged:boolean;
+  onDesignReference:(value:DesignReference)=>void;onComparisonPurpose:(value:string)=>void;onRefreshComparison:()=>void;comparisonChanged:boolean;
   draft:ReferenceDraft; nodes:UIElement[]; camera:CanvasTransform;
   collaboration:CollaborationClient; visible:boolean; onVisible:(open:boolean)=>void;
   note:string; intent:ReferenceIntent; onNote:(value:string)=>void; onIntent:(value:ReferenceIntent)=>void;
   onCancel:()=>void; onShared:(id:string)=>void;
   onRoom:()=>void; onLocate:()=>void;
 }
-export default function SharePopover({inspector=false,inspectorHost,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
+export default function SharePopover({inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
   const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null),pin=useRef<HTMLButtonElement>(null);
   const [viewport,setViewport]=useState({width:800,height:600}),[height,setHeight]=useState(320),[sendId,setSendId]=useState(requestId);
   const [inviteNow,setInviteNow]=useState(false);
@@ -54,16 +54,16 @@ export default function SharePopover({inspector=false,inspectorHost,onComparison
         <div className="share-form-body" role={inspector?'region':undefined} aria-label={inspector?'Comparison content':undefined} tabIndex={inspector?0:undefined}>{!inspector&&<><p className="share-target-label" title={draft.label}>{draft.label}</p>
         <div className="share-target-meta"><span>{draft.elementIds.length} {draft.elementIds.length===1?'object':'objects'}</span><button type="button" onClick={onLocate}>Locate</button></div>
         {layout?.offscreen&&<p className="subtle">Targets offscreen.</p>}</>}
-        {inspector?<ComparisonOverview context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
+        {inspector?<ComparisonOverview showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
         {draft.comparison&&comparisonChanged&&<p className="subtle">Selection changed. <button type="button" onClick={onRefreshComparison}>Refresh comparison</button></p>}
         {inspector?<section className="comparison-sharing-options" aria-label="Sharing options"><h4>Sharing options</h4>
-          {draft.comparison&&<ComparisonPurpose context={draft.comparison} onPurpose={onComparisonPurpose}/>}
+          {draft.comparison&&<ComparisonPurpose context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>}
           {sharingControls}
         </section>:sharingControls}
         {!draft.comparison&&intent!=='Compare'&&<PropertyComparison compact={inspector} contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded={false}/>}
         {!c.session||!c.room?<p className="subtle">Create or join a room first. <button type="button" onClick={onRoom}>Open shared workspace</button></p>:!c.room.members.some(m=>m.userId===target)?<p className="subtle">Invite User {target} before sending. <button type="button" onClick={onRoom}>Open room</button></p>:!c.room.members.some(m=>m.userId===target&&m.online)?<p className="subtle">User {target} is offline. They can open this request when they return.</p>:null}
         {c.error&&<p className="connection-error" role="alert">{c.error}</p>}
-        </div><div className="action-row share-form-footer"><button className="primary-action" disabled={c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&!draft.comparison.purpose.trim()} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':`Send to User ${target}`}</button><button type="button" onClick={onCancel}>Cancel draft</button></div>
+        </div><div className="action-row share-form-footer"><button className="primary-action" disabled={c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':`Send to User ${target}`}</button><button type="button" onClick={onCancel}>Cancel draft</button></div>
       </form>
     </div>}
   </div>;
