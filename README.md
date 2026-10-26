@@ -28,20 +28,20 @@ The prototype uses six example mobile shopping screens: Home, Search, Product De
 | References | Create or join a room, share references, and read or reply to requests. |
 | Tasks | Choose a research level, read instructions and check progress. |
 | Center canvas | Explore the six mobile screens. Pan and zoom to inspect their contents. |
-| Bottom controls | Use Select for clicks and rough gestures, or Hand to pan. Add a note to a reference request. |
+| Bottom controls | Use Select to select/move, Rough Reference to draw, or Hand to pan. Add a note to a reference request. |
 
 The bottom input helps you describe why your collaborator should look at the selected items. It is not a general-purpose AI chat or a design-editing command box.
 
 ## Start with selection
 
 1. Choose **Select** to click an item. Hold **Shift** while clicking to add or remove items from your selection.
-2. Stay in **Select** and drag more than 6px across related items, such as two category chips on Home. Hold Shift while dragging for a precise rectangular selection.
+2. Choose **Rough Reference (R)** and draw across related items, such as two category chips on Home. Hold Shift while dragging for a precise rectangular selection.
 3. Inspect the suggested interpretation. Use **Touched**, **Screen** or **All Screens** to adjust how broadly the reference applies. You can also use Select and Shift-click to correct individual targets.
 4. Use **Share to User A/B** when you are ready to discuss the selection with someone.
 
 Use **Hand** or hold **Space** while dragging to move around the canvas. Use the zoom controls to look closer, and **Fit view** to find all six screens again. Help contains the keyboard shortcuts.
 
-You can select and reference the sample content, but objects are read-only. Movement, resize, recolor and text editing are not implemented.
+Select can move elements locally; rough referencing uses its dedicated tool. Movement resets on refresh and is not synchronized. Resize, recolor and text editing are not implemented.
 
 ## Try it with another person
 
@@ -182,7 +182,7 @@ Manual Compare references within your own selection still work. All five researc
 
 ### One selection tool
 
-**Select (V or S)** handles both ordinary selection and rough gestures. Click selects one object; Shift-click adds or removes it. Drag more than 6 screen pixels to draw a rough gesture, even when starting on an object. Shift-drag adds objects using a precise box. Small pointer movements remain clicks. Selection changes commit on release, and gesture results commit after interpretation; pending strokes do not change the other participant’s selection view. Cancelled strokes retain your previous selection. **Hand (H)**, Space-drag, and middle-button drag pan the canvas.
+**Select (V or S)** selects and moves objects; Shift-click toggles objects and empty-canvas drag / Shift-drag provides box selection. **Rough Reference (R)** draws over any object without moving it. Small movements within 6px remain clicks. **Hand (H)**, Space-drag and middle-button drag pan the canvas.
 
 ## Hosting online
 
@@ -244,10 +244,12 @@ Compare the normal rule-based alternatives with the AI’s proposed group. The o
 Tests use injected fake Responses payloads, never a live model. They cover the fixture, invalid IDs, refusals, timeouts, limits, caching, stale responses and disabled configuration. Official API references: [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) and [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
 
 
-### Pointer trajectory experiment
+## Separate tools: Select → Rough Reference → Hand
 
-Select now runs a pure screen-pixel trajectory classifier (`src/trajectory.ts`): clicks stay within 6px; Shift-drag is always box selection; loops, curved paths and scribbles resolve to referencing. It considers travel distance, end displacement, straightness, accumulated turns, deviation and closure, filtering movement under 2px. Hand/Space/middle-button panning remains separate.
+The bottom toolbar now uses this order, keeping the same styling and icons:
 
-Move intent requires at least 32px travel, 28px displacement and 120ms elapsed time, with straightness ≥0.96, deviation ≤3px and no sharp turns. Once a host visibly begins moving, it must pass the locked intent back to the classifier; the classifier never changes a locked move to a reference. Ambiguous strokes remain pending and fall back to reference on release.
+- **Select (V; S alias):** click to select, Shift-click to toggle, drag an object to move locally, or drag empty canvas / Shift-drag for box selection.
+- **Rough Reference (R):** freely draw circles, curves, straight strokes or scribbles, even starting over a parent or child object. This tool never moves objects. The existing interpretation dropdown, scope correction and explicit AI suggestions remain available.
+- **Hand (H):** pan. Space-drag and middle-button panning remain available.
 
-**The canvas is read-only.** Select drags create rough references again; object movement and Reset positions have been removed. The standalone trajectory classifier remains for future experiments. AI suggestions and shared references are unchanged.
+Tool choice, not trajectory classification, determines whether a drag moves or references. The 6px threshold still separates clicks from drags. Movement is memory-only, constrained to the authored screen, and carries descendants of moved parents. It is never synchronized; refresh restores positions. Pins and outlines follow local geometry. Switching tools or canceling rolls back an unfinished move. The old trajectory helper remains isolated experimental code and is no longer imported by Canvas.

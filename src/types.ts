@@ -50,9 +50,9 @@ export interface Point {
   y: number;
 }
 
-export type ToolMode = 'pointer' | 'pan';
+export type ToolMode = 'pointer' | 'reference' | 'pan';
 
-export type SelectionState = 'idle' | 'drawing' | 'interpreting' | 'disambiguating' | 'preview' | 'rect-selecting';
+export type SelectionState = 'idle' | 'moving' | 'drawing' | 'interpreting' | 'disambiguating' | 'preview' | 'rect-selecting';
 
 export type ScopeLevel = 'exemplars' | 'screen' | 'flow' | 'document';
 

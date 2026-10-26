@@ -26,7 +26,7 @@ export default function Toolbar({
               ? 'bg-zinc-800 text-white shadow-sm ring-1 ring-zinc-700'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
           }`}
-          title="Selection Tool (V) - Click, drag for rough gesture, Shift-drag for box"
+          title="Selection Tool (V) - Click, drag to move, Shift-drag for box"
         >
           <MousePointer2 className="w-4 h-4" />
         </button>

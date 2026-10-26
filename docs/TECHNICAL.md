@@ -24,7 +24,7 @@ The remaining deployment and authenticated collaboration sections describe **rea
 
 # Smart Reference — shared referencing
 
-Two actual browser clients share object-anchored references, intent, notes, responses, and review status. Canvas camera and selection stay local. Gesture interpretation uses geometric intersection and authored semantic metadata immediately; the explicit AI suggestions action can request optional server-side model interpretation. The commerce document is read-only.
+Two actual browser clients share object-anchored references, intent, notes, responses, and review status. Canvas camera and selection stay local. Gesture interpretation uses geometric intersection and authored semantic metadata immediately; the explicit AI suggestions action can request optional server-side model interpretation. The authored commerce dataset is immutable; Select can apply in-memory local position overrides.
 
 ## Run
 
@@ -153,9 +153,9 @@ Selection presence uses authenticated `POST /api/rooms/:code/selection` and name
 
 ## Unified Select interaction
 
-The toolbar exposes `pointer` (Select) and `pan` (Hand). S is an alias for Select, rather than a separate gesture mode. Selection metadata still distinguishes `conventional` and `smart-ref` for collaboration and research evidence.
+The toolbar order is `pointer` (Select), `reference` (Rough Reference), `pan` (Hand), with V/S, R and H shortcuts. Selection metadata still distinguishes `conventional` and `smart-ref` for collaboration and research evidence.
 
-Canvas keeps a pending pointer interaction containing the initial hit node, Shift modifier, prior selection, screen-space samples, and world-space stroke. It does not mutate reference state on pointer-down. A maximum displacement greater than 6 screen pixels establishes a drag; ordinary drags use gesture inference, while Shift-drags use the existing additive box selection. Pointer-up commits clicks/boxes, or starts interpretation; only the interpretation result changes the shared selection. Pointer cancellation, capture loss, or window blur discards the transient stroke and retains prior selection. The inference engine accepts two-point strokes so short gestures are independent of pointer event frequency.
+Canvas keeps a pending pointer interaction containing the initial hit node, Shift modifier, prior selection, screen-space samples, and world-space stroke. It does not mutate reference state on pointer-down. A maximum displacement greater than 6 screen pixels establishes a drag; Select drags on objects move local snapshots and descendants; Select drags on empty canvas use a box, with Shift preserving additive box behavior. Rough Reference always uses gesture inference, including when starting on an object. The trajectory classifier is not used for routing. Pointer-up commits clicks/boxes, or starts interpretation; only the interpretation result changes the shared selection. Pointer cancellation, capture loss, or window blur discards the transient stroke and retains prior selection. The inference engine accepts two-point strokes so short gestures are independent of pointer event frequency.
 
 ## Progressive interpretation and consolidated attention
 
