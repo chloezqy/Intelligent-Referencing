@@ -352,3 +352,101 @@ button:disabled { opacity:.45; }
 .selection-context.action-context > .action-stack {flex-wrap:nowrap;flex-shrink:1;}
 .action-stack > .interpretation-step {width:calc(100% - 44px);flex-shrink:1;}
 .action-stack .interpretation-step:not(.is-expanded) > .refine-selection {align-self:flex-start;}
+
+/* Compare inspector: participants, a concise relationship, then readable properties. */
+.inspector-composer .share-form-body {padding-top:12px;}
+.compact-context.comparison-context {border:0;padding:0;margin:0 0 12px;}
+.compact-context .comparison-participants {margin:0 0 12px;gap:10px;}
+.compact-context .comparison-participants > div {padding:9px 10px;background:#faf9fc;border-radius:7px;min-width:0;}
+.compact-context .comparison-participants p {margin-top:3px;font-size:11px;}
+.compact-context .comparison-relationship {padding:10px 12px;border:1px solid #e4e1eb;border-radius:7px;}
+.compact-context .comparison-relationship h4 {font-size:11px;color:#75649f;margin-bottom:5px;}
+.compact-comparison.property-comparison {margin:10px 0 14px;}
+.compact-comparison > summary {padding:10px 12px;font-size:12px;}
+.compact-comparison > summary span {display:inline;margin-left:6px;}
+.compact-comparison .comparison-scroll {max-height:none;}
+.compact-comparison .comparison-scroll table {font-size:11px;}
+.compact-comparison .comparison-scroll th,.compact-comparison .comparison-scroll td {padding:10px 8px;line-height:1.5;min-width:108px;}
+.compact-comparison .comparison-scroll th:first-child {min-width:90px;width:90px;}
+.compact-comparison .comparison-scroll thead th {position:sticky;top:0;z-index:1;background:#f7f5fb;}
+.compact-comparison .comparison-scroll thead strong {font-weight:600;margin:3px 0;}
+.compact-comparison .comparison-scroll tbody tr:nth-child(even) {background:#fcfbfe;}
+.compact-comparison .comparison-scroll tbody th {font-weight:500;color:#615b6d;}
+.comparison-sharing-options {margin:12px 0;border-top:1px solid #e5e0ef;padding-top:10px;}
+.comparison-sharing-options > summary {cursor:pointer;font-size:12px;font-weight:500;color:#75649f;}
+.comparison-inspector-title {display:flex;align-items:baseline;gap:12px;}
+.comparison-inspector-title > span {font-size:11px;color:#888;font-weight:400;}
+
+.property-comparison > .incomplete-properties {margin:8px 10px;}
+.property-comparison > .incomplete-properties > summary {font-size:10px;font-weight:400;color:#888;padding:5px 0;}
+.property-comparison > .incomplete-properties > summary:hover {color:#75649f;}
+
+/* Shared visual comparison overview, in drafts and saved conversations. */
+.comparison-overview {container-type:inline-size;min-width:0;font-size:12px;}
+.reference-card-pair {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;}
+.reference-preview-card {min-width:0;padding:10px;border:1px solid #e2ddef;border-radius:10px;background:#faf9fd;}
+.reference-preview-card.user-B {border-color:#d5e8eb;background:#f6fbfb;}
+.reference-preview-card > header {display:flex;align-items:flex-start;gap:7px;margin-bottom:9px;min-width:0;}
+.reference-preview-card > header > div {min-width:0;flex:1;}
+.reference-preview-card strong {font-size:12px;font-weight:600;}
+.reference-preview-card header p {font-size:10px;color:#777;margin:2px 0 0;overflow-wrap:anywhere;}
+.reference-preview-card small {font-size:10px;font-weight:400;}
+.preview-identity {flex:none;width:23px;height:23px;border-radius:50%;display:grid;place-items:center;background:var(--participant-color,#75649f);color:white;font-size:11px;}
+.preview-count {font-size:9px;color:#777;white-space:nowrap;}
+.reference-preview-tiles {display:grid;gap:7px;}
+.reference-preview-tiles figure {min-width:0;margin:0;}
+.reference-preview-art {height:70px;display:grid;place-items:center;overflow:hidden;border:1px solid #e8e5ee;border-radius:6px;background:white;padding:6px;color:#888;font-size:10px;}
+.element-preview {width:100%;height:100%;pointer-events:none;}
+.reference-preview-tiles figcaption {font-size:10px;color:#57535f;margin-top:4px;overflow-wrap:anywhere;line-height:1.4;}
+.preview-more {font-size:10px;color:#75649f;margin:6px 0 0;}
+.comparison-insight {padding:12px 0;margin:10px 0;border-bottom:1px solid #eeeaf4;}
+.comparison-insight h4 {font-size:11px;font-weight:600;color:#75649f;margin-bottom:5px;}
+.comparison-insight p {font-size:12px;line-height:1.6;color:#57535f;margin:0;}
+.visual-properties {min-width:0;}
+.visual-properties > header {display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:12px 0 4px;}
+.visual-properties h4 {font-size:12px;font-weight:600;}
+.visual-properties > header > span {font-size:10px;color:#888;}
+.visual-differences {list-style:none;margin:0;padding:0;}
+.visual-differences > li {padding:12px 0;border-bottom:1px solid #eeeaf4;}
+.difference-label {display:flex;align-items:center;gap:7px;color:#75649f;margin-bottom:7px;}
+.difference-label strong {font-size:11px;font-weight:500;color:#57535f;}
+.difference-groups {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.difference-groups > div {min-width:0;}
+.difference-groups small {font-size:9px;display:block;margin-bottom:3px;overflow-wrap:anywhere;}
+.difference-values {display:flex;flex-direction:column;gap:4px;min-width:0;}
+.difference-value {display:flex;align-items:center;gap:5px;color:#46414e;font-size:11px;line-height:1.5;min-width:0;overflow-wrap:anywhere;}
+.difference-value > span {min-width:0;overflow-wrap:anywhere;}
+.comparison-swatch {display:inline-block;flex:none;width:18px;height:18px;border:1px solid #d8d4df;border-radius:5px;}
+.difference-more {font-size:10px;color:#888;}
+.no-visual-differences {font-size:11px;color:#777;margin:12px 0;}
+.visual-property-details {margin:14px 0 8px;min-width:0;}
+.visual-property-details > summary {padding:8px 0;font-size:11px;color:#75649f;cursor:pointer;}
+.visual-property-details > details {margin:8px 0;}
+.visual-property-details > details > summary {font-size:10px;color:#777;cursor:pointer;padding:6px 0;}
+.visual-properties > .incomplete-properties {font-size:10px;color:#888;margin:10px 0;}
+.visual-properties > .incomplete-properties > summary {cursor:pointer;padding:5px 0;}
+.visual-properties .comparison-scroll {max-height:360px;border:1px solid #eeeaf4;border-radius:6px;}
+.visual-properties .comparison-scroll table {font-size:10px;}
+.visual-properties .comparison-scroll thead th {position:sticky;top:0;z-index:1;}
+.unowned-reference-card {margin-bottom:12px;}
+.inspector-conversation .comparison-overview {margin-bottom:16px;}
+@container (width < 360px) {
+ .reference-card-pair {grid-template-columns:minmax(0,1fr);}
+}
+
+/* One vertical scroll area per inspector; tables only own horizontal scrolling. */
+.inspector-composer .share-form-body,.inspector-conversation {
+ overflow-y:auto;
+ overscroll-behavior-y:contain;
+ scrollbar-gutter:stable;
+ scrollbar-width:auto;
+}
+.comparison-inspector .comparison-scroll {
+ max-height:none;
+ overflow-x:auto;
+ overflow-y:hidden;
+ overscroll-behavior-x:contain;
+ overscroll-behavior-y:auto;
+}
+.comparison-sharing-options > h4 {font-size:12px;font-weight:500;color:#75649f;margin-bottom:8px;}
+.inspector-composer .share-form-body:focus-visible,.inspector-conversation:focus-visible {outline:2px solid #d5ccf4;outline-offset:-2px;}

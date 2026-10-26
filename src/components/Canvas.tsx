@@ -101,7 +101,7 @@ export default function Canvas({
   // Keyboard navigation & shortcuts (Figma standard)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.target as HTMLElement).closest('input, textarea, select, button, summary, [role=dialog], [contenteditable=true]')) return;
+      if ((e.target as HTMLElement).closest('input, textarea, select, button, summary, [role=dialog], .comparison-inspector, [contenteditable=true]')) return;
 
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();

@@ -33,3 +33,10 @@ export interface SelectionPresence {userId:UserId;elementIds:string[];exemplarId
 export interface ComparisonContext {snapshotId:string;selections:Record<UserId,SelectionPresence>;purpose:string;interpretation:import('./comparisonContext').ContextInterpretation}
 
 export interface AttentionRequest {id:string;sourceUser:UserId;targetUser:UserId;createdAt:string;viewedAt?:string}
+
+
+/** Completed references belong in Archived without rewriting their review evidence. */
+export function referenceLists(references:SharedReference[]){
+ const archived=(reference:SharedReference)=>!!reference.archivedAt||reference.status==='reviewed';
+ return {active:references.filter(reference=>!archived(reference)),archived:references.filter(archived)};
+}

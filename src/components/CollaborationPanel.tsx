@@ -1,7 +1,7 @@
 import type {CollaborationClient} from '../collaborationClient';
 import {needsReferenceNotification} from '../mentions';
 import React, { useState } from 'react';
-import { SharedReference } from '../collaboration';
+import { SharedReference, referenceLists } from '../collaboration';
 import { UIElement } from '../types';
 interface Props { nodes:UIElement[]; collaboration: CollaborationClient; hasDraft:boolean; onResumeDraft:()=>void; activeId: string | null; openRevision:number; onOpen: (id: string) => void; onLocate: (ref: SharedReference) => void; onClear: () => void }
 export default function CollaborationPanel({ nodes, collaboration: c, hasDraft, onResumeDraft, activeId, openRevision, onOpen, onLocate, onClear }: Props) {
@@ -9,7 +9,7 @@ export default function CollaborationPanel({ nodes, collaboration: c, hasDraft, 
   const [copied, setCopied] = useState(false);
   const [showArchived,setShowArchived]=useState(false);
   const received = c.room?.references.filter(r=>needsReferenceNotification(r,c.session?.userId)).length || 0;
-  const activeReferences=c.room?.references.filter(r=>!r.archivedAt)||[],archivedReferences=c.room?.references.filter(r=>r.archivedAt)||[];
+  const {active:activeReferences,archived:archivedReferences}=referenceLists(c.room?.references||[]);
   const listed=showArchived?archivedReferences:activeReferences;
   return <div className="collab-panel">
     <section><label>Workspace mode<select aria-label="Workspace mode" value={c.mode} onChange={e=>{const url=new URL(location.href);url.searchParams.set('mode',e.target.value);url.searchParams.delete('room');url.searchParams.delete('join');location.assign(url.href);}}><option value="demo">Standalone demo</option><option value="realtime">Real-time collaboration</option></select></label></section>
@@ -23,7 +23,7 @@ export default function CollaborationPanel({ nodes, collaboration: c, hasDraft, 
     </section>}
     {c.error && <p className="connection-error" role="alert">{c.error}</p>}
     {hasDraft&&<section><p className="subtle">You have an unsent share request.</p><button onClick={onResumeDraft}>Resume share popup</button></section>}
-    {c.room && <section><h3>References {received > 0 && <span className="inbox-count">{received} notifications</span>}</h3><div className="reference-filter" role="group" aria-label="Reference list filter"><button aria-pressed={!showArchived} onClick={()=>setShowArchived(false)}>Active ({activeReferences.length})</button><button aria-pressed={showArchived} onClick={()=>setShowArchived(true)}>Archived ({archivedReferences.length})</button></div>{!listed.length&&<p>{showArchived?'No archived references.':'No active references. Select objects and share a reference, or restore one from Archived.'}</p>}<div className="reference-list">{[...listed].reverse().map(ref => <button key={ref.id} className={activeId === ref.id ? 'selected' : ''} onClick={() => { onOpen(ref.id); }}><span className={`user-${ref.sourceUser}`}>User {ref.sourceUser} → {ref.notificationRecipients===undefined?`User ${ref.targetUser}`:'Room'}</span><strong>{ref.intent} · {ref.elementIds.length} objects</strong><span>{ref.label}</span><small>{ref.archivedAt?'Archived':ref.status==='reviewed'?'Reviewed':'Awaiting review'} · {new Date(ref.createdAt).toLocaleString()}</small></button>)}</div></section>}
+    {c.room && <section><h3>References {received > 0 && <span className="inbox-count">{received} notifications</span>}</h3><div className="reference-filter" role="group" aria-label="Reference list filter"><button aria-pressed={!showArchived} onClick={()=>setShowArchived(false)}>Active ({activeReferences.length})</button><button aria-pressed={showArchived} onClick={()=>setShowArchived(true)}>Archived ({archivedReferences.length})</button></div>{!listed.length&&<p>{showArchived?'No archived references.':'No active references. Select objects and share a reference.'}</p>}<div className="reference-list">{[...listed].reverse().map(ref => <button key={ref.id} className={activeId === ref.id ? 'selected' : ''} onClick={() => { onOpen(ref.id); }}><span className={`user-${ref.sourceUser}`}>User {ref.sourceUser} → {ref.notificationRecipients===undefined?`User ${ref.targetUser}`:'Room'}</span><strong>{ref.intent} · {ref.elementIds.length} objects</strong><span>{ref.label}</span><small>{ref.archivedAt?'Archived':ref.status==='reviewed'?'Reviewed':'Awaiting review'} · {new Date(ref.createdAt).toLocaleString()}</small></button>)}</div></section>}
 
   </div>;
 }
