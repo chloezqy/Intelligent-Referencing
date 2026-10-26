@@ -1,3 +1,4 @@
+import {installSemantic} from './semantic';
 import { DeploymentOptions } from './deployment';
 import { randomUUID } from 'node:crypto';
 import { MOCK_NODES } from '../src/data';
@@ -31,6 +32,7 @@ export function collaborationServer(store: RoomStore,options:DeploymentOptions={
     }
     next();
   });
+  installSemantic(app);
   const route = (fn: (req: express.Request, res: express.Response) => void) => (req: express.Request, res: express.Response, next: express.NextFunction) => { try { fn(req, res); } catch (error) { next(error); } };
   const auth = (req: express.Request) => store.authorize(String(req.params.code), (req.get('authorization') || '').replace(/^Bearer /, ''));
   const selections=new Map<string,Partial<Record<UserId,SelectionPresence>>>();

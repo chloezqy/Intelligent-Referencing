@@ -1,3 +1,11 @@
+## Semantic OpenAI integration (local, opt-in)
+
+`server/semantic.ts` installs POST `/api/semantic/interpret` before the API 404 handler. It resolves bounded candidates from the authoritative dataset, constructs metadata/hierarchy input, calls Responses via native server-side fetch and validates structured suggestions. `AI_ENABLED=true` plus `OPENAI_API_KEY` are required; production/non-loopback requests are rejected. It does not require collaboration identity. The first approved live test and validation correction are recorded in `docs/AI_LIVE_TEST.md`.
+
+`src/modelSemanticProvider.ts` implements SemanticProvider over this endpoint. `src/useSemanticSuggestions.ts` aborts obsolete requests, checks context identity and keeps suggestions separate from selection. Canvas connects the explicit AI suggestions button to the existing interpretation dropdown; only choosing a candidate applies IDs. Interpretation provenance is optional on existing Interpretation records, preserving deterministic compatibility. Existing rule-based orchestration remains available.
+
+See README’s semantic AI section for setup, payload bounds, cache/limits, verification steps and the explicitly mocked cross-role evaluation fixture. Implementation tests use mocks; the subsequent two approved live calls and cached UI verification are documented separately in `docs/AI_LIVE_TEST.md`.
+
 ## Standalone and realtime modes
 
 Standalone is now default. `collaborationMode()` selects realtime for `?mode=realtime` or an existing `?room=...` link, unless `mode=demo` is explicit. References contains a mode selector. Switching modes reloads the workspace and discards unsent drafts.
@@ -10,13 +18,13 @@ Standalone is now default. `collaborationMode()` selects realtime for `?mode=rea
 - Browser storage is origin-specific and last-write persistence, not multi-tab synchronization. No server tokens or real rooms are copied into demo data. Disabled storage yields an explicit warning and memory-only use.
 - `npm run dev:standalone` / `preview:standalone` serve only Vite/static assets. `npm run dev`, build, start, realtime APIs, SSE and production persistence verification remain available.
 
-No model is connected. The existing `SemanticProvider` layer is unchanged and remains the future model integration point.
+Model access is optional and disabled by default; see the semantic OpenAI integration section above.
 
 The remaining deployment and authenticated collaboration sections describe **realtime mode**.
 
 # Smart Reference — shared referencing
 
-Two actual browser clients share object-anchored references, intent, notes, responses, and review status. Canvas camera and selection stay local. Gesture interpretation uses geometric intersection and authored semantic metadata; it does not call an AI model. The commerce document is read-only.
+Two actual browser clients share object-anchored references, intent, notes, responses, and review status. Canvas camera and selection stay local. Gesture interpretation uses geometric intersection and authored semantic metadata immediately; the explicit AI suggestions action can request optional server-side model interpretation. The commerce document is read-only.
 
 ## Run
 
@@ -155,6 +163,6 @@ Canvas commits the best rule-based gesture interpretation directly into preview 
 
 `SharedReference.attention` is an optional array of invitation requests (`id`, authenticated source/target, creation/view timestamps). New references always write an array, including `[]` for asynchronous sharing. `share(..., inviteNow)` creates the initial invitation atomically with a reference, preserving idempotent reference IDs. Existing references use authenticated `POST /api/rooms/:code/references/:id/attention` with an idempotency request ID. `POST .../attention/:invitationId/view` records the recipient’s explicit View action. Both routes broadcast through existing SSE snapshots and persist to the same room file. Invitations never create conversations or modify target IDs, replies, review status, or research association. Archived references cannot be invited; repeated invitations have separate receipts, capped at 50/reference. Legacy Look at this references without the new array retain their prior notification behavior.
 
-`src/semanticInterpretation.ts` defines geometric/structural/semantic levels, rule-based/model provenance, request context IDs, metadata/optional intent/peer selection inputs, and a separate asynchronous `SemanticProvider` contract. The orchestrator validates candidate IDs/shape and falls back to the existing scope generator. It returns candidates only; it never applies a selection or sends a reference. Context matching lets a future UI reject stale model responses. No provider, API endpoint, credentials, SDK call, or automatic AI trigger has been connected.
+`src/semanticInterpretation.ts` defines geometric/structural/semantic levels, rule-based/model provenance, request context IDs, metadata/optional intent/peer selection inputs, and a separate asynchronous `SemanticProvider` contract. The orchestrator validates candidate IDs/shape and falls back to the existing scope generator. It returns candidates only; it never applies a selection or sends a reference. Context matching rejects stale model responses. The modelSemanticProvider transport and local-only server endpoint now implement the opt-in model path, with no automatic AI trigger or live calls during verification.
 
 A future server-side model adapter should construct an authoritative, bounded metadata request from selected IDs and relevant candidate objects (including hierarchy, role, text, component and available properties), enforce a timeout/cancellation, and return labeled candidates. Introduce an explicit semantic-suggestions action within Adjust interpretation; applying a candidate must remain an explicit user action. Cross-user interpretation can use the optional peer IDs/revision from existing presence/frozen comparison snapshots. Keep deterministic property comparisons independent, and extend selection/reference provenance when model candidates become usable. Do not present the current metadata heuristics as model inference.

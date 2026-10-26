@@ -57,6 +57,8 @@ export type SelectionState = 'idle' | 'drawing' | 'interpreting' | 'disambiguati
 export type ScopeLevel = 'exemplars' | 'screen' | 'flow' | 'document';
 
 export interface Interpretation {
+  source?: 'rule-based'|'model';
+  level?: 'geometric'|'structural'|'semantic';
   id: string;
   label: string;
   description: string;

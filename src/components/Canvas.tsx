@@ -1,3 +1,4 @@
+import {useSemanticSuggestions} from '../useSemanticSuggestions';
 import {interpretationLevel} from '../semanticInterpretation';
 import { isSelectionDrag, selectionDragKind } from '../selectionInteraction';
 import { selectionActionLayout } from '../selectionActionLayout';
@@ -48,6 +49,7 @@ export default function Canvas({
   transform,
   setTransform, onResearchEvent, sharedReferences, activeSharedId, onOpenShared
 }: CanvasProps) {
+  const ai=useSemanticSuggestions(inferredRef,nodes);
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
   const [actionAnchor,setActionAnchor]=useState<Point|null>(null);
@@ -265,7 +267,7 @@ export default function Canvas({
       matchingRole: interp.matchingRole,
       matchingComponent: interp.matchingComponent,
       scope: interp.scope,
-      selectionMethod: 'smart-ref'
+      selectionMethod: interp.source==='model'?(inferredRef?.selectionMethod||'conventional'):'smart-ref'
     });
 
     if (finalize) {
@@ -431,14 +433,19 @@ export default function Canvas({
             className={`selection-context action-context ${inferredRef.selectionMethod==='smart-ref'?'gesture-context':''} ${detailsOpen?'details-expanded':''} ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
             style={{...actionPosition,width:Math.min(inferredRef.selectionMethod==='smart-ref'?320:336,Math.max(0,viewport.width-16)),maxHeight:actionAvailableHeight,'--adjustment-space':`${Math.max(0,actionAvailableHeight-collapsedActionSize.current.height-1)}px`} as React.CSSProperties}
           >
-            {inferredRef.selectionMethod==='smart-ref'&&<header className="interpretation-summary"><strong>{inferredRef.label}</strong><span>{inferredRef.activeInterpretation?interpretationLevel(inferredRef.activeInterpretation):'geometric'} · rule-based</span></header>}
+            {inferredRef.selectionMethod==='smart-ref'&&<header className="interpretation-summary"><strong>{inferredRef.label}</strong><span>{inferredRef.activeInterpretation?.level||(inferredRef.activeInterpretation?interpretationLevel(inferredRef.activeInterpretation):'geometric')} · {inferredRef.activeInterpretation?.source==='model'?'AI':'rule-based'}</span></header>}
             {(!detailsOpen||inferredRef.selectionMethod==='smart-ref')&&<ReferenceActions hideMore={inferredRef.selectionMethod==='smart-ref'} onMore={()=>{setDetailsOpen(true);setShowAlternatives(false);}} onCompare={onCompare} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onAction={onAcceptReference}/>}
             {(inferredRef.selectionMethod==='smart-ref'||detailsOpen)&&<div className={`interpretation-dropdown ${detailsOpen?'is-expanded':''}`}>
             <button type="button" className="interpretation-toggle" aria-controls="interpretation-adjustments" aria-expanded={detailsOpen} onClick={()=>setDetailsOpen(v=>!v)}><span>{inferredRef.selectionMethod==='smart-ref'?'Adjust interpretation':'Selection details'}</span><ChevronDown size={14} aria-hidden="true" className={detailsOpen?'rotate-180':''}/></button>
             {detailsOpen&&<div id="interpretation-adjustments" className="interpretation-adjustments">
-              {inferredRef.selectionMethod!=='smart-ref'&&<strong>{inferredRef.label}</strong>}
+              {inferredRef.selectionMethod!=='smart-ref'&&<><strong>{inferredRef.label}</strong>{inferredRef.activeInterpretation?.source==='model'&&<small>semantic · AI</small>}</>}
               <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'Screen'},{scope:'document',label:'All screens'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={inferredRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
               {inferredRef.selectionMethod==='smart-ref'&&interpretations.length>1&&<details><summary>Alternative interpretations ({interpretations.length})</summary><div className="interpretation-options">{interpretations.map(interp=><button type="button" key={interp.id} aria-pressed={inferredRef.activeInterpretation?.id===interp.id} onMouseEnter={()=>setHoveredInterpretation(interp)} onMouseLeave={()=>setHoveredInterpretation(null)} onClick={()=>{commitInterpretation(interp,true);setHoveredInterpretation(null);}}><strong>{interp.label}</strong><small>{interpretationLevel(interp)} · rule-based</small></button>)}</div></details>}
+              <div className="semantic-suggestions">
+                <button type="button" data-semantic-input={JSON.stringify({selectedIds:inferredRef.selectedIds,exemplarIds:inferredRef.exemplarIds,scope:inferredRef.scope})} disabled={ai.loading||ai.done||inferredRef.selectedIds.length>24} title={inferredRef.selectedIds.length>24?'Select up to 24 objects to request AI suggestions':undefined} onClick={()=>{onResearchEvent('ai_interpretation_requested');void ai.request();}}><Sparkles size={12} aria-hidden="true"/> {ai.loading?'Interpreting…':ai.done?'AI suggestions loaded':'AI suggestions'}</button>
+                {ai.message&&<p className="subtle" role="status">{ai.message}</p>}
+                {ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=><button type="button" key={candidate.id} onClick={()=>{const exemplars=candidate.evidenceIds.filter(id=>candidate.elementIds.includes(id));onResearchEvent('ai_interpretation_chosen');commitInterpretation({id:candidate.id,label:candidate.label,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef.scope,confidence:'medium',source:'model',level:'semantic'},true);}}><strong>{candidate.label}</strong><small>semantic · AI</small><small>{candidate.reason}</small></button>)}</div></details>}
+              </div>
               <p className="subtle">Click or Shift-click objects to correct the selection. Scope changes apply immediately.</p>
             </div>}
             </div>}

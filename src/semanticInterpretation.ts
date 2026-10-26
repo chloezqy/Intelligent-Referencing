@@ -5,13 +5,14 @@ export type InterpretationSource='rule-based'|'model';
 export interface SemanticRequest {contextId:string;selectedIds:string[];exemplarIds:string[];scope:ScopeLevel;elements:UIElement[];intent?:string;peer?:{userId:'A'|'B';elementIds:string[];revision:number}}
 export interface SemanticCandidate {id:string;label:string;elementIds:string[];evidenceIds:string[];level:InterpretationLevel;source:InterpretationSource;reason:string}
 export interface SemanticResult {contextId:string;candidates:SemanticCandidate[];fallback:boolean}
-/** Future server-side model adapter. Never changes selection; UI must explicitly apply a candidate. */
+/** Model provider contract. Never changes selection; UI must explicitly apply a candidate. */
 export interface SemanticProvider {interpret(request:SemanticRequest,signal?:AbortSignal):Promise<SemanticCandidate[]>}
 export function interpretationLevel(value:Pick<Interpretation,'selectedIds'|'exemplarIds'|'matchingRole'>):InterpretationLevel{
  if(value.selectedIds.every(id=>value.exemplarIds.includes(id))&&value.selectedIds.length===value.exemplarIds.length)return 'geometric';
  return value.matchingRole&&!['card','badge'].includes(value.matchingRole)?'semantic':'structural';
 }
 export function validSemanticCandidate(candidate:SemanticCandidate,request:SemanticRequest){
+ if(!candidate||typeof candidate!=='object')return false;
  const ids=new Set(request.elements.filter(n=>n.type!=='screen').map(n=>n.id));
  return typeof candidate.id==='string'&&typeof candidate.label==='string'&&candidate.label.length<=300&&typeof candidate.reason==='string'&&candidate.reason.length<=1000&&['geometric','structural','semantic'].includes(candidate.level)&&['rule-based','model'].includes(candidate.source)&&Array.isArray(candidate.elementIds)&&candidate.elementIds.length>0&&candidate.elementIds.length<=182&&candidate.elementIds.every(id=>ids.has(id))&&new Set(candidate.elementIds).size===candidate.elementIds.length&&Array.isArray(candidate.evidenceIds)&&candidate.evidenceIds.every(id=>ids.has(id));
 }

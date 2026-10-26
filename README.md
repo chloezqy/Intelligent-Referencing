@@ -15,7 +15,7 @@ The prototype uses six example mobile shopping screens: Home, Search, Product De
 - Open a received reference, find its targets, and reply or mark it reviewed.
 - Work through five research tasks that progress from selection to collaboration.
 
-**Standalone demo is the default:** Switch between User A and User B locally; both perspectives are manually controlled in one browser. Real collaboration remains available in References → Workspace mode, or with `?mode=realtime`; existing room links also open real-time mode. In that mode two actual people receive references and replies live. **The interpretation is rule-based:** the prototype uses where you draw and information already attached to the sample elements. It does not currently use an external AI model.
+**Standalone demo is the default:** Switch between User A and User B locally; both perspectives are manually controlled in one browser. Real collaboration remains available in References → Workspace mode, or with `?mode=realtime`; existing room links also open real-time mode. In that mode two actual people receive references and replies live. **Interpretation works immediately using rules.** Optional OpenAI semantic suggestions are now integrated but disabled until a server key is configured and a paid live test is approved.
 
 ## Find your way around
 
@@ -101,7 +101,7 @@ The default workspace needs no collaboration backend. Use the top-bar **User A /
 2. Switch to B. The incoming nudge offers **View reference** or **Later**. Only View navigates; switching never moves B to A’s targets automatically.
 3. Open the existing conversation, reply and mark reviewed. Switch back to A to see the result.
 
-Each perspective retains its own camera and selection. References, nudge dismissal and cameras recover on refresh. No replies, review events or collaborator cursors are generated automatically. For cross-user Compare, manually select targets in both perspectives first. This remains simulated collaboration in one browser, not real participant research evidence; no AI model is involved.
+Each perspective retains its own camera and selection. References, nudge dismissal and cameras recover on refresh. No replies, review events or collaborator cursors are generated automatically. For cross-user Compare, manually select targets in both perspectives first. This remains simulated collaboration in one browser, not real participant research evidence; AI interpretation is optional and disabled by default.
 
 Use **References → Reset demo** to clear demo references and demo research history. Real rooms and their research records remain untouched. Demo state stays in this browser and origin; it is not shared across devices or tabs and is not evidence from another participant.
 
@@ -214,3 +214,31 @@ The inspector can be resized from its left edge, including with arrow keys when 
 
 
 Reviewed references keep their conversations in References but no longer show canvas pins. The recipient’s Mark reviewed control sits below Send response. Reference navigation is available through the incoming View reference nudge; the conversation omits redundant locate, invite and remove-pin controls.
+
+
+## Optional semantic AI interpretation
+
+Select objects, then open **Refine Selection** (click selection) or **Adjust interpretation** (rough gesture). Press **AI suggestions**. This explicit action is the only model trigger; drawing and selecting still run deterministic rules immediately. AI interpretations appear in the same dropdown, labeled **semantic · AI**, with a short evidence-based reason. Click a suggestion to apply it, or ignore it. No selection changes on arrival; no notes or replies are generated.
+
+### Local configuration — no live calls until approved
+
+1. Add `OPENAI_API_KEY` to your private `.env` (already ignored by Git). Never use a `VITE_` prefix or put the key in frontend code.
+2. Keep `AI_ENABLED=false` until you have approved a paid live test. The key alone does not enable calls.
+3. After approval, set `AI_ENABLED=true`; optionally change `OPENAI_MODEL` (default `gpt-4.1-mini`). Restart with `npm run dev` and open `http://localhost:3000/?mode=demo` (or realtime mode). The same endpoint serves either mode without requiring a room.
+4. Static-only `dev:standalone` / `preview:standalone`, including port 3001, cannot call a private AI endpoint. Referencing still works there; the AI button explains how to start the Node backend.
+
+For this first local prototype the AI endpoint rejects production and non-loopback traffic, even when enabled. Do not deploy it as an unauthenticated paid endpoint. Public AI deployment and access control are separate work.
+
+### What goes to the model
+
+The browser sends IDs, scope and context ID; the provider interface also supports optional intent. The server resolves the authoritative sample dataset, sending at most **24 selected objects and 64 candidate objects**, with labels, roles, visible text, parent/group hierarchy, screen and authored visual properties. Candidate retrieval is metadata-ranked with some cross-screen diversity, not an exhaustive semantic search. No screenshots, conversation notes, room identities, tokens or credentials are sent as model input. The API key appears only in the server-to-OpenAI authorization header. The request uses the Responses API with a strict JSON schema and `store:false`.
+
+Every suggested/evidence ID is validated against the supplied candidate/selected IDs. Invalid, refused or incomplete responses do not become options. Missing key, errors and timeouts leave rule-based selection usable. Requests time out after 15 seconds server-side; there are no automatic paid retries. Identical successes are cached 10 minutes (maximum 100 entries), concurrent duplicates coalesce, and there are 6 uncached requests/minute per client, at most 2 simultaneous calls and 20 paid attempts/hour per server process. These local limits reset on server restart; they are not account-level spending controls.
+
+### Verify a real call — only after approval
+
+Open browser DevTools → Network, select a product title such as **Nordic Lounge Chair**, open interpretation details and click AI suggestions once. Inspect `/api/semantic/interpret`: a successful result includes `model`, OpenAI `responseId`, `cached` and validated candidates. Confirm the first fresh request has `cached:false`, an OpenAI response ID, and a corresponding request/usage entry in your OpenAI project dashboard. A repeat can have `cached:true` and must not be mistaken for another model call. Browser request headers must contain no OpenAI key.
+
+Compare the normal rule-based alternatives with the AI’s proposed group. The offline evaluation fixture groups the lounge chair title, current price and Add to Bag button as purchase-decision information, while the current deterministic expansions do not return that exact cross-role group. This is a **mocked contract test, not demonstrated real-model quality**. The first approved live test is recorded in [AI live test](docs/AI_LIVE_TEST.md), including the real response ID and cached replay. For further evaluation: check grounded reasons, relevant IDs, unwanted extras, correction count and whether participants choose/ignore the suggestion before claiming improvement.
+
+Tests use injected fake Responses payloads, never a live model. They cover the fixture, invalid IDs, refusals, timeouts, limits, caching, stale responses and disabled configuration. Official API references: [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) and [GPT-4.1 mini](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
