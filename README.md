@@ -218,16 +218,16 @@ Reviewed references keep their conversations in References but no longer show ca
 
 ## Optional semantic AI interpretation
 
-Select objects, then open **Refine Selection** (click selection) or **Adjust interpretation** (rough gesture). Press **AI suggestions**. This explicit action is the only model trigger; drawing and selecting still run deterministic rules immediately. AI interpretations appear in the same dropdown, labeled **semantic · AI**, with a short evidence-based reason. Click a suggestion to apply it, or ignore it. No selection changes on arrival; no notes or replies are generated.
+Select objects, then open **Adjust interpretation**. Press **AI suggestions**. This explicit action is the only model trigger; drawing and selecting still run deterministic rules immediately. AI interpretations appear in the same dropdown, labeled **semantic · AI**, with a short evidence-based reason. Click a suggestion to apply it, or ignore it. No selection changes on arrival; no notes or replies are generated.
 
 ### Local configuration — no live calls until approved
 
 1. Add `OPENAI_API_KEY` to your private `.env` (already ignored by Git). Never use a `VITE_` prefix or put the key in frontend code.
 2. Keep `AI_ENABLED=false` until you have approved a paid live test. The key alone does not enable calls.
 3. After approval, set `AI_ENABLED=true`; optionally change `OPENAI_MODEL` (default `gpt-4.1-mini`). Restart with `npm run dev` and open `http://localhost:3000/?mode=demo` (or realtime mode). The same endpoint serves either mode without requiring a room.
-4. Static-only `dev:standalone` / `preview:standalone`, including port 3001, cannot call a private AI endpoint. Referencing still works there; the AI button explains how to start the Node backend.
+4. Static-only `dev:standalone` / `preview:standalone`, including port 3001, cannot call a private AI endpoint. Referencing still works there; the AI button reports the unavailable endpoint.
 
-For this first local prototype the AI endpoint rejects production and non-loopback traffic, even when enabled. Do not deploy it as an unauthenticated paid endpoint. Public AI deployment and access control are separate work.
+The local Node endpoint rejects production and non-loopback traffic. For a hosted standalone demo, **[Vercel setup](docs/VERCEL.md)** serves the same AI logic through a same-domain serverless function without your local server. Configure server-side environment variables and protect the enabled deployment before using it.
 
 ### What goes to the model
 

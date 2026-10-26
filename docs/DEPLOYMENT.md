@@ -1,6 +1,8 @@
 # Deploy Smart Reference online
 
-## Recommended: one Render Node web service
+For the standalone demo with real semantic AI, use **[Vercel setup](VERCEL.md)**. The configuration below is for deploying the existing realtime backend.
+
+## Realtime: one Render Node web service
 
 Use **one always-on paid Node web service with a persistent disk**, serving both the React build and the existing Express backend. Do not create a Static Site for this app. `render.yaml` describes this setup; applying it creates billable resources. No external service has been created by this preparation.
 

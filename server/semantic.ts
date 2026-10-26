@@ -1,4 +1,4 @@
-import type {Express,RequestHandler} from 'express';
+import type {Express,Request,RequestHandler} from 'express';
 import {createHash} from 'node:crypto';
 import {MOCK_NODES} from '../src/data';
 import type {SemanticCandidate,SemanticRequest} from '../src/semanticInterpretation';
@@ -40,14 +40,15 @@ export function parseModelOutput(response:any,request:SemanticRequest,onRejected
  if(parsed.suggestions.length&&!accepted.length)throw new SemanticError(502,'AI returned unsupported object references.');
  return accepted;
 }
-export interface SemanticOptions {enabled?:boolean;key?:string;model?:string;fetcher?:typeof fetch;timeoutMs?:number;now?:()=>number}
+export interface SemanticOptions {enabled?:boolean;key?:string;model?:string;fetcher?:typeof fetch;timeoutMs?:number;now?:()=>number;authorize?:(req:Request)=>void}
 export function semanticHandler(options:SemanticOptions={}):RequestHandler{
  const cache=new Map<string,{until:number;value:any}>(),pending=new Map<string,Promise<any>>(),limits=new Map<string,{until:number;count:number}>();
  let windowStart=0,calls=0,active=0;
- return async(req,res)=>{try{
+ return async(req,res)=>{res.setHeader('Cache-Control','private, no-store');try{
   if(!(options.enabled??process.env.AI_ENABLED==='true')||!(options.key??process.env.OPENAI_API_KEY))throw new SemanticError(503,'AI is disabled. Configure the server key and enable AI after approving a live test. Rule-based options still work.');
-  // Local prototype only: do not expose a paid, unauthenticated public endpoint.
-  if(process.env.NODE_ENV==='production'||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||'')||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.ip||''))throw new SemanticError(403,'AI requests are limited to this server’s computer until public access controls are configured.');
+  // The hosted adapter supplies its own access policy; local Node remains loopback-only.
+  if(options.authorize)options.authorize(req);
+  else if(process.env.NODE_ENV==='production'||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||'')||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.ip||''))throw new SemanticError(403,'AI requests are limited to this server’s computer until public access controls are configured.');
   const request=semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini',payload=modelPayload(request,model),now=(options.now||Date.now)();
   const hash=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   for(const [key,value] of cache)if(value.until<now)cache.delete(key);
