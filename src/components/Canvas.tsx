@@ -1,3 +1,4 @@
+import {tokenFacts} from '../designSystemReferencing';
 import ReferenceActions from './ReferenceActions';
 import {isSelectionDrag} from '../selectionInteraction';
 import {toolDragIntent,moveTargets,movePositions,Positions} from '../toolInteraction';
@@ -17,6 +18,7 @@ import { getBoundingBox, rectIntersect,inferSelection,generateScopeInterpretatio
 import { Check, Sparkles, X, Share2, GitCompareArrows } from 'lucide-react';
 
 interface CanvasProps {
+  onReviewTokens:()=>void;
   onMoveEnd:()=>void;
   pickingSource:boolean;
   sourceId:string|null;
@@ -46,7 +48,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,onSelectionStart,onMove,onCompare,compareOwn=false,compareReady,compareHint,
+  onReviewTokens,onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,onSelectionStart,onMove,onCompare,compareOwn=false,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -388,7 +390,7 @@ export default function Canvas({
           <header className="interpretation-summary"><strong>{inferredRef.label}</strong><small>{inferredRef.activeInterpretation?.source==='model'?'AI interpretation':'Rule-based / manual selection'}</small></header>
           <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'Screen'},{scope:'document',label:'All screens'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={inferredRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
           <details open><summary>Alternative interpretations · rule-based</summary><div className="interpretation-options">{generateScopeInterpretations(inferredRef.exemplarIds,nodes,inferredRef.scope,inferredRef.matchingRole,inferredRef.matchingComponent).map(interp=><button type="button" key={interp.id} aria-pressed={inferredRef.activeInterpretation?.id===interp.id} onMouseEnter={()=>setHoveredInterpretation(interp)} onMouseLeave={()=>setHoveredInterpretation(null)} onFocus={()=>setHoveredInterpretation(interp)} onBlur={()=>setHoveredInterpretation(null)} onClick={()=>{commitInterpretation(interp);setHoveredInterpretation(null);}}><strong>{interp.label}</strong></button>)}</div></details>
-          <div className="semantic-suggestions"><button type="button" disabled={ai.loading} onClick={()=>{onResearchEvent('ai_interpretation_requested');void ai.request();}}><Sparkles size={12}/>{ai.loading?'Interpreting…':'AI suggestions'}</button>{ai.message&&<p role="status" className="subtle">{ai.message}</p>}{ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=><SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={inferredRef.activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?candidateInterpretation(candidate):null)} onSelect={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(candidateInterpretation(candidate));setHoveredInterpretation(null);}}/>)}</div></details>}</div>
+          <>{tokenFacts(inferredRef.selectedIds,nodes).length>0&&<div className="token-match-entry"><strong>Possible design system match</strong><small>{new Set(tokenFacts(inferredRef.selectedIds,nodes).map(f=>f.property)).size} properties found · rule-based candidates</small><button type="button" onClick={onReviewTokens}>Review suggested tokens</button></div>}</><div className="semantic-suggestions"><button type="button" disabled={ai.loading} onClick={()=>{onResearchEvent('ai_interpretation_requested');void ai.request();}}><Sparkles size={12}/>{ai.loading?'Interpreting…':'AI suggestions'}</button>{ai.message&&<p role="status" className="subtle">{ai.message}</p>}{ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=><SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={inferredRef.activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?candidateInterpretation(candidate):null)} onSelect={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(candidateInterpretation(candidate));setHoveredInterpretation(null);}}/>)}</div></details>}</div>
         </div>}/>
       </div>}
 

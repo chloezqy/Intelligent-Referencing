@@ -1,3 +1,4 @@
+import {tokenFacts} from './designSystemReferencing';
 import type {ComparisonContext} from './collaboration';
 import {DESIGN_REFERENCE_PURPOSE} from './collaboration';
 import {comparisonSides,referenceSides} from './comparisonSides';
@@ -22,7 +23,8 @@ export function inspectorActions(ids:string[],nodes:UIElement[],context?:Compari
  if(design){try{referenceTransfer(context!,nodes);actions.push('Match Styles');}catch{}}else if(nodes.some(source=>{if(ids.includes(source.id)||source.type!==selected[0].type)return false;try{return matchStyles(ids,nodes,source.id).mappings.length>0;}catch{return false;}}))actions.push('Match Styles');
  if((!design||properties.includes('typography'))&&textTargets(ids,nodes,'all').length)actions.push('Typography');
  if((!design||properties.includes('colors'))&&descendants(ids,nodes).some(n=>n.bg!==undefined||n.color!==undefined||n.border!==undefined))actions.push('Colors');
- if(!design){try{libraryProposal(ids,nodes);actions.push('Design System');}catch{}if(ids.length<=512)actions.push('Ask AI');}
+ if(tokenFacts(ids,nodes).length)actions.push('Design System');
+ if(!design&&ids.length<=512)actions.push('Ask AI');
  return {actions,reason:!sameKinds?'The reference and target have different roles or types. Only applicable property actions are offered; select corresponding elements for broader style matching.':''};
 }
 export function referenceTransfer(context:ComparisonContext,nodes:UIElement[]):EditProposal{

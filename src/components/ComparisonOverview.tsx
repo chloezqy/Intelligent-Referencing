@@ -1,3 +1,4 @@
+import {SharedTokenSuggestions} from './DesignSystemReview';
 import DesignReferenceIntent from './DesignReferenceIntent';
 import {DESIGN_REFERENCE_PURPOSE} from '../collaboration';
 import React from 'react';
@@ -10,9 +11,10 @@ interface Props {context?:Context;contextId:string;ids:string[];nodes:UIElement[
 export default function ComparisonOverview({context,contextId,ids,nodes,user,showDesignIntent=true,proposedChanges,purposeControls}:Props){
  return <div className="comparison-overview">
   {context?<ComparisonContext context={context} nodes={nodes} user={user} visual hideInsight showDesignIntent={false}/>:<ReferencePreviewCard ids={ids} nodes={nodes}/>}
+  <PropertyComparison ownership={context} contextId={contextId} ids={ids} nodes={nodes} expanded visual/>
   {purposeControls||context&&<p className="comparison-purpose-summary">{context.purpose==='Compare selected elements'?'Compare differences':context.purpose}</p>}
   {!purposeControls&&showDesignIntent&&context?.purpose===DESIGN_REFERENCE_PURPOSE&&context.designReference&&<DesignReferenceIntent context={context} value={context.designReference}/>}
-  <PropertyComparison ownership={context} contextId={contextId} ids={ids} nodes={nodes} expanded visual/>
   {proposedChanges}
+  {!purposeControls&&context?.tokenSuggestions?.length>0&&<section><h4>Proposed design system properties</h4><SharedTokenSuggestions suggestions={context.tokenSuggestions} nodes={nodes}/></section>}
  </div>;
 }

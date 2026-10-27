@@ -1,3 +1,4 @@
+import {comparisonTokenFacts,validateTokenSuggestions} from '../src/designSystemReferencing.js';
 import {documentContext} from './documentContext';
 import {localComparison} from '../src/comparisonSides';
 import {installSemantic} from './semantic';
@@ -97,7 +98,7 @@ export function collaborationServer(store: RoomStore,options:DeploymentOptions={
       const purpose=req.body.comparison.purpose;
       if(typeof purpose!=='string'||!purpose.trim()||purpose.length>300||req.body.intent!=='Compare')throw new ApiError(400,'Choose a comparison purpose.');
       comparison={...structuredClone(frozen.context),purpose:purpose.trim()};
-      try{const designReference=validateDesignReference(comparison.purpose,req.body.comparison.designReference,comparison.selections,comparison.sides,documentContext(req.body.document));if(designReference)comparison.designReference=designReference;}catch(error){throw new ApiError(400,(error as Error).message);}
+      try{const designReference=validateDesignReference(comparison.purpose,req.body.comparison.designReference,comparison.selections,comparison.sides,documentContext(req.body.document));if(designReference)comparison.designReference=designReference;if(req.body.comparison.tokenSuggestions)comparison.tokenSuggestions=validateTokenSuggestions(req.body.comparison.tokenSuggestions,comparisonTokenFacts(comparison,documentContext(req.body.document)));}catch(error){throw new ApiError(400,(error as Error).message);}
       const ids=[...new Set([...comparison.selections.A.elementIds,...comparison.selections.B.elementIds])];
       if(!Array.isArray(req.body.elementIds)||ids.length!==req.body.elementIds.length||ids.some(id=>!req.body.elementIds.includes(id)))throw new ApiError(400,'Comparison targets must match the frozen selections.');
     }

@@ -33,7 +33,7 @@ export const INTENTS: ReferenceIntent[] = ['Review', 'Compare', 'Help', 'Look at
 
 export interface CollaboratorCursor { userId:UserId; x:number; y:number; visible:boolean; at:number }
 export interface SelectionPresence {userId:UserId;elementIds:string[];exemplarIds:string[];scope:ScopeLevel;method:'conventional'|'smart-ref';revision:number}
-export interface ComparisonContext {sides?:Record<'A'|'B',import('./comparisonSides').ComparisonSideSelection>;snapshotId:string;selections:Record<UserId,SelectionPresence>;purpose:string;designReference?:DesignReference;interpretation:import('./comparisonContext').ContextInterpretation}
+export interface ComparisonContext {tokenSuggestions?:import('./designSystemReferencing').TokenSuggestion[];sides?:Record<'A'|'B',import('./comparisonSides').ComparisonSideSelection>;snapshotId:string;selections:Record<UserId,SelectionPresence>;purpose:string;designReference?:DesignReference;interpretation:import('./comparisonContext').ContextInterpretation}
 
 export interface AttentionRequest {id:string;sourceUser:UserId;targetUser:UserId;createdAt:string;viewedAt?:string}
 
