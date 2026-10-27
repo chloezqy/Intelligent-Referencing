@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MOCK_NODES } from './data';
 import { SharedReference } from './collaboration';
-import { compareReferenceElements, layoutReferencePins, orderedReferences, PIN_SIZE, referenceShortLabel, pinChooserBounds, sharePopoverLayout, shareActionLabel } from './referencePresentation';
+import { compareReferenceElements, layoutReferencePins, orderedReferences, PIN_SIZE, referenceChooserTitle, referenceShortLabel, pinChooserBounds, sharePopoverLayout, shareActionLabel } from './referencePresentation';
 const reference=(id:string,elementIds:string[],status:'open'|'reviewed'='open'):SharedReference=>({id,elementIds,exemplarIds:[],sourceUser:'A',targetUser:'B',scope:'document',intent:'Compare',label:'Buttons',message:'Compare wording',createdAt:'2026-10-21T12:00:00Z',status,responses:[]});
 const camera={x:0,y:0,scale:1},viewport={width:4000,height:2000};
 test('Each saved target has an object anchor that follows world coordinates under pan and zoom',()=>{
@@ -98,4 +98,13 @@ test('Reviewing removes object pins without deleting or archiving the conversati
  assert.equal(layoutReferencePins([reviewed],MOCK_NODES,camera,viewport,ref.id).length,0);
  assert.equal(reviewed.archivedAt,undefined);assert.deepEqual(reviewed.elementIds,ref.elementIds);
  assert.equal(orderedReferences([reviewed]).length,1);
+});
+
+test('Compact chooser titles show intent and object name without changing saved metadata',()=>{
+ const ref={...reference('internal-A5',['lamp']),intent:'Review' as const,label:'Image · Minimalist Desk Lamp'};
+ assert.equal(referenceChooserTitle(ref),'Review · Minimalist Desk Lamp');
+ assert.equal(ref.label,'Image · Minimalist Desk Lamp');
+ assert.equal(referenceChooserTitle({...ref,intent:'Help',label:'Text · Title · Minimalist Desk Lamp'}),'Help · Minimalist Desk Lamp');
+ assert.equal(referenceChooserTitle({...ref,label:'  '}),'Review · Selected objects');
+ assert.equal(referenceChooserTitle({...ref,label:'Lamp · Floor model'}),'Review · Lamp · Floor model');
 });

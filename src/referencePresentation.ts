@@ -81,6 +81,11 @@ export function referenceShortLabel(reference: SharedReference) {
   const short=label.length>44?`${label.slice(0,43)}…`:label;
   return `${reference.intent} · ${short || `${reference.elementIds.length} objects`}`;
 }
+/** Display-only title for the compact conversation chooser. */
+export function referenceChooserTitle(reference: SharedReference) {
+  const name=reference.label.replace(/\s+/g,' ').trim().replace(/^(?:(?:image|text|button|icon|card|product card|title|price|rating|badge|group|element)\s*·\s*)+/i,'');
+  return `${reference.intent} · ${name || 'Selected objects'}`;
+}
 export function pinChooserBounds(anchor:{x:number;y:number},viewport:{width:number;height:number}) {
   const width=Math.min(240,Math.max(0,viewport.width-16)),height=Math.min(224,Math.max(0,viewport.height-16));
   return {left:Math.max(8,Math.min(viewport.width-width-8,anchor.x+18)),top:Math.max(8,Math.min(viewport.height-height-8,anchor.y+18)),width,maxHeight:height};

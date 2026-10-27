@@ -193,7 +193,7 @@ button:disabled { opacity:.45; }
 .pin-chooser { width:240px;max-width:calc(100% - 16px);padding:6px;display:flex;flex-direction:column;overflow:hidden; }
 .pin-chooser-heading { flex-shrink:0;padding:0 4px 4px;font-size:11px; }
 .pin-chooser-list { min-height:0;overflow-y:auto;overscroll-behavior:contain; }
-.pin-conversation { display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:center;gap:6px;padding:7px 3px;min-height:44px; }
+.pin-conversation { display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:6px;padding:7px 3px;min-height:44px; }
 .pin-conversation .chooser-author { display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--participant-color);color:white;font-size:9px;font-weight:600; }
 .pin-conversation .chooser-label { overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:10px;color:#333; }
 .pin-conversation .chooser-label small { display:block;font-size:9px;color:#888; }
@@ -519,3 +519,30 @@ button:disabled { opacity:.45; }
 .semantic-object-count {flex-shrink:0;border-radius:20px;background:#efedf4;padding:2px 6px;font-size:9px;color:#655d73;}
 .semantic-suggestion-context {font-size:10px;color:#777080;}
 .semantic-suggestion-action {align-self:flex-end;font-size:10px;font-weight:600;color:#6954ab;border:1px solid #d8ceee;border-radius:20px;padding:3px 8px;}
+
+.pin-conversation .chooser-title {display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+
+/* One content gutter for pin conversations and the Compare inspector. */
+.collab-panel .reference-detail {padding:16px;display:flex;flex-direction:column;gap:16px;color:#343039;}
+.reference-detail .conversation-header {padding-bottom:12px;border-bottom:1px solid #eeebf2;}
+.reference-detail .conversation-heading {align-items:center;flex-wrap:wrap;gap:8px;}
+.reference-detail .conversation-heading h3 {margin:0;font-size:14px;line-height:20px;font-weight:650;color:#29252f;}
+.reference-detail .conversation-status {flex-shrink:0;max-width:100%;border-radius:20px;background:#f1eff5;padding:3px 8px;font-size:10px;line-height:15px;color:#706978;}
+.reference-detail .conversation-recipient {margin:6px 0 0;font-size:11px;color:#77707e;}
+.reference-detail .conversation-note-label {margin:0 0 6px;font-size:12px;font-weight:500;color:inherit;}
+.reference-detail .conversation-body {margin:0;white-space:pre-wrap;color:inherit;}
+.reference-detail .conversation-empty {margin:0;font-size:11px;font-style:italic;color:#928b98;}
+.reference-detail .responses:empty {display:none;}
+.reference-detail .responses > div {border-left:0;border-top:1px solid #eeebf2;padding:10px 0 0;margin:0;}
+.reference-detail .responses > div + div {margin-top:12px;}
+.reference-detail .responses p {margin:4px 0;color:inherit;white-space:pre-wrap;}
+.reference-detail .responses strong {font-size:11px;font-weight:500;}
+.reference-detail .responses small {color:#928b98;}
+.reference-detail .conversation-reply {margin:0;padding:12px 0 0;border-top:1px solid #eeebf2;}
+.reference-detail .conversation-reply label {margin:0;gap:6px;font-size:12px;font-weight:500;color:inherit;}
+.reference-detail .conversation-reply textarea {min-height:72px;max-height:180px;border-radius:8px;font-weight:400;color:inherit;}
+.reference-detail .conversation-reply textarea::placeholder {color:#928b98;}
+.reference-detail .conversation-reply-actions {display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px;margin-top:8px;}
+.reference-detail .conversation-reply-actions button {min-height:32px;border-radius:8px;}
+.reference-detail .review-action {margin:0;}
+.reference-detail .comparison-overview {margin:0;}

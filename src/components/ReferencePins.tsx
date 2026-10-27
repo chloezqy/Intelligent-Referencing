@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SharedReference } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
-import { layoutReferencePins, orderedReferences, referenceShortLabel, pinChooserBounds } from '../referencePresentation';
+import { layoutReferencePins, orderedReferences, referenceShortLabel, referenceChooserTitle, pinChooserBounds } from '../referencePresentation';
 interface Props { references:SharedReference[]; nodes:UIElement[]; camera:CanvasTransform; viewport:{width:number;height:number}; activeId:string|null; dismissChooser:boolean; onChooserChange:(open:boolean)=>void; onOpen:(id:string)=>void }
 export default function ReferencePins({references,nodes,camera,viewport,activeId,dismissChooser,onChooserChange,onOpen}:Props){
   const [chooser,setChooser]=useState<string|null>(null),host=useRef<HTMLDivElement>(null),lastTrigger=useRef<HTMLButtonElement|null>(null);
@@ -34,7 +34,7 @@ export default function ReferencePins({references,nodes,camera,viewport,activeId
     })}
     {selected&&<div role="dialog" aria-label="Shared reference conversations" className="pin-chooser pointer-events-auto" style={pinChooserBounds(selected,viewport)} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
       <div className="pin-chooser-heading"><strong>Shared references</strong></div>
-      <div className="pin-chooser-list">{selected.referenceIds.map(id=>{const ref=byId.get(id)!;return <button type="button" className="pin-conversation" aria-label={`Open ${ref.sourceUser}${ordered.findIndex(r=>r.id===ref.id)+1} · ${referenceShortLabel(ref)} · ${ref.status==='reviewed'?'Reviewed':'Awaiting review'}`} key={id} onClick={()=>open(id)}><span className={`chooser-author user-${ref.sourceUser}`} aria-hidden="true">{ref.sourceUser}</span><span className="chooser-label">{referenceShortLabel(ref)}<small>{ref.sourceUser}{ordered.findIndex(r=>r.id===ref.id)+1} · {ref.elementIds.length} objects · {new Date(ref.createdAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</small></span><span className={`chooser-status ${ref.status}`}>{ref.status==='reviewed'?'Reviewed':'Awaiting'}</span></button>;})}</div>
+      <div className="pin-chooser-list">{selected.referenceIds.map(id=>{const ref=byId.get(id)!;const title=referenceChooserTitle(ref);return <button type="button" className="pin-conversation" aria-label={`Open ${title} from User ${ref.sourceUser}`} key={id} onClick={()=>open(id)}><span className={`chooser-author user-${ref.sourceUser}`} aria-hidden="true">{ref.sourceUser}</span><span className="chooser-label"><span className="chooser-title" title={title}>{title}</span><small>{ref.elementIds.length} {ref.elementIds.length===1?'object':'objects'} · {new Date(ref.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</small></span></button>;})}</div>
     </div>}
   </div>;
 }
