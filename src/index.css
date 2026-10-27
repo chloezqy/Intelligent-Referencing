@@ -477,3 +477,32 @@ button:disabled { opacity:.45; }
 .reference-request-header {display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;}
 .reference-unread-label {display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;color:#75649f;white-space:nowrap;}
 .reference-unread-label i {width:6px;height:6px;border-radius:50%;background:#7965c6;}
+
+/* Interpretation results grow down inside the anchored third step, never sideways. */
+.selection-context.action-context,
+.selection-context.action-context.conventional {overflow:visible;}
+.selection-context.action-context > .action-stack,
+.selection-context.action-context.conventional > .action-stack {flex-wrap:nowrap;}
+.action-stack .interpretation-step > .interpretation-adjustments {
+ width:100%;
+ min-width:0;
+ max-width:100%;
+ overflow-x:hidden;
+ overflow-y:auto;
+}
+.interpretation-adjustments > * {min-width:0;max-width:100%;flex-shrink:0;}
+.interpretation-adjustments :where(details,summary,.semantic-suggestions,.interpretation-options,.interpretation-summary,strong,small,p) {
+ min-width:0;
+ max-width:100%;
+ white-space:normal;
+ overflow-wrap:anywhere;
+}
+.action-stack .interpretation-adjustments button {
+ min-width:0;
+ max-width:100%;
+ white-space:normal;
+ overflow-wrap:anywhere;
+}
+.interpretation-adjustments .interpretation-options {width:100%;}
+.interpretation-adjustments .interpretation-options button {width:100%;align-items:stretch;flex-shrink:0;}
+.interpretation-adjustments .semantic-suggestions > button svg {flex-shrink:0;}
