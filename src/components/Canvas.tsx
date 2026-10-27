@@ -254,7 +254,16 @@ export default function Canvas({
     const end=getCanvasCoords(e);pending.path.push(end);pending.screenPoints.push({x:e.clientX,y:e.clientY});
     if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);
     setActionAnchor(end);setCurrentPath([]);setRectStart(null);
-    if(!isSelectionDrag(pending.screenStart,pending.screenPoints)){if(pending.tool==='pointer')commitClick(pending.node,pending.shift,pending.previous);return;}
+    if(!isSelectionDrag(pending.screenStart,pending.screenPoints)){
+      if(pending.tool==='pointer')commitClick(pending.node,pending.shift,pending.previous);
+      else if(pending.tool==='reference'){
+        // A tap ends the previous rough reference; only a stroke starts a new one.
+        commitClick(null,false,pending.previous);
+        setHoveredInterpretation(null);setActiveInterpretation(null);setInterpretations([]);
+        setShowAlternatives(false);setDetailsOpen(false);setClicksCounter(0);
+      }
+      return;
+    }
     const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(intent==='move'){
       const snapshot=pending.moveNodes.length?pending.moveNodes:moveTargets(nodes,pending.node!.id,pending.previous?.selectedIds||[]);
