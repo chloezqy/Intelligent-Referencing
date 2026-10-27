@@ -11,10 +11,9 @@ export function semanticSuggestionPresentation(candidate:SemanticCandidate,nodes
  const targets=candidate.elementIds.map(id=>nodes.find(node=>node.id===id)).filter((node):node is UIElement=>!!node);
  const roles=new Set(targets.map(node=>node.role));
  const role=roles.size===1?targets[0]?.role:undefined;
- const compactModelTitle=candidate.label.trim().split(/\s+/).length<=6&&!candidate.elementIds.some(id=>candidate.label.split(/\W+/).includes(id));
- const title=compactModelTitle?shortText(candidate.label,6):role&&roleNames[role]?(targets.length>1?`Matching ${roleNames[role]}`:shortText(targets[0].label,6)):shortText(candidate.label,6);
+ const kinds=[...new Set(targets.map(node=>roleNames[node.role||'']||({text:'text elements',button:'buttons',image:'images',icon:'icons',card:'cards',chip:'filters'}[node.type]||'design elements')))];
+ // Derive visible titles from actual targets, never from model design judgments.
+ const title=role&&roleNames[role]?`Matching ${roleNames[role]}`:kinds.length?shortText(kinds.slice(0,2).join(' + ')+(kinds.length>2?' + related objects':''),8):'Related design elements';
  const screens=[...new Set(targets.map(node=>node.screen).filter(Boolean))];
- const ids=new Set(candidate.elementIds);
- const reason=candidate.reason.split(/\s+/).filter(word=>!ids.has(word.replace(/[(),.;:]/g,''))).join(' ');
- return {title,context:screens.join(' + ')||'Selected design elements',count:candidate.elementIds.length,reason:shortText(reason,9)};
+ return {title,context:screens.join(' + ')||'Selected design elements',count:candidate.elementIds.length};
 }

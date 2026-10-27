@@ -9,9 +9,7 @@ export default function SemanticSuggestionCard({candidate,nodes,selected,onPrevi
   <button type="button" className="semantic-suggestion-select" aria-pressed={selected} onClick={onSelect}>
    <span className="semantic-suggestion-heading"><strong>{summary.title}</strong><span className="semantic-object-count">{summary.count} {summary.count===1?'object':'objects'}</span></span>
    <span className="semantic-suggestion-context">{summary.context}</span>
-   <span className="semantic-suggestion-reason">{summary.reason}</span>
    <span className="semantic-suggestion-action">{selected?'Selected':'Select objects'}</span>
   </button>
-  <details className="semantic-suggestion-why"><summary>Why this suggestion?</summary><p>{candidate.label}</p><p>{candidate.reason}</p><p>Element IDs: {candidate.elementIds.join(', ')}</p><small>Model-generated suggestion · AI</small></details>
  </article>;
 }

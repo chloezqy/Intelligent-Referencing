@@ -2,6 +2,7 @@ import {isSelectionDrag} from '../selectionInteraction';
 import {toolDragIntent,moveTargets,movePositions,Positions} from '../toolInteraction';
 import {useSemanticSuggestions} from '../useSemanticSuggestions';
 import {interpretationLevel} from '../semanticInterpretation';
+import {semanticSuggestionPresentation} from '../semanticSuggestionPresentation';
 import { selectionActionLayout } from '../selectionActionLayout';
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -463,7 +464,7 @@ export default function Canvas({
                 {ai.message&&<p className="subtle" role="status">{ai.message}</p>}
                 {ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=>{
                   const exemplars=candidate.evidenceIds.filter(id=>candidate.elementIds.includes(id));
-                  const interpretation:Interpretation={id:candidate.id,label:candidate.label,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef.scope,confidence:'medium',source:'model',level:'semantic'};
+                  const interpretation:Interpretation={id:candidate.id,label:semanticSuggestionPresentation(candidate,nodes).title,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef.scope,confidence:'medium',source:'model',level:'semantic'};
                   return <SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={inferredRef.activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?interpretation:null)} onSelect={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(interpretation,true);setHoveredInterpretation(null);}}/>;
                 })}</div></details>}
               </div>

@@ -515,8 +515,4 @@ button:disabled { opacity:.45; }
 .semantic-suggestion-heading strong {font-size:12px;line-height:17px;}
 .semantic-object-count {flex-shrink:0;border-radius:20px;background:#efedf4;padding:2px 6px;font-size:9px;color:#655d73;}
 .semantic-suggestion-context {font-size:10px;color:#777080;}
-.semantic-suggestion-reason {font-size:11px;line-height:16px;color:#655d70;}
 .semantic-suggestion-action {align-self:flex-end;font-size:10px;font-weight:600;color:#6954ab;border:1px solid #d8ceee;border-radius:20px;padding:3px 8px;}
-.semantic-suggestion-why {margin:0 10px 8px;font-size:10px;color:#777080;}
-.semantic-suggestion-why summary {cursor:pointer;}
-.semantic-suggestion-why p {margin-top:6px;line-height:15px;}
