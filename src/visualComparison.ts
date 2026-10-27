@@ -1,8 +1,9 @@
+import {comparisonSides,sideLabel} from './comparisonSides';
 import type {ComparisonContext} from './collaboration';
 import type {ComparisonRow,PropertyComparison} from './referencePresentation';
 import type {UIElement} from './types';
 
-const priority=['role','text','dimensions','background','color','radius','fontSize','fontWeight','border'];
+const priority=['role','text','dimensions','spacing','background','color','radius','fontSize','fontWeight','fontFamily','lineHeight','letterSpacing','border'];
 export const readableMetadata=(value:string)=>value.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/([A-Z])([A-Z][a-z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase());
 export interface VisualDifference {row:ComparisonRow;groups:{label:string;user?:'A'|'B';values:string[]}[]}
 /** Derive a bounded presentation from existing rows; never pair objects or mutate comparisons. */
@@ -11,7 +12,7 @@ export function visualDifferences(comparison:PropertyComparison,ownership?:Compa
  for(const key of priority){
   const row=comparison.rows.find(row=>row.key===key&&row.state==='different');
   if(!row)continue;
-  const groups=ownership?(['A','B'] as const).map(user=>({label:`User ${user}`,user,values:[...new Set(comparison.elements.flatMap((element,index)=>ownership.selections[user].elementIds.includes(element.id)?[row.values[index]]:[]))]}))
+  const groups=ownership?(['A','B'] as const).map(user=>({label:sideLabel(ownership,user),user:comparisonSides(ownership)[user].selectedBy,values:[...new Set(comparison.elements.flatMap((element,index)=>comparisonSides(ownership)[user].elementIds.includes(element.id)?[row.values[index]]:[]))]}))
    :[{label:'Selected references',values:[...new Set(row.values)]}];
   // A missing group is not a comparison. Equal sets can reflect variation within both
   // selections, but are not evidence of a difference between the participants.

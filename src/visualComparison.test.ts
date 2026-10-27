@@ -80,7 +80,7 @@ test('Saved Compare uses the same overview and keeps replies/review, while ordin
  const ref={...room.references[0],responses:[{id:'reply',userId:'B' as const,message:'Checked both',createdAt:'2026-10-26T10:00:00Z'}]};
  const c={session:{userId:'B'},connected:true,busy:false} as CollaborationClient;
  const html=renderToStaticMarkup(React.createElement(ReferenceConversation,{active:ref,nodes:MOCK_NODES,collaboration:c,onLocate:()=>{},onClear:()=>{}}));
- assert.equal((html.match(/class="comparison-overview"/g)||[]).length,1);assert.match(html,/Rule-based insight/);
+ assert.equal((html.match(/class="comparison-overview"/g)||[]).length,1);assert.ok(!html.includes('Rule-based insight'));
  assert.match(html,/Checked both/);assert.match(html,/Mark reviewed/);assert.match(html,/Reply to User A/);
  const normal=renderToStaticMarkup(React.createElement(ReferenceConversation,{active:{...ref,intent:'Review'},nodes:MOCK_NODES,collaboration:c,onLocate:()=>{},onClear:()=>{}}));
  assert.ok(!normal.includes('class="comparison-overview"'));assert.match(normal,/Property comparison · rule-based/);

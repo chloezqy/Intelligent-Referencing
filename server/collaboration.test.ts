@@ -117,7 +117,7 @@ test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and 
     assert.equal(savedComparison.comparison!.purpose,'Wording consistency');
     const designId=randomUUID(),designReference={direction:{referenceUser:'A',targetUser:'B'},properties:['typography','colors']};
     const designPayload={...comparisonPayload,requestId:designId,comparison:{...comparisonPayload.comparison,purpose:'Use as a design reference',designReference},message:'@User B use A as reference',inviteNow:true};
-    for(const invalid of [{...designReference,properties:[]},{...designReference,properties:['unknown']},{...designReference,direction:{referenceUser:'B',targetUser:'A'}}]){
+    for(const invalid of [{...designReference,properties:[]},{...designReference,properties:['unknown']},{...designReference,direction:{referenceUser:'A',targetUser:'A'}}]){
       assert.equal((await api(`/rooms/${a.code}/references`,{...designPayload,comparison:{...designPayload.comparison,designReference:invalid}},a)).status,400);
     }
     assert.equal((await api(`/rooms/${a.code}/references`,designPayload,a)).status,201);

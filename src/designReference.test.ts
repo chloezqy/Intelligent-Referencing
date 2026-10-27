@@ -17,7 +17,7 @@ test('Design reference intent is bounded, directional and optional for existing 
  assert.deepEqual(validateDesignReference(DESIGN_REFERENCE_PURPOSE,intent,ctx.selections),intent);
  assert.equal(validateDesignReference('Compare selected elements',undefined,ctx.selections),undefined);
  assert.equal(validateDesignReference('Custom purpose',intent,ctx.selections),undefined);
- for(const value of [undefined,{direction,properties:[]},{direction,properties:['unknown']},{direction,properties:['colors','colors']},{direction:{referenceUser:'B',targetUser:'A'},properties:['colors']}]){
+ for(const value of [undefined,{direction,properties:[]},{direction,properties:['unknown']},{direction,properties:['colors','colors']},{direction:{referenceUser:'A',targetUser:'A'},properties:['colors']}]){
   assert.throws(()=>validateDesignReference(DESIGN_REFERENCE_PURPOSE,value,ctx.selections));
  }
  assert.throws(()=>validateDesignReference(DESIGN_REFERENCE_PURPOSE,intent,{...ctx.selections,B:{...ctx.selections.B,elementIds:[]}}));
@@ -34,7 +34,7 @@ test('Demo handoff preserves purpose, frozen ownership, intent, mentions and inv
  comparison.designReference.properties.push('spacing');
  assert.deepEqual(ref.comparison.designReference.properties,['typography','colors']);
 });
-test('Purpose controls show design properties only for the new purpose and preserve custom typing',()=>{
+test('Purpose controls show two modes and design properties only in reference mode',()=>{
  const ctx=original();
  const render=(context:ComparisonContext)=>renderToStaticMarkup(React.createElement(ComparisonPurpose,{context,onPurpose:()=>{},onDesignReference:()=>{}}));
  const normal=render({...ctx,purpose:'Compare selected elements'});
@@ -43,7 +43,7 @@ test('Purpose controls show design properties only for the new purpose and prese
  assert.match(design,/Properties to reference/);assert.match(design,/User A · Reference/);assert.match(design,/User B · Target/);
  assert.equal((design.match(/type="checkbox"/g)||[]).length,4);
  const custom=render({...ctx,purpose:'Check the purchase flow'});
- assert.match(custom,/Custom comparison purpose/);assert.match(custom,/Check the purchase flow/);
+ assert.match(custom,/Compare differences/);assert.match(custom,/Use as a design reference/);assert.ok(!custom.includes('<select'));
  assert.ok(!custom.includes('type="checkbox"'));
 });
 test('Recipients see stored design intent; old references without the optional field render normally',()=>{

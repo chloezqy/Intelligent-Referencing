@@ -57,7 +57,7 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   if(req.body?.task!==undefined&&!changes&&!editing)throw new SemanticError(400,'Unknown AI task.');
   if(changes)try{changeContext=designChangesRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
   const request=changes||editing?{contextId:req.body.contextId}:semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini';
-  if(changeContext&&!changeContext.facts.length){res.json({contextId:request.contextId,proposals:[],cached:false,message:'No fully recorded differences for these properties. Spacing data is not recorded.'});return;}
+  if(changeContext&&!changeContext.facts.length){res.json({contextId:request.contextId,proposals:[],cached:false,message:'No fully recorded differences for these properties.'});return;}
   const payload=editContext?actionPayload(editContext,model):changeContext?designChangesPayload(changeContext,model):modelPayload(request as SemanticRequest,model),now=(options.now||Date.now)();
   const hash=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   for(const [key,value] of cache)if(value.until<now)cache.delete(key);

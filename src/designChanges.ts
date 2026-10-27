@@ -1,3 +1,4 @@
+import {comparisonSides,referenceSides} from './comparisonSides';
 import type {ComparisonContext,DesignReference,SharedReference,UserId} from './collaboration';
 import type {UIElement} from './types';
 export type DesignProperty=DesignReference['properties'][number];
@@ -5,6 +6,7 @@ export interface DesignChangeFact {id:string;category:DesignProperty;property:st
 export interface ProposedDesignChange {id:string;title:string;explanation:string;facts:DesignChangeFact[];source:'model';status:'pending'|'accepted'|'dismissed';reviewedAt?:string}
 export interface DesignChangeContext {referenceIds:string[];targetIds:string[];properties:DesignProperty[];elements:UIElement[];facts:DesignChangeFact[]}
 const fields:{category:DesignProperty;key:keyof UIElement;label:string;unit?:string}[]=[
+ {category:'spacing',key:'spacing',label:'Spacing',unit:' px'},
  {category:'typography',key:'fontSize',label:'Font size',unit:' px'},
  {category:'typography',key:'fontWeight',label:'Font weight'},
  {category:'colors',key:'bg',label:'Background'},
@@ -27,7 +29,7 @@ export function designChangeContext(referenceIds:string[],targetIds:string[],pro
  }
  return {referenceIds:[...referenceIds],targetIds:[...targetIds],properties:[...properties],elements:[...new Map([...a,...b].map(n=>[n.id,n])).values()],facts:facts.slice(0,96)};
 }
-export function designChangeKey(context:Pick<ComparisonContext,'selections'|'designReference'|'purpose'>){return JSON.stringify([context.purpose,context.selections.A.elementIds,context.selections.B.elementIds,context.designReference?.properties.slice().sort()]);}
+export function designChangeKey(context:Pick<ComparisonContext,'sides'|'selections'|'designReference'|'purpose'>){return JSON.stringify([context.purpose,comparisonSides(context),context.designReference?.direction,context.designReference?.properties.slice().sort()]);}
 export function validateProposedChanges(value:unknown,context:DesignChangeContext):ProposedDesignChange[]{
  if(value===undefined)return [];
  if(!Array.isArray(value)||value.length>3)throw new Error('Invalid proposed changes.');
@@ -41,7 +43,7 @@ export function validateProposedChanges(value:unknown,context:DesignChangeContex
 }
 /** Shared by local demo and realtime mutations; decisions never edit canvas properties. */
 export function decideDesignChange(reference:SharedReference,user:UserId,id:string,status:unknown):SharedReference {
- if(user!=='B'||reference.comparison?.designReference?.direction.targetUser!==user)throw new Error('Only User B can review proposed changes.');
+ if(user!==reference.targetUser||!reference.comparison?.designReference)throw new Error('Only the request recipient can review proposed changes.');
  if(reference.archivedAt||reference.status==='reviewed')throw new Error('Restore an open reference before reviewing changes.');
  if(!['accepted','dismissed','pending'].includes(status as string))throw new Error('Invalid proposed change status.');
  const changes=reference.comparison.designReference.proposedChanges;

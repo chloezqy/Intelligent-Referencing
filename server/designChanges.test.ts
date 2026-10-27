@@ -1,3 +1,4 @@
+import {MOCK_NODES} from '../src/data';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -55,4 +56,10 @@ test('Authenticated realtime HTTP clients share selected proposals and receive i
   assert.equal((await api(path,{status:'dismissed'},b)).status,200);
   assert.equal((await api(`/rooms/${a.code}/references/${id}/review`,{},b)).status,200);
  }finally{streams.forEach(controller=>controller.abort());server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));rmSync(directory,{recursive:true,force:true});}
+});
+test('Design-change evidence uses validated current document styles instead of stale authored defaults',()=>{
+ const document=MOCK_NODES.map(n=>n.id==='hc1-title'?{...n,fontSize:17}:n);
+ const ctx=designChangesRequest({contextId:'edited',referenceIds:['hc1-title'],targetIds:['detail-title'],properties:['typography'],document});
+ assert.ok(ctx.facts.some(f=>f.property==='Font size'&&f.referenceValue==='17 px'));
+ assert.throws(()=>designChangesRequest({contextId:'bad',referenceIds:['hc1-title'],targetIds:['detail-title'],properties:['typography'],document:[{id:'invented'}]}));
 });

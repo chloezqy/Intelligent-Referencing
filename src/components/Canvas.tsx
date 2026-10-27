@@ -1,3 +1,4 @@
+import ReferenceActions from './ReferenceActions';
 import {isSelectionDrag} from '../selectionInteraction';
 import {toolDragIntent,moveTargets,movePositions,Positions} from '../toolInteraction';
 import {useSemanticSuggestions} from '../useSemanticSuggestions';
@@ -12,7 +13,7 @@ import SemanticSuggestionCard from './SemanticSuggestionCard';
 import { ReferenceIntent, SharedReference } from '../collaboration';
 import { zoomAtPoint } from '../workspace';
 import { SCREEN_CONFIGS, SCREEN_W, SCREEN_H, START_Y } from '../data';
-import { getBoundingBox, rectIntersect } from '../utils';
+import { getBoundingBox, rectIntersect,inferSelection,generateScopeInterpretations } from '../utils';
 import { Check, Sparkles, X, Share2, GitCompareArrows } from 'lucide-react';
 
 interface CanvasProps {
@@ -35,6 +36,7 @@ interface CanvasProps {
   inferredRef: InferredReference | null;
   setInferredRef: (ref: InferredReference | null) => void;
   onCompare:()=>void;
+  compareOwn?:boolean;
   compareReady:boolean;
   compareHint:string;
   onAcceptReference: (intent?:ReferenceIntent) => void;
@@ -44,7 +46,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,onSelectionStart,onMove,onCompare,compareReady,compareHint,
+  onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,onSelectionStart,onMove,onCompare,compareOwn=false,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -56,10 +58,10 @@ export default function Canvas({
   transform,
   setTransform, onResearchEvent, sharedReferences, activeSharedId, onOpenShared
 }: CanvasProps) {
-  const [draftRef,setDraftRef]=useState<InferredReference|null>(null);
-  const ai=useSemanticSuggestions(draftRef,nodes);
-  useEffect(()=>{if(selectionState==='idle'){setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);}},[selectionState]);
-  useEffect(()=>{if(inferredRef){setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);}},[inferredRef]);
+  const [adjustOpen,setAdjustOpen]=useState(false);
+  const ai=useSemanticSuggestions(inferredRef,nodes);
+  useEffect(()=>{if(selectionState==='idle'){setHoveredInterpretation(null);}},[selectionState]);
+  useEffect(()=>{if(inferredRef){setHoveredInterpretation(null);}},[inferredRef]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
   const [actionAnchor,setActionAnchor]=useState<Point|null>(null);
@@ -87,7 +89,6 @@ export default function Canvas({
 
   // Candidate previews are separate from the confirmed reference.
   const [hoveredInterpretation, setHoveredInterpretation] = useState<Interpretation | null>(null);
-  const [activeInterpretation, setActiveInterpretation] = useState<Interpretation | null>(null);
   const [clicksCounter, setClicksCounter] = useState(0);
 
   // Keyboard navigation & shortcuts (Figma standard)
@@ -113,7 +114,7 @@ export default function Canvas({
       }
       if (e.key === 'Escape') {
         if(pendingPointer.current||panPoint.current){handlePointerCancel();return;}
-        setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);
+        setHoveredInterpretation(null);
         setSelectionState('idle');
         setInferredRef(null);
         setCurrentPath([]);
@@ -134,8 +135,7 @@ export default function Canvas({
         });
         setSelectionState('preview');
       }
-      if(e.key==='Enter'&&draftRef&&activeInterpretation){commitInterpretation(activeInterpretation);}
-      else if(e.key==='Enter'&&selectionState==='preview')onAcceptReference();
+      if(e.key==='Enter'&&selectionState==='preview')onAcceptReference();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -150,7 +150,7 @@ export default function Canvas({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectionState, onAcceptReference, setToolMode, nodes, clicksCounter,draftRef,activeInterpretation]);
+  }, [selectionState, onAcceptReference, setToolMode, nodes, clicksCounter]);
 
   // Wheel handling: zoom and pan
   useEffect(() => {
@@ -200,7 +200,7 @@ export default function Canvas({
     }
     if(pickingSource){if(node)onPickSource(node.id);return;}
     if(node?.library&&toolMode==='pointer'){commitClick(node,false,inferredRef);return;}
-    setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);
+    setHoveredInterpretation(null);
     const start=getCanvasCoords(e),screenStart={x:e.clientX,y:e.clientY};
     pendingPointer.current={id:e.pointerId,start,screenStart,screenPoints:[screenStart],path:[start],node,shift:e.shiftKey,previous:inferredRef,dragging:false,tool:toolMode,moveNodes:[]};
     containerRef.current?.setPointerCapture(e.pointerId);
@@ -222,7 +222,7 @@ export default function Canvas({
   };
   useEffect(()=>{handlePointerCancel();},[toolMode]);
   const commitClick=(node:UIElement|null,shift:boolean,previous:InferredReference|null)=>{
-    onSelectionStart();setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);
+    setAdjustOpen(false);onSelectionStart();setHoveredInterpretation(null);
     if(!node){if(!shift){setInferredRef(null);setSelectionState('idle');}return;}
     const count=clicksCounter+1;setClicksCounter(count);
     const ids=shift?(previous?.selectedIds.includes(node.id)?previous.selectedIds.filter(id=>id!==node.id):[...(previous?.selectedIds||[]),node.id]):[node.id];
@@ -249,7 +249,7 @@ export default function Canvas({
       else if(pending.tool==='reference'){
         // A tap ends the previous rough reference; only a stroke starts a new one.
         commitClick(null,false,pending.previous);
-        setHoveredInterpretation(null);setActiveInterpretation(null);setDraftRef(null);
+        setHoveredInterpretation(null);
         setClicksCounter(0);
       }
       return;
@@ -268,21 +268,21 @@ export default function Canvas({
       setInferredRef(ids.length?{selectedIds:ids,exemplarIds:ids,label:`${ids.length} layers selected`,scope:'exemplars',selectionMethod:'conventional',clicksCount:count}:null);setSelectionState(ids.length?'preview':'idle');return;
     }
     onResearchEvent('gesture_attempt');
+    const results=inferSelection(pending.path,nodes);
     const touched=gestureTouched(pending.path,nodes);
-    setInferredRef(null);setHoveredInterpretation(null);setActiveInterpretation(null);
-    setDraftRef({selectedIds:touched,exemplarIds:touched,label:'Gesture reference',scope:'exemplars',selectionMethod:'smart-ref'});
-    setSelectionState('interpreting');setCurrentPath([]);
+    const first=results[0]||{id:'touched',label:`${touched.length} touched objects`,description:'Directly touched objects',reasoning:'Direct gesture coverage',selectedIds:touched,exemplarIds:touched,inferredIds:[],scope:'exemplars' as const,confidence:'medium' as const};
+    if(first.selectedIds.length){commitInterpretation(first,false);setAdjustOpen(true);onResearchEvent('gesture_interpreted');}else{setInferredRef(null);setSelectionState('idle');}
+    setCurrentPath([]);
   };
 
-  const commitInterpretation=(interp:Interpretation)=>{
+  const commitInterpretation=(interp:Interpretation,record=true)=>{
     setInferredRef({selectedIds:[...interp.selectedIds],exemplarIds:interp.exemplarIds.filter(id=>interp.selectedIds.includes(id)),label:interp.label,activeInterpretation:interp,matchingRole:interp.matchingRole,matchingComponent:interp.matchingComponent,scope:interp.scope,selectionMethod:'smart-ref'});
-    onResearchEvent('interpretation_choice');setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);setSelectionState('preview');
+    if(record)onResearchEvent('interpretation_choice');setHoveredInterpretation(null);setSelectionState('preview');
   };
-  const handleScopeChange=(scope:ScopeLevel)=>{setDraftRef(prev=>prev?{...prev,scope}:prev);setActiveInterpretation(null);setHoveredInterpretation(null);setSelectionState('interpreting');onResearchEvent('scope_changed');};
-  useEffect(()=>{if(draftRef&&!ai.loading){setSelectionState('disambiguating');if(ai.candidates.length){setActiveInterpretation(candidateInterpretation(ai.candidates[0]));onResearchEvent('gesture_interpreted');}}},[draftRef,ai.loading,ai.done]);
+  const handleScopeChange=(scope:ScopeLevel)=>{if(!inferredRef)return;const results=generateScopeInterpretations(inferredRef.exemplarIds,nodes,scope,inferredRef.matchingRole,inferredRef.matchingComponent);if(results[0])commitInterpretation(results[0],false);onResearchEvent('scope_changed');};
   const candidateInterpretation=(candidate:typeof ai.candidates[number]):Interpretation=>{
-    const summary=semanticSuggestionPresentation(candidate,nodes),exemplars=candidate.elementIds.filter(id=>draftRef?.exemplarIds.includes(id));
-    return {id:candidate.id,label:`${summary.count} ${summary.title.replace(/^Matching /,'')}`,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:draftRef?.scope||'exemplars',confidence:'medium',source:'model',level:'semantic'};
+    const summary=semanticSuggestionPresentation(candidate,nodes),exemplars=candidate.elementIds.filter(id=>inferredRef?.exemplarIds.includes(id));
+    return {id:candidate.id,label:`${summary.count} ${summary.title.replace(/^Matching /,'')}`,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef?.scope||'exemplars',confidence:'medium',source:'model',level:'semantic'};
   };
 
   // Generate SVG path for the ink trail
@@ -291,7 +291,7 @@ export default function Canvas({
     : '';
 
   // Active highlights
-  const activeCandidate = draftRef ? (hoveredInterpretation || activeInterpretation) : null;
+  const activeCandidate = hoveredInterpretation;
   const activeIds = activeCandidate ? activeCandidate.selectedIds : (inferredRef?.selectedIds || []);
   const exemplarIds = activeCandidate ? activeCandidate.exemplarIds : (inferredRef?.exemplarIds || []);
 
@@ -299,7 +299,7 @@ export default function Canvas({
   // Re-anchor only on appearance or actual canvas navigation, never accordion changes.
   useLayoutEffect(()=>{
     if(!actionSurface)return;
-    const header=actionSurface.querySelector<HTMLElement>('header');
+    const header=actionSurface.querySelector<HTMLElement>('.refine-selection');
     if(header)collapsedActionSize.current={width:actionSurface.offsetWidth,height:header.getBoundingClientRect().bottom-actionSurface.getBoundingClientRect().top+8};
     const width=Math.min(336,Math.max(0,viewport.width-16));
     // Reserve a small scrollable adjustment area when first choosing an edge-safe anchor.
@@ -383,18 +383,14 @@ export default function Canvas({
     >
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* One AI review surface; editing is available only after reference confirmation. */}
-      {draftRef&&!sharing&&<div ref={setActionSurface} className="ai-interpretations selection-context" role="region" aria-label="AI Interpretations" onPointerDown={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,maxHeight:Math.max(120,viewport.height-actionPosition.top-16)}}>
-        <header><strong><Sparkles size={14}/> AI Interpretations</strong><button aria-label="Cancel interpretation" onClick={()=>{setDraftRef(null);setSelectionState('idle');}}><X size={14}/></button></header>
-        <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'This Screen'},{scope:'document',label:'Whole File'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={draftRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
-        <p className="interaction-stage">{ai.loading?'AI Interpreting':'Reviewing Interpretations'}</p>
-        {ai.loading&&<p role="status" className="ai-loading"><span/>Interpreting gesture…</p>}
-        {!ai.loading&&ai.candidates.map(candidate=>{const interpretation=candidateInterpretation(candidate);return <SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?interpretation:null)} onSelect={()=>{setActiveInterpretation(interpretation);setHoveredInterpretation(null);onResearchEvent('candidate_activated');}}/>;})}
-        {ai.message&&<p role="status">{ai.message}</p>}
-        {!ai.loading&&!ai.candidates.length&&<div className="edit-row"><button disabled={!draftRef.selectedIds.length} onClick={()=>ai.request()}>Retry AI</button><button disabled={!draftRef.selectedIds.length} onClick={()=>commitInterpretation({id:'manual-touched',label:`${draftRef.selectedIds.length} touched objects`,description:'Manual selection of directly touched objects',reasoning:'User explicitly selected the touched objects',selectedIds:draftRef.selectedIds,exemplarIds:draftRef.exemplarIds,inferredIds:[],scope:'exemplars',confidence:'high'})}>Select touched objects manually</button></div>}
-        {activeInterpretation&&!ai.loading&&<button className="primary-action confirm-reference" onClick={()=>commitInterpretation(activeInterpretation)}><Check size={14}/>Select {activeInterpretation.label}</button>}
-        <p className="subtle">Hover to preview · click a candidate, then confirm.</p>
+      {!sharing&&selectionState==='preview'&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context absolute z-40 flex flex-col items-stretch pointer-events-auto ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:Math.min(336,viewport.width-16),maxHeight:viewport.height-actionPosition.top-8,'--adjustment-space':`${Math.max(48,viewport.height-actionPosition.top-collapsedActionSize.current.height-8)}px`} as React.CSSProperties}>
+        <ReferenceActions compareOwn={compareOwn} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onCompare={onCompare} onAction={onAcceptReference} expanded={adjustOpen} onMore={()=>{setAdjustOpen(v=>!v);setHoveredInterpretation(null);}} interpretationContent={<div id="interpretation-adjustments" className="interpretation-adjustments">
+          <header className="interpretation-summary"><strong>{inferredRef.label}</strong><small>{inferredRef.activeInterpretation?.source==='model'?'AI interpretation':'Rule-based / manual selection'}</small></header>
+          <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'Screen'},{scope:'document',label:'All screens'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={inferredRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
+          <details open><summary>Alternative interpretations · rule-based</summary><div className="interpretation-options">{generateScopeInterpretations(inferredRef.exemplarIds,nodes,inferredRef.scope,inferredRef.matchingRole,inferredRef.matchingComponent).map(interp=><button type="button" key={interp.id} aria-pressed={inferredRef.activeInterpretation?.id===interp.id} onMouseEnter={()=>setHoveredInterpretation(interp)} onMouseLeave={()=>setHoveredInterpretation(null)} onFocus={()=>setHoveredInterpretation(interp)} onBlur={()=>setHoveredInterpretation(null)} onClick={()=>{commitInterpretation(interp);setHoveredInterpretation(null);}}><strong>{interp.label}</strong></button>)}</div></details>
+          <div className="semantic-suggestions"><button type="button" disabled={ai.loading} onClick={()=>{onResearchEvent('ai_interpretation_requested');void ai.request();}}><Sparkles size={12}/>{ai.loading?'Interpreting…':'AI suggestions'}</button>{ai.message&&<p role="status" className="subtle">{ai.message}</p>}{ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=><SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={inferredRef.activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?candidateInterpretation(candidate):null)} onSelect={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(candidateInterpretation(candidate));setHoveredInterpretation(null);}}/>)}</div></details>}</div>
+        </div>}/>
       </div>}
-      {!draftRef&&!sharing&&selectionState==='preview'&&inferredRef&&<div className="selection-sharing selection-context reference-actions action-stack" onPointerDown={e=>e.stopPropagation()}><span className="action-pill-wrap" title={compareHint}><button className={`action-pill collaboration-pill user-${shareLabel.includes('User A')?'A':'B'}`} disabled={!compareReady} onClick={onCompare}><span className="action-orb" aria-hidden="true"><GitCompareArrows size={14}/></span>Compare selections</button></span><button className="action-pill neutral-pill" onClick={()=>onAcceptReference()}><span className="action-orb" aria-hidden="true"><Share2 size={14}/></span>{shareLabel}</button></div>}
 
       <div
         ref={containerRef}

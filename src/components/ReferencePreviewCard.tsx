@@ -13,12 +13,12 @@ function ElementPreview({element,nodes}:{element:UIElement;nodes:UIElement[]}){
   </svg>)}
  </svg>;
 }
-interface Props {key?:string;ids:string[];nodes:UIElement[];user?:UserId;self?:UserId}
-export default function ReferencePreviewCard({ids,nodes,user,self}:Props){
+interface Props {title?:string;key?:string;ids:string[];nodes:UIElement[];user?:UserId;self?:UserId}
+export default function ReferencePreviewCard({ids,nodes,user,self,title}:Props){
  const selected=ids.map(id=>nodes.find(node=>node.id===id));
  const screens=[...new Set(selected.flatMap(node=>node?.screen?[node.screen]:[]))];
- return <article className={`reference-preview-card ${user?`user-${user}`:'unowned-reference-card'}`} aria-label={user?`User ${user} references`:'Selected references'}>
-  <header><span className="preview-identity" aria-hidden="true">{user||<Layers size={13}/>}</span><div><strong>{user?`User ${user}`:'Selected references'}{user&&user===self&&<small> · You</small>}</strong><p>{screens.join(', ')||'Screen unavailable'}</p></div><span className="preview-count">{ids.length} {ids.length===1?'object':'objects'}</span></header>
+ return <article className={`reference-preview-card ${user?`user-${user}`:'unowned-reference-card'}`} aria-label={title?`${title} selected by User ${user}`:user?`User ${user} references`:'Selected references'}>
+  <header><span className="preview-identity" aria-hidden="true">{user||<Layers size={13}/>}</span><div><strong>{title||(user?`User ${user}`:'Selected references')}{user&&user===self&&<small> · You</small>}</strong><p>{screens.join(', ')||'Screen unavailable'}{title&&user?` · Selected by User ${user}`:''}</p></div><span className="preview-count">{ids.length} {ids.length===1?'object':'objects'}</span></header>
   <div className="reference-preview-tiles">{selected.slice(0,3).map((node,index)=><figure key={ids[index]}>
    <div className="reference-preview-art">{node?<ElementPreview element={node} nodes={nodes}/>:<span>Element unavailable</span>}</div>
    <figcaption title={node?.label||ids[index]}>{node?.label||`Unavailable · ${ids[index]}`}</figcaption>

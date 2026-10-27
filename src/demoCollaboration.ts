@@ -10,9 +10,10 @@ export function demoShare(room:RoomSnapshot,draft:ReferenceDraft,intent:Referenc
  if(!draft.elementIds.length||draft.elementIds.some(id=>!valid.has(id)))throw new Error('Select valid design objects.');
  const at=new Date().toISOString(),mentions=mentionedUsers(message,room.members);
  const comparison=draft.comparison?structuredClone(draft.comparison):undefined;
- if(comparison){const designReference=validateDesignReference(comparison.purpose,comparison.designReference,comparison.selections);if(designReference)comparison.designReference=designReference;else delete comparison.designReference;}
+ if(comparison){const designReference=validateDesignReference(comparison.purpose,comparison.designReference,comparison.selections,comparison.sides,draft.document||MOCK_NODES);if(designReference)comparison.designReference=designReference;else delete comparison.designReference;}
 
- const ref:SharedReference={...structuredClone(draft),...(comparison?{comparison}:{}),id,simulated:true,sourceUser,targetUser:sourceUser==='A'?'B':'A',intent,message,createdAt:at,status:'open',mentions,notificationRecipients:mentions.filter(id=>id!==sourceUser),responses:[],activity:[],attention:inviteNow?[{id:`${id}-invite`,sourceUser,targetUser:sourceUser==='A'?'B':'A',createdAt:at}]:[]};
+ const {document:documentSnapshot,...storedDraft}=draft;
+ const ref:SharedReference={...structuredClone(storedDraft),...(comparison?{comparison}:{}),id,simulated:true,sourceUser,targetUser:sourceUser==='A'?'B':'A',intent,message,createdAt:at,status:'open',mentions,notificationRecipients:mentions.filter(id=>id!==sourceUser),responses:[],activity:[],attention:inviteNow?[{id:`${id}-invite`,sourceUser,targetUser:sourceUser==='A'?'B':'A',createdAt:at}]:[]};
  return {...room,revision:room.revision+1,references:[...room.references,ref]};
 }
 export function demoComparison(a:SelectionPresence,b:SelectionPresence,id:string):ComparisonContext{

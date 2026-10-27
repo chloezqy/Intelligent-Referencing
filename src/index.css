@@ -510,9 +510,9 @@ button:disabled { opacity:.45; }
 .interpretation-adjustments .interpretation-options button {width:100%;align-items:stretch;flex-shrink:0;}
 .interpretation-adjustments .semantic-suggestions > button svg {flex-shrink:0;}
 
-.semantic-suggestion-card {min-width:0;max-width:100%;border:1px solid #e1dbea;border-radius:9px;background:#fdfcfe;overflow-wrap:anywhere;}
+.semantic-suggestion-card {width:100%;min-width:0;max-width:100%;border:1px solid #e1dbea;border-radius:9px;background:#fdfcfe;overflow-wrap:anywhere;}
 .semantic-suggestion-card:focus-within,.semantic-suggestion-card:hover {border-color:#b9a9e3;background:#faf8ff;}
-.interpretation-adjustments .interpretation-options .semantic-suggestion-select {border:0;border-radius:9px;background:transparent;padding:10px;gap:6px;color:#514760;}
+.interpretation-adjustments .interpretation-options .semantic-suggestion-select {border:0;border-radius:9px;background:transparent;padding:10px;display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:6px;color:#514760;}
 .semantic-suggestion-select[aria-pressed=true] {background:#f1edfb!important;}
 .semantic-suggestion-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0;}
 .semantic-suggestion-heading strong {font-size:12px;line-height:17px;}
@@ -636,3 +636,29 @@ button:disabled { opacity:.45; }
 .editing-toolbar.is-previewing .editing-panel> :not(.edit-proposal){display:none;}
 .editing-toolbar.is-previewing .edit-proposal .mapping-list,.editing-toolbar.is-previewing .edit-proposal details{display:none;}
 .editing-toolbar.is-previewing .edit-proposal{margin-top:0;}
+
+.comparison-purpose {margin:12px 0;}
+.comparison-purpose fieldset {display:flex;flex-direction:column;gap:8px;border:0;padding:0;margin:0;}
+.comparison-purpose legend {font-size:12px;font-weight:600;color:#514560;margin-bottom:8px;}
+.inspector-composer .comparison-purpose fieldset > label {display:flex;align-items:center;gap:8px;font-size:12px;margin:0;}
+.comparison-purpose input[type=radio] {accent-color:#7965c6;width:14px;height:14px;flex-shrink:0;}
+.comparison-purpose-summary {font-size:12px;color:#756784;}
+.design-reference-direction {flex-wrap:wrap;}
+.design-reference-direction button {margin-left:auto;}
+
+/* Editing is part of Compare; the canvas retains only its contextual actions. */
+.inspector-editing.editing-toolbar {position:static;transform:none;left:auto;top:auto;width:100%;max-width:100%;border:0;border-radius:0;box-shadow:none;background:transparent;margin:8px 0;}
+.inspector-editing.editing-toolbar header {padding:8px 0;border:0;}
+.inspector-editing .editing-categories {padding:4px 0;gap:6px;}
+.inspector-editing .editing-panel {padding:10px 0;max-height:none;max-width:100%;overflow:visible;}
+.inspector-editing .edit-form-grid {grid-template-columns:repeat(2,minmax(0,1fr));}
+.inspector-editing .mapping-list {max-height:180px;overflow-y:auto;}
+.inspector-editing .action-compatibility {font-size:11px;line-height:1.5;color:#756984;margin:6px 0;}
+.inspector-suggested-actions {padding:12px 0;border-top:1px solid #ece8f1;margin-top:12px;}
+.inspector-suggested-actions > h4 {font-size:12px;font-weight:600;color:#514560;margin-bottom:8px;}
+.inspector-editing button,.inspector-editing input,.inspector-editing select {min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;}
+.inspector-editing .edit-row {flex-wrap:wrap;}
+.inspector-editing .edit-proposal {min-width:0;max-width:100%;overflow-wrap:anywhere;}
+.inspector-editing .edit-proposal pre {white-space:pre-wrap;overflow-wrap:anywhere;}
+.inspector-editing .proposal-origin {display:block;font-size:10px;color:#84758f;margin-bottom:4px;}
+.inspector-editing.editing-toolbar header {justify-content:flex-end;}

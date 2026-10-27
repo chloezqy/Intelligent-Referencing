@@ -1,3 +1,5 @@
+import {documentContext} from './documentContext';
+import {localComparison} from '../src/comparisonSides';
 import {installSemantic} from './semantic';
 import { DeploymentOptions } from './deployment';
 import { randomUUID } from 'node:crypto';
@@ -52,6 +54,11 @@ export function collaborationServer(store: RoomStore,options:DeploymentOptions={
   }));
   app.post('/api/rooms/:code/comparison-drafts',route((req,res)=>{
     const user=auth(req),code=String(req.params.code),room=selections.get(code);
+    if(req.body.localIds!==undefined){
+      let context:ComparisonContext;try{context=localComparison(user,req.body.localIds,randomUUID(),MOCK_NODES);}catch(error){throw new ApiError(400,(error as Error).message);}
+      if(drafts.size>=1000)throw new ApiError(429,'Too many comparison drafts. Try later.');
+      drafts.set(context.snapshotId,{code,user,context,expires:Date.now()+3600000});res.status(201).json(context);return;
+    }
     if(!online(code,'A')||!online(code,'B')||!room?.A?.elementIds.length||!room?.B?.elementIds.length)throw new ApiError(409,'Both users must be online with a selection.');
     if(req.body.revisions?.A!==room.A.revision||req.body.revisions?.B!==room.B.revision)throw new ApiError(409,'Selections changed. Try Compare again.');
     for(const [id,draft] of drafts)if(draft.expires<Date.now())drafts.delete(id);
@@ -90,7 +97,7 @@ export function collaborationServer(store: RoomStore,options:DeploymentOptions={
       const purpose=req.body.comparison.purpose;
       if(typeof purpose!=='string'||!purpose.trim()||purpose.length>300||req.body.intent!=='Compare')throw new ApiError(400,'Choose a comparison purpose.');
       comparison={...structuredClone(frozen.context),purpose:purpose.trim()};
-      try{const designReference=validateDesignReference(comparison.purpose,req.body.comparison.designReference,comparison.selections);if(designReference)comparison.designReference=designReference;}catch(error){throw new ApiError(400,(error as Error).message);}
+      try{const designReference=validateDesignReference(comparison.purpose,req.body.comparison.designReference,comparison.selections,comparison.sides,documentContext(req.body.document));if(designReference)comparison.designReference=designReference;}catch(error){throw new ApiError(400,(error as Error).message);}
       const ids=[...new Set([...comparison.selections.A.elementIds,...comparison.selections.B.elementIds])];
       if(!Array.isArray(req.body.elementIds)||ids.length!==req.body.elementIds.length||ids.some(id=>!req.body.elementIds.includes(id)))throw new ApiError(400,'Comparison targets must match the frozen selections.');
     }

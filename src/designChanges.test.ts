@@ -38,5 +38,5 @@ test('Draft has explicit Suggest changes action, no automatic model request, and
  const ctx=comparison();const html=renderToStaticMarkup(React.createElement(DraftDesignChanges,{context:ctx,onChange:()=>{}}));assert.match(html,/Suggest changes/);assert.match(html,/0 proposed changes selected/);assert.doesNotMatch(html,/type="checkbox"/);
  ctx.designReference.proposedChanges=[proposal()];const ref=demoShare(freshDemo(),{comparison:ctx,elementIds:['hc1','sc1'],exemplarIds:['hc1'],label:'Fixture',scope:'document'},'Compare','','fixture').references[0];
  const render=(userId:'A'|'B')=>renderToStaticMarkup(React.createElement(SharedDesignChanges,{reference:ref,collaboration:{session:{userId},connected:true,busy:false} as any}));
- assert.match(render('B'),/>Accept</);assert.match(render('B'),/>Dismiss</);assert.doesNotMatch(render('A'),/>Accept</);assert.match(render('B'),/A: /);
+ assert.match(render('B'),/>Accept</);assert.match(render('B'),/>Dismiss</);assert.doesNotMatch(render('A'),/>Accept</);assert.match(render('B'),/Reference: /);
 });

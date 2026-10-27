@@ -82,7 +82,7 @@ export function useRealtimeCollaboration(enabled=true) {
   }
   return { mode: 'realtime' as const, session, room, selections, cursors, connected, busy, error, initialCode,
     publishSelection: async (body:Omit<SelectionPresence,'userId'|'revision'>) => {if(!session||!connected)return;await api(`/rooms/${session.code}/selection`,body);},
-    comparisonDraft: () => action(async()=>{if(!session||!connected)throw new Error('Reconnect before comparing.');return await api(`/rooms/${session.code}/comparison-drafts`,{revisions:{A:selections.A?.revision,B:selections.B?.revision}}) as unknown as ComparisonContext;}),
+    comparisonDraft: (localIds?:string[]) => action(async()=>{if(!session||!connected)throw new Error('Reconnect before comparing.');return await api(`/rooms/${session.code}/comparison-drafts`,{...(localIds?{localIds}:{revisions:{A:selections.A?.revision,B:selections.B?.revision}})}) as unknown as ComparisonContext;}),
     cursor: async (x:number,y:number,visible:boolean) => {if(!session||!connected)return;try{await api(`/rooms/${session.code}/cursor`,{x,y,visible});}catch{/* Ephemeral presence never interrupts reference actions. */}},
     create: () => action(async () => { const identity = await api('/rooms', {}, null); remember(identity); return identity; }),
     join: (input: string) => action(async () => {
