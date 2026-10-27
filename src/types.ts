@@ -31,7 +31,7 @@ export interface UIElement {
   // Semantic metadata for intelligent inference
   role?: 'price' | 'originalPrice' | 'primaryCTA' | 'secondaryCTA' | 'rating' | 'favorite' | 'productTitle' | 'filterChip' | 'stepper' | 'productImage' | 'navTitle' | 'card' | 'badge' | 'searchBar' | 'tabIcon' | 'errorBanner';
   component?: 'ProductCard' | 'CartItem' | 'NavBar' | 'TabBar' | 'FilterBar' | 'DetailHero' | 'CheckoutCard' | 'ReviewCard' | 'AddressCard' | 'PaymentCard';
-  screen?: 'Home' | 'Search' | 'Detail' | 'Favorites' | 'Cart' | 'Checkout';
+  screen?: 'Home' | 'Search' | 'Detail' | 'Favorites' | 'Cart' | 'Checkout' | 'Design System';
   group?: string;
 
   // Visual styling
@@ -41,6 +41,13 @@ export interface UIElement {
   radius?: number;
   border?: string;
   fontWeight?: string;
+  fontFamily?: string;
+  lineHeight?: number;
+  letterSpacing?: number;
+  shadow?: string;
+  spacing?: number;
+  library?: boolean;
+  token?: string;
   originalBg?: string;
   originalText?: string;
 }

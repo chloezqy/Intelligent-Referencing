@@ -567,3 +567,72 @@ button:disabled { opacity:.45; }
 .proposed-change-review > span {margin-right:auto;color:#80758d;}
 .proposed-change-review button[aria-pressed=true] {background:#eee8fa;border-color:#bcacdd;color:#6352a0;}
 .reference-detail .design-change-suggestions {padding:12px 0;}
+
+/* Intelligent editing extends the existing floating canvas surfaces. */
+.editing-toolbar,.ai-interpretations{position:absolute;z-index:42;background:#fff;border:1px solid #dedee7;border-radius:12px;box-shadow:0 8px 32px #18181b18;font-size:12px;color:#27272a;pointer-events:auto;}
+.editing-toolbar{top:14px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100% - 32px);}
+.editing-toolbar header,.ai-interpretations header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border-bottom:1px solid #eee;}
+.ai-interpretations header strong{display:flex;align-items:center;gap:6px;}
+.editing-toolbar button,.ai-interpretations button{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid #e4e4e7;border-radius:6px;background:white;padding:6px 8px;font-size:11px;cursor:pointer;}
+.editing-toolbar button:hover,.ai-interpretations button:hover{background:#f4f4f5;}
+.editing-toolbar button:disabled,.ai-interpretations button:disabled{opacity:.4;cursor:not-allowed;}
+.editing-toolbar button[aria-pressed=true],.ai-interpretations button[aria-pressed=true]{color:#4338ca;border-color:#a5b4fc;background:#eef2ff;}
+.editing-categories{display:flex;flex-wrap:wrap;gap:4px;padding:7px;}
+.editing-categories button{border:0;}
+.edit-history{display:flex;gap:3px;}
+.edit-history button{border:0;padding:3px;}
+.editing-panel{padding:12px;border-top:1px solid #e4e4e7;max-height:min(65vh,620px);width:100%;max-width:560px;overflow:auto;overscroll-behavior:contain;}
+.edit-panel-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.editing-panel p,.ai-interpretations p{font-size:11px;color:#71717a;line-height:1.5;margin:7px 0;}
+.editing-panel label{display:flex;flex-direction:column;gap:4px;font-size:11px;margin:6px 0;}
+.editing-panel input,.editing-panel select,.editing-panel textarea{background:#fafafa;border:1px solid #d4d4d8;border-radius:5px;padding:6px;font-size:12px;min-width:0;width:100%;}
+.editing-panel input[type=color]{width:40px;height:32px;padding:3px;}
+.editing-panel input[type=checkbox]{width:auto;accent-color:#4f46e5;}
+.editing-panel textarea{height:66px;resize:vertical;}
+.editing-panel select{max-width:100%;}
+.edit-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+.edit-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0;}
+.edit-row select{width:auto;flex:1;}
+.layout-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.layout-actions button{width:100%;height:100%;}
+.edit-proposal{margin-top:12px;padding:10px;border-radius:8px;background:#fafaff;border:1px solid #c7d2fe;}
+.mapping-list{max-height:190px;overflow:auto;margin:8px 0;}
+.mapping-list label{flex-direction:row;align-items:start;gap:8px;padding:5px 0;}
+.mapping-list small{display:block;color:#71717a;margin-top:2px;}
+.edit-diffs{font-size:10px;max-height:170px;overflow:auto;}
+.edit-diffs li{padding:5px;}
+.edit-diffs span{display:block;overflow-wrap:anywhere;}
+.editing-toolbar .primary-action,.ai-interpretations .primary-action{background:#4f46e5;color:white;border-color:#4f46e5;}
+.preview-status{font-weight:600;color:#4338ca!important;}
+.edit-feedback,.source-picking{padding:8px 12px;border-top:1px solid #eee;font-size:11px;max-width:500px;}
+.source-picking{background:#fff7ed;color:#9a3412;}
+.source-outline{border:3px dashed #f59e0b;}
+.source-outline span{position:absolute;top:-24px;background:#f59e0b;color:#451a03;padding:2px 5px;font-size:12px;white-space:nowrap;}
+.ai-interpretations{width:310px;max-width:calc(100% - 16px);padding:0 10px 8px;overflow:auto;}
+.ai-interpretations header{padding:10px 0;}
+.ai-interpretations .semantic-suggestion-card{margin:6px 0;}
+.ai-interpretations .semantic-suggestion-select{width:100%;display:flex;flex-direction:column;align-items:stretch;text-align:left;}
+.ai-interpretations .scope-options{margin-top:10px;}
+.ai-interpretations .confirm-reference{width:100%;margin-top:8px;}
+.ai-loading{display:flex;align-items:center;gap:8px;padding:12px 0;}
+.ai-loading span{height:12px;width:12px;border:2px solid #c7d2fe;border-top-color:#4f46e5;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.interaction-status{position:absolute;bottom:12px;left:12px;background:#ffffffed;border:1px solid #e4e4e7;padding:5px 9px;border-radius:6px;font-size:10px;color:#52525b;pointer-events:none;z-index:35;}
+.interaction-stage{font-size:9px!important;text-transform:uppercase;letter-spacing:.06em;}
+.selection-sharing{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:max-content;max-width:calc(100% - 24px);padding-left:13px;overflow:visible;z-index:39;}
+@media(max-width:800px){.editing-toolbar{width:calc(100% - 24px);}.editing-categories button{font-size:10px;padding:5px;}.layout-actions{grid-template-columns:1fr 1fr;}}
+.layers-tree{display:flex;flex-direction:column;height:100%;font-size:11px;}
+.layers-tree header{display:flex;gap:6px;padding:12px;border-bottom:1px solid #e4e4e7;align-items:center;}
+.layers-tree header small{margin-left:auto;font-size:9px;color:#71717a;}
+.layer-scroll{overflow:auto;flex:1;min-height:0;}
+.layer-row{display:flex;align-items:center;min-height:30px;border-bottom:1px solid #f4f4f5;gap:2px;}
+.layer-row.selected{background:#eef2ff;color:#4338ca;}
+.layer-row button{padding:4px;background:none;border:0;cursor:pointer;}
+.layer-row .layer-name{display:flex;align-items:center;gap:6px;flex:1;min-width:0;text-align:left;}
+.layer-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.layer-name small{font-size:8px;margin-left:auto;}
+.layer-expand{width:20px;flex-shrink:0;}
+.layers-tree>p{font-size:10px;color:#71717a;padding:8px;border-top:1px solid #e4e4e7;}
+.editing-toolbar.is-previewing .editing-panel> :not(.edit-proposal){display:none;}
+.editing-toolbar.is-previewing .edit-proposal .mapping-list,.editing-toolbar.is-previewing .edit-proposal details{display:none;}
+.editing-toolbar.is-previewing .edit-proposal{margin-top:0;}

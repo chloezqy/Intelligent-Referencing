@@ -31,7 +31,7 @@ test('Zoom preserves the world point under the cursor, including scale limits', 
 });
 
 test('All commerce content fits its parent and retains the six original screen bounds', () => {
-  assert.deepEqual(MOCK_NODES.filter(n => n.type === 'screen').map(n => [n.x, n.y, n.w, n.h]),
+  assert.deepEqual(MOCK_NODES.filter(n => n.type === 'screen'&&!n.library).map(n => [n.x, n.y, n.w, n.h]),
     SCREEN_CONFIGS.map(s => [s.x, START_Y, 375, 812]));
   for (const node of MOCK_NODES) {
     const parent = MOCK_NODES.find(p => p.id === node.parent);

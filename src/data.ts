@@ -1,4 +1,5 @@
 import { UIElement } from './types.js';
+import {buildLibrary} from './designSystem.js';
 
 export const INITIAL_NODES: UIElement[] = [];
 
@@ -1396,5 +1397,5 @@ function buildDataset(): UIElement[] {
   return nodes;
 }
 
-export const MOCK_NODES = buildDataset();
+export const MOCK_NODES = [...buildDataset(), ...buildLibrary()];
 

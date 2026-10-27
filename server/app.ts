@@ -12,7 +12,7 @@ export function collaborationServer(store: RoomStore,options:DeploymentOptions={
   app.set('trust proxy',options.trustProxyHops);
   app.use((_req,res,next)=>{res.set({'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY'});next();});
   app.use('/api', (_req, res, next) => { res.setHeader('Cache-Control', 'no-store, no-transform'); res.setHeader('Referrer-Policy', 'no-referrer'); next(); });
-  app.use(express.json({ limit: '24kb' }));
+  app.use(express.json({ limit: '512kb' }));
   app.use('/api', (req, _res, next) => { if (req.method === 'POST' && (!req.body || typeof req.body !== 'object' || Array.isArray(req.body))) return next(new ApiError(400, 'Expected a JSON object.')); next(); });
   const clients = new Map<string, Set<{ user: UserId; response: express.Response }>>();
   const online = (code: string, user: UserId) => [...(clients.get(code) || [])].some(c => c.user === user);

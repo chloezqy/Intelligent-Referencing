@@ -63,11 +63,11 @@ test('Hosted disabled AI, malformed requests and unavailable OpenAI retain deter
   assert.equal((await fetch(url+'/api/semantic/interpret')).status,405);
   assert.equal((await post(url,input,{'Content-Type':'text/plain'})).status,415);
   assert.equal((await post(url,'{')).status,400);
-  assert.equal((await post(url,{...input,contextId:'x'.repeat(100000)})).status,413);
+  assert.equal((await post(url,{...input,contextId:'x'.repeat(600000)})).status,413);
  });assert.equal(calls,0);
  await hosted({enabled:true,key:'fixture',fetcher:async()=>{calls++;throw new Error('private upstream details');}},async url=>{
   const result=await post(url);assert.equal(result.status,504);const text=await result.text();
-  assert.match(text,/Rule-based options still work/);assert.doesNotMatch(text,/private upstream details/);
+  assert.match(text,/Retry or select touched objects manually/);assert.doesNotMatch(text,/private upstream details/);
  });assert.equal(calls,1);
 });
 test('Hosted requests reuse candidate validation and timeouts',async()=>{
@@ -96,7 +96,7 @@ test('Vercel pre-parsed bodies work without rereading a consumed request stream'
  try{
   const base=`http://127.0.0.1:${(server.address() as any).port}`;
   assert.equal((await post(base)).status,200);
-  assert.equal((await post(base,{...input,contextId:'x'.repeat(100000)})).status,413);
+  assert.equal((await post(base,{...input,contextId:'x'.repeat(600000)})).status,413);
   assert.equal((await post(base,'{')).status,400);
   assert.equal(calls,1);
  }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));}

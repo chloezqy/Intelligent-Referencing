@@ -7,9 +7,9 @@ export default function SemanticSuggestionCard({candidate,nodes,selected,onPrevi
  const summary=semanticSuggestionPresentation(candidate,nodes);
  return <article className="semantic-suggestion-card" onMouseEnter={()=>onPreview(true)} onMouseLeave={()=>onPreview(false)} onFocus={()=>onPreview(true)} onBlur={event=>{if(!event.currentTarget.contains(event.relatedTarget as Node|null))onPreview(false);}}>
   <button type="button" className="semantic-suggestion-select" aria-pressed={selected} onClick={onSelect}>
-   <span className="semantic-suggestion-heading"><strong>{summary.title}</strong><span className="semantic-object-count">{summary.count} {summary.count===1?'object':'objects'}</span></span>
+   <span className="semantic-suggestion-heading"><strong>{summary.count} {summary.title.replace(/^Matching /,'')}</strong><span className="semantic-object-count">{summary.count} {summary.count===1?'object':'objects'}</span></span>
    <span className="semantic-suggestion-context">{summary.context}</span>
-   <span className="semantic-suggestion-action">{selected?'Selected':'Select objects'}</span>
+   <span className="semantic-suggestion-action">{selected?'Preview active · confirm below':'Preview this reference'}</span>
   </button>
  </article>;
 }

@@ -19,7 +19,7 @@ let server;
 try{
  // Preserve local imports: bundling alone hides native Node ESM resolution errors.
  const esmDirectory=join(directory,'esm');
- await build({entryPoints:['api/semantic/interpret.ts','server/vercelSemantic.ts','server/semantic.ts','src/data.ts','src/semanticInterpretation.ts','src/utils.ts','src/types.ts'],outbase:'.',outdir:esmDirectory,bundle:false,platform:'node',format:'esm',target:'node24',logLevel:'silent'});
+ await build({entryPoints:['api/semantic/interpret.ts','server/vercelSemantic.ts','server/semantic.ts','server/actionIntent.ts','server/documentContext.ts','server/designChanges.ts','src/designChanges.ts','src/collaboration.ts','src/editing.ts','src/actionIntent.ts','src/designSystem.ts','src/gestureContext.ts','src/data.ts','src/semanticInterpretation.ts','src/utils.ts','src/types.ts'],outbase:'.',outdir:esmDirectory,bundle:false,platform:'node',format:'esm',target:'node24',logLevel:'silent'});
  await writeFile(join(esmDirectory,'package.json'),JSON.stringify({type:'module'}));
  await symlink(resolve('node_modules'),join(esmDirectory,'node_modules'),'dir');
  execFileSync(process.execPath,['--input-type=module','-e',`const {default:handler}=await import(${JSON.stringify(join(esmDirectory,'api/semantic/interpret.js'))}); if(typeof handler!=='function')throw new Error('Missing API handler');`],{stdio:'inherit'});

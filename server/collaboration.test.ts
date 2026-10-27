@@ -7,7 +7,7 @@ import { randomUUID, randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
 import { collaborationServer } from './app';
 import { RoomStore } from './store';
-import { evaluateAttempt } from '../src/research';
+import { evaluateAttempt } from '../src/legacyResearch';
 import { RoomSnapshot, Session } from '../src/collaboration';
 
 test('Two authenticated HTTP/SSE clients share, respond, review, reconnect, and recover durable rooms', async () => {

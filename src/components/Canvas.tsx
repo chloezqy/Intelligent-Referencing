@@ -1,22 +1,25 @@
 import {isSelectionDrag} from '../selectionInteraction';
 import {toolDragIntent,moveTargets,movePositions,Positions} from '../toolInteraction';
 import {useSemanticSuggestions} from '../useSemanticSuggestions';
-import {interpretationLevel} from '../semanticInterpretation';
+import {gestureTouched} from '../gestureContext';
 import {semanticSuggestionPresentation} from '../semanticSuggestionPresentation';
 import { selectionActionLayout } from '../selectionActionLayout';
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Point, UIElement, ToolMode, SelectionState, InferredReference, Interpretation, ScopeLevel } from '../types';
 import ReferencePins from './ReferencePins';
-import ReferenceActions from './ReferenceActions';
 import SemanticSuggestionCard from './SemanticSuggestionCard';
 import { ReferenceIntent, SharedReference } from '../collaboration';
 import { zoomAtPoint } from '../workspace';
 import { SCREEN_CONFIGS, SCREEN_W, SCREEN_H, START_Y } from '../data';
-import { inferSelection, getBoundingBox, expandScope, rectIntersect, generateScopeInterpretations } from '../utils';
-import { Check, Sparkles, X, MousePointer2 } from 'lucide-react';
+import { getBoundingBox, rectIntersect } from '../utils';
+import { Check, Sparkles, X, Share2, GitCompareArrows } from 'lucide-react';
 
 interface CanvasProps {
+  onMoveEnd:()=>void;
+  pickingSource:boolean;
+  sourceId:string|null;
+  onPickSource:(id:string)=>void;
   shareLabel:string;
   sharing:boolean;
   onSelectionStart:()=>void;
@@ -41,7 +44,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  shareLabel, sharing,onSelectionStart,onMove,onCompare,compareReady,compareHint,
+  onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,onSelectionStart,onMove,onCompare,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -53,26 +56,17 @@ export default function Canvas({
   transform,
   setTransform, onResearchEvent, sharedReferences, activeSharedId, onOpenShared
 }: CanvasProps) {
-  const ai=useSemanticSuggestions(inferredRef,nodes);
+  const [draftRef,setDraftRef]=useState<InferredReference|null>(null);
+  const ai=useSemanticSuggestions(draftRef,nodes);
+  useEffect(()=>{if(selectionState==='idle'){setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);}},[selectionState]);
+  useEffect(()=>{if(inferredRef){setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);}},[inferredRef]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
   const [actionAnchor,setActionAnchor]=useState<Point|null>(null);
-  const [detailsOpen,setDetailsOpen]=useState(false);
   const [actionSurface,setActionSurface]=useState<HTMLDivElement|null>(null);
   const collapsedActionSize=useRef({width:320,height:196});
   const [actionPosition,setActionPosition]=useState({left:8,top:8});
   const [pinChooserOpen, setPinChooserOpen] = useState(false);
-  const [selectionPopupDismissed, setSelectionPopupDismissed] = useState(false);
-  useEffect(()=>{setSelectionPopupDismissed(false);},[inferredRef]);
-  useEffect(()=>{if(sharing||pinChooserOpen)setSelectionPopupDismissed(true);},[sharing,pinChooserOpen]);
-  useEffect(()=>{
-    const dismiss=(event:PointerEvent)=>{
-      if(!(event.target as Element).closest('.selection-context')){setSelectionPopupDismissed(true);setDetailsOpen(false);}
-    };
-    document.addEventListener('pointerdown',dismiss,true);
-    return()=>document.removeEventListener('pointerdown',dismiss,true);
-  },[]);
-
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -91,13 +85,9 @@ export default function Canvas({
   const [currentPath, setCurrentPath] = useState<Point[]>([]);
   const [rectStart, setRectStart] = useState<Point | null>(null);
 
-  // Interpretations from gesture inference
-  const [interpretations, setInterpretations] = useState<Interpretation[]>([]);
+  // Candidate previews are separate from the confirmed reference.
   const [hoveredInterpretation, setHoveredInterpretation] = useState<Interpretation | null>(null);
   const [activeInterpretation, setActiveInterpretation] = useState<Interpretation | null>(null);
-  const [showAlternatives, setShowAlternatives] = useState(false);
-  const inferenceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(()=>()=>{if(inferenceTimer.current)clearTimeout(inferenceTimer.current);},[]);
   const [clicksCounter, setClicksCounter] = useState(0);
 
   // Keyboard navigation & shortcuts (Figma standard)
@@ -122,18 +112,18 @@ export default function Canvas({
         setToolMode('pan');
       }
       if (e.key === 'Escape') {
-        if(pendingPointer.current||panPoint.current||selectionState==='interpreting'){handlePointerCancel();return;}
-        if(inferenceTimer.current)clearTimeout(inferenceTimer.current);
+        if(pendingPointer.current||panPoint.current){handlePointerCancel();return;}
+        setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);
         setSelectionState('idle');
         setInferredRef(null);
         setCurrentPath([]);
-        setShowAlternatives(false);
+
         setClicksCounter(0);
       }
       // Cmd+A / Ctrl+A: Select all selectable layers
       if ((e.metaKey || e.ctrlKey) && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
-        const allSelectable = nodes.filter(n => n.type !== 'screen' && n.type !== 'header' && n.type !== 'tabbar').map(n => n.id);
+        const allSelectable = nodes.filter(n => !n.library && n.type !== 'screen' && n.type !== 'header' && n.type !== 'tabbar').map(n => n.id);
         setInferredRef({
           selectedIds: allSelectable,
           exemplarIds: allSelectable,
@@ -144,9 +134,8 @@ export default function Canvas({
         });
         setSelectionState('preview');
       }
-      if (e.key === 'Enter' && (selectionState === 'preview' || selectionState === 'disambiguating')) {
-        onAcceptReference();
-      }
+      if(e.key==='Enter'&&draftRef&&activeInterpretation){commitInterpretation(activeInterpretation);}
+      else if(e.key==='Enter'&&selectionState==='preview')onAcceptReference();
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -161,13 +150,13 @@ export default function Canvas({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectionState, onAcceptReference, setToolMode, nodes, clicksCounter]);
+  }, [selectionState, onAcceptReference, setToolMode, nodes, clicksCounter,draftRef,activeInterpretation]);
 
   // Wheel handling: zoom and pan
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    
+
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (e.ctrlKey || e.metaKey) {
@@ -186,7 +175,7 @@ export default function Canvas({
         }));
       }
     };
-    
+
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
   }, [setTransform]);
@@ -206,10 +195,12 @@ export default function Canvas({
   const handlePointerDown=(e:React.PointerEvent,node:UIElement|null=null)=>{
     if(e.button!==0&&e.button!==1)return;
     if(pendingPointer.current||panPoint.current)return;
-    if(inferenceTimer.current){clearTimeout(inferenceTimer.current);inferenceTimer.current=null;}
     if(e.button===1||isSpacePressed||toolMode==='pan'){
       setIsPanning(true);panPoint.current={x:e.clientX,y:e.clientY};containerRef.current?.setPointerCapture(e.pointerId);return;
     }
+    if(pickingSource){if(node)onPickSource(node.id);return;}
+    if(node?.library&&toolMode==='pointer'){commitClick(node,false,inferredRef);return;}
+    setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);
     const start=getCanvasCoords(e),screenStart={x:e.clientX,y:e.clientY};
     pendingPointer.current={id:e.pointerId,start,screenStart,screenPoints:[screenStart],path:[start],node,shift:e.shiftKey,previous:inferredRef,dragging:false,tool:toolMode,moveNodes:[]};
     containerRef.current?.setPointerCapture(e.pointerId);
@@ -220,7 +211,7 @@ export default function Canvas({
     pending.screenPoints.push({x:e.clientX,y:e.clientY});pending.path.push(getCanvasCoords(e));
     const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(!pending.dragging&&isSelectionDrag(pending.screenStart,pending.screenPoints)){
-      onSelectionStart();pending.dragging=true;setShowAlternatives(false);setDetailsOpen(false);
+      onSelectionStart();pending.dragging=true;
       if(intent==='move'){pending.moveNodes=moveTargets(nodes,pending.node!.id,pending.previous?.selectedIds||[]);setMovingIds(pending.previous?.selectedIds.includes(pending.node!.id)?pending.previous.selectedIds:[pending.node!.id]);}
     }
     if(pending.dragging){
@@ -231,18 +222,17 @@ export default function Canvas({
   };
   useEffect(()=>{handlePointerCancel();},[toolMode]);
   const commitClick=(node:UIElement|null,shift:boolean,previous:InferredReference|null)=>{
-    onSelectionStart();
+    onSelectionStart();setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);
     if(!node){if(!shift){setInferredRef(null);setSelectionState('idle');}return;}
     const count=clicksCounter+1;setClicksCounter(count);
     const ids=shift?(previous?.selectedIds.includes(node.id)?previous.selectedIds.filter(id=>id!==node.id):[...(previous?.selectedIds||[]),node.id]):[node.id];
     if(!ids.length){setInferredRef(null);setSelectionState('idle');return;}
     setInferredRef({selectedIds:ids,exemplarIds:ids,label:ids.length===1?nodes.find(n=>n.id===ids[0])!.label:`${ids.length} layers selected`,...(ids.length===1?{matchingRole:nodes.find(n=>n.id===ids[0])?.role,matchingComponent:nodes.find(n=>n.id===ids[0])?.component}:{}),scope:'exemplars',selectionMethod:'conventional',clicksCount:count});
-    setSelectionState('preview');setShowAlternatives(false);
+    setSelectionState('preview');
   };
   const handlePointerCancel=()=>{
-    if(inferenceTimer.current){clearTimeout(inferenceTimer.current);inferenceTimer.current=null;}
     const active=!!pendingPointer.current||!!panPoint.current||selectionState==='drawing'||selectionState==='rect-selecting'||selectionState==='interpreting';
-    const pending=pendingPointer.current;if(pending?.moveNodes.length)onMove(Object.fromEntries(pending.moveNodes.map(n=>[n.id,{x:n.x,y:n.y}])));setMovingIds([]);
+    const pending=pendingPointer.current;if(pending?.moveNodes.length)onMove(Object.fromEntries(pending.moveNodes.map(n=>[n.id,{x:n.x,y:n.y}])));setMovingIds([]);onMoveEnd();
     pendingPointer.current=null;panPoint.current=null;setIsPanning(false);setCurrentPath([]);setRectStart(null);
     if(active)setSelectionState(inferredRef?'preview':'idle');
   };
@@ -259,90 +249,40 @@ export default function Canvas({
       else if(pending.tool==='reference'){
         // A tap ends the previous rough reference; only a stroke starts a new one.
         commitClick(null,false,pending.previous);
-        setHoveredInterpretation(null);setActiveInterpretation(null);setInterpretations([]);
-        setShowAlternatives(false);setDetailsOpen(false);setClicksCounter(0);
+        setHoveredInterpretation(null);setActiveInterpretation(null);setDraftRef(null);
+        setClicksCounter(0);
       }
       return;
     }
     const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(intent==='move'){
       const snapshot=pending.moveNodes.length?pending.moveNodes:moveTargets(nodes,pending.node!.id,pending.previous?.selectedIds||[]);
-      onMove(movePositions(snapshot,{x:end.x-pending.start.x,y:end.y-pending.start.y},nodes));setMovingIds([]);onResearchEvent('object_move');
+      onMove(movePositions(snapshot,{x:end.x-pending.start.x,y:end.y-pending.start.y},nodes));setMovingIds([]);onMoveEnd();onResearchEvent('object_move');
       if(!pending.previous?.selectedIds.includes(pending.node!.id))commitClick(pending.node,false,pending.previous);else setSelectionState('preview');return;
     }
     if(intent==='box'){
       const r={x:Math.min(pending.start.x,end.x),y:Math.min(pending.start.y,end.y),w:Math.abs(end.x-pending.start.x),h:Math.abs(end.y-pending.start.y)};
-      const hitIds=nodes.filter(n=>n.type!=='screen'&&rectIntersect(n,r)).map(n=>n.id);
+      const hitIds=nodes.filter(n=>!n.library&&n.type!=='screen'&&rectIntersect(n,r)).map(n=>n.id);
       const ids=[...new Set([...(pending.shift?(pending.previous?.selectedIds||[]):[]),...hitIds])];
       const count=clicksCounter+1;setClicksCounter(count);
       setInferredRef(ids.length?{selectedIds:ids,exemplarIds:ids,label:`${ids.length} layers selected`,scope:'exemplars',selectionMethod:'conventional',clicksCount:count}:null);setSelectionState(ids.length?'preview':'idle');return;
     }
-    onResearchEvent('gesture_attempt');setSelectionState('interpreting');setCurrentPath(pending.path);
-    inferenceTimer.current=setTimeout(()=>{
-      inferenceTimer.current=null;
-      const results=inferSelection(pending.path,nodes);
-      if(!results.length){setSelectionState(pending.previous?'preview':'idle');setCurrentPath([]);return;}
-      setInterpretations(results);onResearchEvent('gesture_interpreted');commitInterpretation(results[0],false);setSelectionState('preview');setShowAlternatives(false);setDetailsOpen(true);setCurrentPath([]);
-    },300);
+    onResearchEvent('gesture_attempt');
+    const touched=gestureTouched(pending.path,nodes);
+    setInferredRef(null);setHoveredInterpretation(null);setActiveInterpretation(null);
+    setDraftRef({selectedIds:touched,exemplarIds:touched,label:'Gesture reference',scope:'exemplars',selectionMethod:'smart-ref'});
+    setSelectionState('interpreting');setCurrentPath([]);
   };
 
-  const commitInterpretation = (interp: Interpretation, finalize = true) => {
-    setActiveInterpretation(interp);
-    setInferredRef({
-      selectedIds: interp.selectedIds,
-      exemplarIds: interp.exemplarIds,
-      label: interp.label,
-      activeInterpretation: interp,
-      matchingRole: interp.matchingRole,
-      matchingComponent: interp.matchingComponent,
-      scope: interp.scope,
-      selectionMethod: interp.source==='model'?(inferredRef?.selectionMethod||'conventional'):'smart-ref'
-    });
-
-    if (finalize) {
-      onResearchEvent('interpretation_choice');
-      setSelectionState('preview');
-      setShowAlternatives(false);
-    }
+  const commitInterpretation=(interp:Interpretation)=>{
+    setInferredRef({selectedIds:[...interp.selectedIds],exemplarIds:interp.exemplarIds.filter(id=>interp.selectedIds.includes(id)),label:interp.label,activeInterpretation:interp,matchingRole:interp.matchingRole,matchingComponent:interp.matchingComponent,scope:interp.scope,selectionMethod:'smart-ref'});
+    onResearchEvent('interpretation_choice');setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);setSelectionState('preview');
   };
-
-  // --- UNCONDITIONAL ROBUST SCOPE SWITCHER ("All Screens", "Screen", "Touched") ---
-  const handleScopeChange = (newScope: ScopeLevel) => {
-    const baseExemplars = inferredRef?.exemplarIds?.length ? inferredRef.exemplarIds : (inferredRef?.selectedIds || []);
-
-    if (baseExemplars.length === 0) return;
-
-    const roleHint = inferredRef?.matchingRole;
-    const compHint = inferredRef?.matchingComponent;
-    const screenHint = inferredRef?.activeInterpretation?.targetScreen;
-
-    // Dynamically regenerate the smart suggestions list tailored to the selected scope!
-    const newInterpretations = generateScopeInterpretations(
-      baseExemplars,
-      nodes,
-      newScope,
-      roleHint,
-      compHint,
-      screenHint
-    );
-
-    setInterpretations(newInterpretations);
-    setHoveredInterpretation(null);
-
-    const bestMatch = newInterpretations[0];
-    if (bestMatch) {
-      setActiveInterpretation(bestMatch);
-      setInferredRef({
-        selectedIds: bestMatch.selectedIds,
-        exemplarIds: baseExemplars,
-        label: bestMatch.label,
-        activeInterpretation: bestMatch,
-        matchingRole: bestMatch.matchingRole || roleHint,
-        matchingComponent: bestMatch.matchingComponent || compHint,
-        scope: newScope,
-        selectionMethod: inferredRef?.selectionMethod || 'smart-ref'
-      });
-    }
+  const handleScopeChange=(scope:ScopeLevel)=>{setDraftRef(prev=>prev?{...prev,scope}:prev);setActiveInterpretation(null);setHoveredInterpretation(null);setSelectionState('interpreting');onResearchEvent('scope_changed');};
+  useEffect(()=>{if(draftRef&&!ai.loading){setSelectionState('disambiguating');if(ai.candidates.length){setActiveInterpretation(candidateInterpretation(ai.candidates[0]));onResearchEvent('gesture_interpreted');}}},[draftRef,ai.loading,ai.done]);
+  const candidateInterpretation=(candidate:typeof ai.candidates[number]):Interpretation=>{
+    const summary=semanticSuggestionPresentation(candidate,nodes),exemplars=candidate.elementIds.filter(id=>draftRef?.exemplarIds.includes(id));
+    return {id:candidate.id,label:`${summary.count} ${summary.title.replace(/^Matching /,'')}`,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:draftRef?.scope||'exemplars',confidence:'medium',source:'model',level:'semantic'};
   };
 
   // Generate SVG path for the ink trail
@@ -351,7 +291,7 @@ export default function Canvas({
     : '';
 
   // Active highlights
-  const activeCandidate = hoveredInterpretation || inferredRef?.activeInterpretation;
+  const activeCandidate = draftRef ? (hoveredInterpretation || activeInterpretation) : null;
   const activeIds = activeCandidate ? activeCandidate.selectedIds : (inferredRef?.selectedIds || []);
   const exemplarIds = activeCandidate ? activeCandidate.exemplarIds : (inferredRef?.exemplarIds || []);
 
@@ -359,14 +299,13 @@ export default function Canvas({
   // Re-anchor only on appearance or actual canvas navigation, never accordion changes.
   useLayoutEffect(()=>{
     if(!actionSurface)return;
-    const header=actionSurface.querySelector<HTMLElement>('.refine-selection');
+    const header=actionSurface.querySelector<HTMLElement>('header');
     if(header)collapsedActionSize.current={width:actionSurface.offsetWidth,height:header.getBoundingClientRect().bottom-actionSurface.getBoundingClientRect().top+8};
     const width=Math.min(336,Math.max(0,viewport.width-16));
     // Reserve a small scrollable adjustment area when first choosing an edge-safe anchor.
     const height=Math.min(Math.max(0,viewport.height-16),collapsedActionSize.current.height+72);
     setActionPosition(selectionActionLayout(boundingBox,transform,viewport,{width,height},actionAnchor));
   },[actionSurface,transform.x,transform.y,transform.scale,viewport.width,viewport.height,actionAnchor]);
-  const actionAvailableHeight=Math.max(0,viewport.height-actionPosition.top-8);
   const gestureBB = currentPath.length > 0 ? {
     x: Math.min(...currentPath.map(p => p.x)),
     y: Math.min(...currentPath.map(p => p.y)),
@@ -389,8 +328,8 @@ export default function Canvas({
                 onMouseEnter={() => !isScreen && setHoveredNodeId(node.id)}
                 onMouseLeave={() => !isScreen && setHoveredNodeId(null)}
                 className={`absolute transition-opacity duration-150 ${
-                  isScreen 
-                    ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none' 
+                  isScreen
+                    ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none'
                     : 'pointer-events-auto flex items-center justify-center text-center overflow-hidden cursor-pointer'
                 } ${isHovered && !isSelected ? 'ring-1 ring-[#0d99ff] ring-offset-1 ring-offset-transparent' : ''}`}
                 style={{
@@ -404,14 +343,13 @@ export default function Canvas({
                   border: isScreen ? 'none' : node.border || 'none',
                   fontSize: node.fontSize,
                   fontWeight: node.fontWeight as any,
-                  opacity: (selectionState === 'preview' || selectionState === 'disambiguating') && activeIds.length > 0 && !isSelected && !isScreen
-                    ? 0.35
-                    : 1
+                  fontFamily:node.fontFamily,lineHeight:node.lineHeight,letterSpacing:node.letterSpacing,boxShadow:node.shadow,
+                  opacity: 1
                 }}
               >
                 {isScreen && <div className="absolute inset-0 pointer-events-none z-20" style={{ border: node.border, borderRadius: node.radius }} />}
                 {/* Screen Mock Status Bar */}
-                {isScreen && (
+                {isScreen && !node.library && (
                   <div className="absolute top-0 inset-x-0 h-11 px-6 flex items-center justify-between text-zinc-800 text-xs font-semibold select-none pointer-events-none z-10">
                     <span>9:41</span>
                     <div className="w-20 h-4.5 bg-black rounded-full mx-auto" />
@@ -424,6 +362,7 @@ export default function Canvas({
                   </div>
                 )}
 
+                {isScreen && node.library&&<span className="absolute top-2 right-4 text-xs text-indigo-500">Design System · Source library</span>}
                 {isScreen && nodes.filter(child => child.type !== 'screen' && child.screen === node.screen).map(child => renderNode(child, node))}
 
                 {/* Text / Label */}
@@ -438,54 +377,26 @@ export default function Canvas({
   };
 
   return (
-    <div 
+    <div
       className={`relative w-full h-full overflow-clip bg-[#e8e8e8] select-none
         ${isPanning || isSpacePressed ? 'cursor-grab' : selectionState === 'drawing' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
-      {/* 
-        ========================================================================
-        SINGLE CONSISTENT TOP CONTEXTUAL SCOPE & SELECTION BAR (Fixed at Top Center)
-        Never moves with circle, never clutters artwork, contains single authoritative toggle
-        ========================================================================
-      */}
-      <AnimatePresence>
-        {!sharing && !pinChooserOpen && !selectionPopupDismissed && (selectionState === 'preview' || selectionState === 'disambiguating') && inferredRef && activeIds.length > 0 && (
-          <motion.div
-            ref={setActionSurface}
-            role="region" aria-label={`Actions for ${inferredRef.label}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition:{duration:0} }}
-            transition={{ duration: 0.15 }}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            className={`selection-context action-context ${detailsOpen?'details-expanded':''} ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
-            style={{...actionPosition,width:Math.min(336,Math.max(0,viewport.width-16)),maxHeight:actionAvailableHeight,'--adjustment-space':`${Math.max(0,actionAvailableHeight-collapsedActionSize.current.height-1)}px`} as React.CSSProperties}
-          >
-            <ReferenceActions expanded={detailsOpen} onMore={()=>{setDetailsOpen(v=>!v);setHoveredInterpretation(null);}} onCompare={onCompare} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onAction={onAcceptReference} interpretationContent={
-            <div id="interpretation-adjustments" className="interpretation-adjustments">
-              <header className="interpretation-summary"><strong>{inferredRef.label}</strong><span>{inferredRef.activeInterpretation?.level||(inferredRef.activeInterpretation?interpretationLevel(inferredRef.activeInterpretation):'geometric')} · {inferredRef.activeInterpretation?.source==='model'?'AI':'rule-based'}</span></header>
-              <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'Screen'},{scope:'document',label:'All screens'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={inferredRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
-              {inferredRef.selectionMethod==='smart-ref'&&interpretations.length>1&&<details open><summary>Alternative interpretations ({interpretations.length})</summary><div className="interpretation-options">{interpretations.map(interp=><button type="button" key={interp.id} aria-pressed={inferredRef.activeInterpretation?.id===interp.id} onMouseEnter={()=>setHoveredInterpretation(interp)} onMouseLeave={()=>setHoveredInterpretation(null)} onClick={()=>{commitInterpretation(interp,true);setHoveredInterpretation(null);}}><strong>{interp.label}</strong><small>{interpretationLevel(interp)} · rule-based</small></button>)}</div></details>}
-              <div className="semantic-suggestions">
-                <button type="button" data-semantic-input={JSON.stringify({selectedIds:inferredRef.selectedIds,exemplarIds:inferredRef.exemplarIds,scope:inferredRef.scope})} disabled={ai.loading||ai.done||inferredRef.selectedIds.length>24} title={inferredRef.selectedIds.length>24?'Select up to 24 objects to request AI suggestions':undefined} onClick={()=>{onResearchEvent('ai_interpretation_requested');void ai.request();}}><Sparkles size={12} aria-hidden="true"/> {ai.loading?'Interpreting…':ai.done?'AI suggestions loaded':'AI suggestions'}</button>
-                {ai.message&&<p className="subtle" role="status">{ai.message}</p>}
-                {ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=>{
-                  const exemplars=candidate.evidenceIds.filter(id=>candidate.elementIds.includes(id));
-                  const interpretation:Interpretation={id:candidate.id,label:semanticSuggestionPresentation(candidate,nodes).title,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef.scope,confidence:'medium',source:'model',level:'semantic'};
-                  return <SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={inferredRef.activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?interpretation:null)} onSelect={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(interpretation,true);setHoveredInterpretation(null);}}/>;
-                })}</div></details>}
-              </div>
-              <p className="subtle">Click or Shift-click objects to correct the selection. Scope changes apply immediately.</p>
-            </div>
-            }/>
+      {/* One AI review surface; editing is available only after reference confirmation. */}
+      {draftRef&&!sharing&&<div ref={setActionSurface} className="ai-interpretations selection-context" role="region" aria-label="AI Interpretations" onPointerDown={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,maxHeight:Math.max(120,viewport.height-actionPosition.top-16)}}>
+        <header><strong><Sparkles size={14}/> AI Interpretations</strong><button aria-label="Cancel interpretation" onClick={()=>{setDraftRef(null);setSelectionState('idle');}}><X size={14}/></button></header>
+        <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'This Screen'},{scope:'document',label:'Whole File'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={draftRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
+        <p className="interaction-stage">{ai.loading?'AI Interpreting':'Reviewing Interpretations'}</p>
+        {ai.loading&&<p role="status" className="ai-loading"><span/>Interpreting gesture…</p>}
+        {!ai.loading&&ai.candidates.map(candidate=>{const interpretation=candidateInterpretation(candidate);return <SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?interpretation:null)} onSelect={()=>{setActiveInterpretation(interpretation);setHoveredInterpretation(null);onResearchEvent('candidate_activated');}}/>;})}
+        {ai.message&&<p role="status">{ai.message}</p>}
+        {!ai.loading&&!ai.candidates.length&&<div className="edit-row"><button disabled={!draftRef.selectedIds.length} onClick={()=>ai.request()}>Retry AI</button><button disabled={!draftRef.selectedIds.length} onClick={()=>commitInterpretation({id:'manual-touched',label:`${draftRef.selectedIds.length} touched objects`,description:'Manual selection of directly touched objects',reasoning:'User explicitly selected the touched objects',selectedIds:draftRef.selectedIds,exemplarIds:draftRef.exemplarIds,inferredIds:[],scope:'exemplars',confidence:'high'})}>Select touched objects manually</button></div>}
+        {activeInterpretation&&!ai.loading&&<button className="primary-action confirm-reference" onClick={()=>commitInterpretation(activeInterpretation)}><Check size={14}/>Select {activeInterpretation.label}</button>}
+        <p className="subtle">Hover to preview · click a candidate, then confirm.</p>
+      </div>}
+      {!draftRef&&!sharing&&selectionState==='preview'&&inferredRef&&<div className="selection-sharing selection-context reference-actions action-stack" onPointerDown={e=>e.stopPropagation()}><span className="action-pill-wrap" title={compareHint}><button className={`action-pill collaboration-pill user-${shareLabel.includes('User A')?'A':'B'}`} disabled={!compareReady} onClick={onCompare}><span className="action-orb" aria-hidden="true"><GitCompareArrows size={14}/></span>Compare selections</button></span><button className="action-pill neutral-pill" onClick={()=>onAcceptReference()}><span className="action-orb" aria-hidden="true"><Share2 size={14}/></span>{shareLabel}</button></div>}
 
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <div 
+      <div
         ref={containerRef}
         className="absolute inset-0 origin-top-left touch-none"
         onPointerDown={handlePointerDown}
@@ -494,15 +405,15 @@ export default function Canvas({
         onPointerCancel={handlePointerCancel}
         onLostPointerCapture={()=>{if(pendingPointer.current||panPoint.current)handlePointerCancel();}}
       >
-        <div 
-          style={{ 
-            transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, 
-            transformOrigin: '0 0' 
-          }} 
+        <div
+          style={{
+            transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`,
+            transformOrigin: '0 0'
+          }}
           className="w-full h-full relative"
         >
           {/* Canvas Dot Grid Background */}
-          <div 
+          <div
             className="absolute inset-0 pointer-events-none opacity-20"
             style={{
               width: 5000,
@@ -515,8 +426,8 @@ export default function Canvas({
           {/* Frame Headers */}
           <div className="absolute pointer-events-none z-0">
             {SCREEN_CONFIGS.map(cfg => (
-              <div 
-                key={cfg.name} 
+              <div
+                key={cfg.name}
                 className="absolute"
                 style={{ left: cfg.x, top: START_Y - 24, width: SCREEN_W }}
               >
@@ -534,6 +445,7 @@ export default function Canvas({
 
           {sharedReferences.filter(ref=>ref.id===activeSharedId&&!ref.archivedAt).flatMap(ref=>nodes.filter(n=>ref.elementIds.includes(n.id)).map(node=><div key={`shared-${ref.id}-${node.id}`} className={`shared-target absolute pointer-events-none z-20 ${ref.sourceUser==='A'?'shared-a':'shared-b'}`} style={{left:node.x-2,top:node.y-2,width:node.w+4,height:node.h+4,borderRadius:(node.radius||0)+2,borderWidth:2/transform.scale}}/>))}
 
+          {sourceId&&nodes.filter(n=>n.id===sourceId).map(n=><div key={`source-${n.id}`} className="source-outline absolute pointer-events-none z-30" style={{left:n.x-3,top:n.y-3,width:n.w+6,height:n.h+6}}><span>Style source</span></div>)}
           {/* Individual Selection Ring Overlays */}
           <AnimatePresence>
             {(selectionState === 'moving' || selectionState === 'preview' || selectionState === 'disambiguating') && (movingIds.length||activeIds.length) > 0 && nodes.filter(n => (movingIds.length?movingIds:activeIds).includes(n.id) && n.type !== 'screen').map(node => {
@@ -550,14 +462,14 @@ export default function Canvas({
                   className={`absolute pointer-events-none z-20 ${
                     isConventional
                       ? 'border-2 border-[#0d99ff] bg-[#0d99ff]/15 shadow-sm'
-                      : isExemplar 
-                      ? 'border-2 border-indigo-500 bg-indigo-500/20 shadow-md shadow-indigo-500/30' 
+                      : isExemplar
+                      ? 'border-2 border-indigo-500 bg-indigo-500/20 shadow-md shadow-indigo-500/30'
                       : 'border-2 border-cyan-400 border-dashed bg-cyan-400/10 shadow-sm'
                   }`}
-                  style={{ 
-                    left: node.x - 2, 
-                    top: node.y - 2, 
-                    width: node.w + 4, 
+                  style={{
+                    left: node.x - 2,
+                    top: node.y - 2,
+                    width: node.w + 4,
                     height: node.h + 4,
                     borderRadius: (node.radius || 0) + 3
                   }}
@@ -597,8 +509,8 @@ export default function Canvas({
           </AnimatePresence>
 
           {/* Drawing Ink Trail / Marquee Overlay */}
-          <svg 
-            className="absolute inset-0 pointer-events-none overflow-visible z-40" 
+          <svg
+            className="absolute inset-0 pointer-events-none overflow-visible z-40"
             style={{ width: 5000, height: 3000 }}
           >
             <defs>
@@ -626,7 +538,7 @@ export default function Canvas({
 
               {/* Conventional Marquee Box */}
               {selectionState === 'rect-selecting' && rectStart && currentPath.length === 2 && (
-                <rect 
+                <rect
                   x={Math.min(rectStart.x, currentPath[1].x)}
                   y={Math.min(rectStart.y, currentPath[1].y)}
                   width={Math.abs(currentPath[1].x - rectStart.x)}
@@ -662,7 +574,7 @@ export default function Canvas({
 
         </div>
       </div>
-      
+
     </div>
   );
 }

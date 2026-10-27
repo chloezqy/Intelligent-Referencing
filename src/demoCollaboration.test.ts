@@ -26,7 +26,6 @@ test('Cross-user comparison snapshots both local and manually established demo s
  const comparison=demoComparison(a,b,'snapshot');a.elementIds.length=0;
  assert.deepEqual(comparison.selections.A.elementIds,['hc1-cta']);assert.deepEqual(comparison.selections.B.elementIds,['sc1-cta']);assert.equal(comparison.interpretation.provenance,'rule-based');
 });
-test('All five validators remain strict; demo evidence can demonstrate Levels 4–5 without relaxing targets',()=>{
- for(const level of [1,2,3] as const){const task=TASKS[level-1];const events:ResearchAttempt['events']=[{id:'g',type:'gesture_attempt',at:''},{id:'i',type:'gesture_interpreted',at:''},{id:'c',type:'interpretation_correction',at:''},{id:'s',type:'selection',at:'',ids:task.targets},{id:'v',type:'interpretation_review',at:'',ids:task.targets}];assert.equal(evaluateAttempt({id:'a',level,startedAt:'',events},[]).complete,true);events[3]={...events[3],ids:[...task.targets,'invalid']};assert.equal(evaluateAttempt({id:'a',level,startedAt:'',events},[]).complete,false);}
- for(const level of [4,5] as const){const attempt={id:`attempt-${level}`,level,startedAt:'',events:[]};const ref=demoShare(freshDemo(),{...draft,research:{level,attemptId:attempt.id}},level===4?'Review':'Compare','Review consistency','r').references[0];assert.equal(evaluateAttempt(attempt,[ref]).complete,false);assert.equal(evaluateAttempt(attempt,[recipientEvidence(ref)]).complete,true);assert.equal(evaluateAttempt(attempt,[{...recipientEvidence(ref),elementIds:['hc1-cta']}]).complete,false);}
+test('Demo reference activity cannot substitute for actual canvas editing task evidence',()=>{
+ for(const level of [4,5] as const){const attempt={id:`attempt-${level}`,level,startedAt:'',events:[]};const ref=demoShare(freshDemo(),{...draft,research:{level,attemptId:attempt.id}},level===4?'Review':'Compare','Review consistency','r').references[0];assert.equal(evaluateAttempt(attempt,[recipientEvidence(ref)]).complete,false);}
 });

@@ -1,3 +1,5 @@
+> Current workflow: **gesture → live AI interpretations → explicit reference confirmation → editing actions → preview/apply → undo/redo**. See [Intelligent editing](docs/INTELLIGENT_EDITING.md) for the current architecture, five research tasks, and verification. Earlier sections below describe the retained collaboration infrastructure and its history.
+
 # Smart Reference
 
 **Point to the design. Explain why it matters. Bring someone else into the conversation.**
