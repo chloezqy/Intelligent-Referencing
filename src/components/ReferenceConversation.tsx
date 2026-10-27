@@ -1,3 +1,4 @@
+import {SharedDesignChanges} from './DesignChangeSuggestions';
 import type {CollaborationClient} from '../collaborationClient';
 import ComparisonContext from './ComparisonContext';
 import ComparisonOverview from './ComparisonOverview';
@@ -21,7 +22,7 @@ export default function ReferenceConversation({active,nodes,collaboration:c,onLo
         <div className="conversation-heading"><h3>{heading}</h3><span className="conversation-status" role="status">{status}</span></div>
         <p className="conversation-recipient">{recipient}</p>
       </header>
-      {active.intent==='Compare'&&<ComparisonOverview context={active.comparison} contextId={active.id} ids={active.elementIds} nodes={nodes} user={c.session?.userId}/>}
+      {active.intent==='Compare'&&<ComparisonOverview proposedChanges={<SharedDesignChanges reference={active} collaboration={c}/>} context={active.comparison} contextId={active.id} ids={active.elementIds} nodes={nodes} user={c.session?.userId}/>}
       <div className="conversation-note">
         <p className="conversation-note-label">{isSender?'Your note':`User ${active.sourceUser}’s note`}</p>
         <p className={active.message?'conversation-body':'conversation-empty'}>{active.message || 'No additional note'}</p>

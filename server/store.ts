@@ -1,3 +1,4 @@
+import {decideDesignChange} from '../src/designChanges';
 import {mentionedUsers} from '../src/mentions';
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
@@ -92,6 +93,9 @@ export class RoomStore {
     const message = text(body.message, 2000);
     if (!message || !/^[a-f0-9-]{36}$/i.test(body.requestId || '')) throw new ApiError(400, 'Write a response.');
     this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.archivedAt) throw new ApiError(409, 'Restore this reference before responding.'); if (ref.responses.some(r => r.id === body.requestId)) return; if (ref.responses.length >= 100) throw new ApiError(409, 'Response limit reached.'); ref.responses.push({ id: body.requestId, userId: user, message, createdAt: new Date().toISOString() }); room.revision++; });
+  }
+  decideChange(code:string,user:UserId,id:string,changeId:string,status:unknown){
+    this.transaction(rooms=>{const room=this.room(code,rooms),index=room.references.findIndex(r=>r.id===id);if(index<0)throw new ApiError(404,'Reference not found.');try{room.references[index]=decideDesignChange(room.references[index],user,changeId,status);}catch(error){throw new ApiError(400,(error as Error).message);}room.revision++;});
   }
   review(code: string, user: UserId, id: string) {
     this.transaction(rooms => { const room = this.room(code, rooms), ref = room.references.find(r => r.id === id); if (!ref) throw new ApiError(404, 'Reference not found.'); if (ref.targetUser !== user) throw new ApiError(403, 'Only the recipient can mark a reference reviewed.'); if (ref.archivedAt) throw new ApiError(409, 'Restore this reference before reviewing.'); if (ref.status !== 'reviewed') { ref.status = 'reviewed'; ref.reviewedAt = new Date().toISOString(); room.revision++; } });

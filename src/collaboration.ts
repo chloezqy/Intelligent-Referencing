@@ -1,3 +1,5 @@
+import {designChangeContext,validateProposedChanges} from './designChanges';
+import {MOCK_NODES} from './data';
 import { ScopeLevel } from './types';
 export type UserId = 'A' | 'B';
 export type ReferenceIntent = 'Review' | 'Compare' | 'Help' | 'Look at this';
@@ -44,11 +46,11 @@ export function referenceLists(references:SharedReference[],isPending?:(referenc
 
 export const DESIGN_REFERENCE_PURPOSE='Use as a design reference';
 export const DESIGN_REFERENCE_PROPERTIES={typography:'Typography',spacing:'Spacing',colors:'Colors',cornerRadius:'Corner radius'} as const;
-export interface DesignReference {direction:{referenceUser:'A';targetUser:'B'};properties:(keyof typeof DESIGN_REFERENCE_PROPERTIES)[]}
+export interface DesignReference {proposedChanges?:import('./designChanges').ProposedDesignChange[];direction:{referenceUser:'A';targetUser:'B'};properties:(keyof typeof DESIGN_REFERENCE_PROPERTIES)[]}
 /** Optional, backwards-compatible comparison intent; IDs remain in the frozen selections. */
 export function validateDesignReference(purpose:string,value:unknown,selections:ComparisonContext['selections']):DesignReference|undefined {
  if(purpose!==DESIGN_REFERENCE_PURPOSE)return undefined;
  const input=value as DesignReference|undefined;
  if(!input||input.direction?.referenceUser!=='A'||input.direction?.targetUser!=='B'||!selections.A.elementIds.length||!selections.B.elementIds.length||!Array.isArray(input.properties)||!input.properties.length||input.properties.length>4||new Set(input.properties).size!==input.properties.length||!input.properties.every(key=>Object.hasOwn(DESIGN_REFERENCE_PROPERTIES,key)))throw new Error('Choose at least one valid design reference property for User A → User B.');
- return {direction:{referenceUser:'A',targetUser:'B'},properties:[...input.properties]};
+ return {direction:{referenceUser:'A',targetUser:'B'},properties:[...input.properties],...(input.proposedChanges!==undefined?{proposedChanges:validateProposedChanges(input.proposedChanges,designChangeContext(selections.A.elementIds,selections.B.elementIds,input.properties,MOCK_NODES))}:{})};
 }

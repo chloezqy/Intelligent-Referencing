@@ -13,6 +13,7 @@ export interface CollaborationClient {
  viewAttention(id:string,invitationId:string):Promise<unknown>;
  respond(id:string,message:string,responseId:string):Promise<unknown>;
  review(id:string):Promise<unknown>;
+ decideChange(id:string,changeId:string,status:'accepted'|'dismissed'|'pending'):Promise<unknown>;
  activity(id:string,kind:'opened'|'located',elementIds?:string[]):Promise<unknown>;
  archive(id:string,archived:boolean):Promise<unknown>;
  setPerspective?(user: 'A'|'B'):void;

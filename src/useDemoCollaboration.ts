@@ -1,3 +1,4 @@
+import {decideDesignChange} from './designChanges';
 import {useEffect,useRef,useState} from 'react';
 import type {CollaborationClient} from './collaborationClient';
 import type {RoomSnapshot,SharedReference,UserId} from './collaboration';
@@ -21,6 +22,7 @@ export function useDemoCollaboration(enabled:boolean):CollaborationClient{
  share:(draft,intent,message,id,inviteNow)=>action(()=>{const next=demoShare(current.current,draft,intent,message,id,inviteNow,user);commit(next);return next.references.find(r=>r.id===id)!;}),
  activity:(id,kind,elementIds=[])=>action(()=>mutate(id,r=>{if(r.archivedAt)throw new Error('Restore this reference first.');if(elementIds.some(id=>!r.elementIds.includes(id)))throw new Error('Invalid reference targets.');if(r.activity?.some(e=>e.userId===user&&e.kind===kind&&JSON.stringify(e.elementIds)===JSON.stringify(elementIds)))return r;return {...r,activity:[...(r.activity||[]),{id:crypto.randomUUID(),userId:user,kind,elementIds,at:new Date().toISOString()}]};})),
  respond:(id,message,responseId)=>action(()=>mutate(id,r=>{if(r.archivedAt||!message.trim())throw new Error('Write a response to an active reference.');return r.responses.some(e=>e.id===responseId)?r:{...r,responses:[...r.responses,{id:responseId,userId:user,message,createdAt:new Date().toISOString()}]};})),
+ decideChange:(id,changeId,status)=>action(()=>mutate(id,r=>decideDesignChange(r,user,changeId,status))),
  review:id=>action(()=>mutate(id,r=>{if(r.targetUser!==user)throw new Error('Only the recipient can mark reviewed.');if(r.archivedAt)throw new Error('Restore this reference first.');return r.status==='reviewed'?r:{...r,status:'reviewed',reviewedAt:new Date().toISOString()};})),
  archive:(id,archived)=>action(()=>mutate(id,r=>({...r,archivedAt:archived?new Date().toISOString():undefined,archivedBy:archived?user:undefined}))),
  inviteAttention:(id,requestId)=>action(()=>mutate(id,r=>{if(r.archivedAt)throw new Error('Restore this reference first.');return r.attention?.some(e=>e.id===requestId)?r:{...r,attention:[...(r.attention||[]),{id:requestId,sourceUser:user,targetUser:user==='A'?'B':'A',createdAt:new Date().toISOString()}]};})),

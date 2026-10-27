@@ -546,3 +546,24 @@ button:disabled { opacity:.45; }
 .reference-detail .conversation-reply-actions button {min-height:32px;border-radius:8px;}
 .reference-detail .review-action {margin:0;}
 .reference-detail .comparison-overview {margin:0;}
+
+.design-reference-setup {margin-bottom:12px;}
+.design-reference-setup > h4,.design-change-suggestions h4 {font-size:12px;font-weight:600;color:#514560;}
+.design-change-suggestions {padding:12px 0;border-top:1px solid #e9e3f0;border-bottom:1px solid #e9e3f0;}
+.design-change-suggestions h4 {display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin:0;}
+.design-change-suggestions h4 small {font-size:10px;font-weight:400;color:#80758d;}
+.suggested-changes-heading {display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.inspector-composer .proposed-change,.reference-detail .proposed-change {display:flex;align-items:flex-start;gap:8px;margin:8px 0;padding:10px;border:1px solid #e3dced;border-radius:9px;background:#faf8fe;font-size:11px;}
+.proposed-change input {flex-shrink:0;margin-top:3px;accent-color:#7965c6;}
+.proposed-change > div {min-width:0;}
+.proposed-change strong {display:block;font-size:12px;font-weight:600;color:#534169;overflow-wrap:anywhere;}
+.proposed-change p {margin:4px 0!important;font-size:11px;line-height:1.5;overflow-wrap:anywhere;color:#625a6b;}
+.proposed-change-source {display:block;font-size:9px;color:#84768f;margin-bottom:3px;}
+.proposed-change-values {display:flex;flex-direction:column;gap:3px;}
+.proposed-change-values small {font-size:10px;color:#73657e;overflow-wrap:anywhere;}
+.proposed-change-count {margin:8px 0 0;font-size:10px;color:#80758d;}
+.reference-detail .shared-change {display:block;}
+.proposed-change-review {display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:10px;}
+.proposed-change-review > span {margin-right:auto;color:#80758d;}
+.proposed-change-review button[aria-pressed=true] {background:#eee8fa;border-color:#bcacdd;color:#6352a0;}
+.reference-detail .design-change-suggestions {padding:12px 0;}

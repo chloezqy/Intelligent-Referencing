@@ -59,3 +59,17 @@ test('Selected evidence can ground a related target group without forcing that e
  const result=parseModelOutput(response([{...suggestion,elementIds:['hc1-price','hc1-cta']}]),context);
  assert.deepEqual(result[0].elementIds,['hc1-price','hc1-cta']);assert.deepEqual(result[0].evidenceIds,['hc1-title']);
 });
+test('Design-change task shares the secure Responses adapter and cache without affecting semantic selection',async()=>{
+ let calls=0;
+ const designBody={task:'design-changes',contextId:'changes-1',referenceIds:['hc1'],targetIds:['detail-title'],properties:['typography']};
+ await endpoint({enabled:true,key:'fixture-only',fetcher:async(_url,init)=>{calls++;const payload=JSON.parse(String(init!.body)),context=JSON.parse(payload.input);assert.equal(payload.text.format.name,'design_changes');assert.ok(context.facts.every((f:any)=>f.category==='typography'));return Response.json({id:'resp_mock_changes_not_live',status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({suggestions:[{title:'Match typography',explanation:'Use the reference title styling for the target title.',factIds:[context.facts[0].id]}]})}]}]});}},async url=>{
+  const first=await (await post(url,designBody)).json();assert.equal(first.proposals.length,1);assert.equal(first.proposals[0].status,'pending');assert.equal(first.responseId,'resp_mock_changes_not_live');assert.equal(first.candidates,undefined);
+  const repeat=await (await post(url,{...designBody,contextId:'changes-2'})).json();assert.equal(repeat.cached,true);assert.equal(repeat.contextId,'changes-2');assert.equal(calls,1);
+  const spacing=await (await post(url,{...designBody,properties:['spacing']})).json();assert.deepEqual(spacing.proposals,[]);assert.equal(calls,1);
+ });
+});
+test('Design-change disabled and malformed requests retain deterministic fallback without model calls',async()=>{
+ let calls=0;const fetcher=async()=>{calls++;throw new Error('Must not call');};
+ await endpoint({enabled:false,key:'fixture',fetcher},async url=>{assert.equal((await post(url,{task:'design-changes',contextId:'x',referenceIds:['hc1'],targetIds:['sc1'],properties:['colors']})).status,503);});
+ await endpoint({enabled:true,key:'fixture',fetcher},async url=>{assert.equal((await post(url,{task:'design-changes',contextId:'x',referenceIds:['made-up'],targetIds:['sc1'],properties:['colors']})).status,400);});assert.equal(calls,0);
+});

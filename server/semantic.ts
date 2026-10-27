@@ -1,3 +1,4 @@
+import {designChangesRequest,designChangesPayload,parseDesignChanges} from './designChanges.js';
 import type {Express,Request,RequestHandler} from 'express';
 import {createHash} from 'node:crypto';
 import {MOCK_NODES} from '../src/data.js';
@@ -49,7 +50,13 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   // The hosted adapter supplies its own access policy; local Node remains loopback-only.
   if(options.authorize)options.authorize(req);
   else if(process.env.NODE_ENV==='production'||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||'')||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.ip||''))throw new SemanticError(403,'AI requests are limited to this server’s computer until public access controls are configured.');
-  const request=semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini',payload=modelPayload(request,model),now=(options.now||Date.now)();
+  const changes=req.body?.task==='design-changes';
+  let changeContext:ReturnType<typeof designChangesRequest>|undefined;
+  if(req.body?.task!==undefined&&!changes)throw new SemanticError(400,'Unknown AI task.');
+  if(changes)try{changeContext=designChangesRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
+  const request=changes?{contextId:req.body.contextId}:semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini';
+  if(changeContext&&!changeContext.facts.length){res.json({contextId:request.contextId,proposals:[],cached:false,message:'No fully recorded differences for these properties. Spacing data is not recorded.'});return;}
+  const payload=changeContext?designChangesPayload(changeContext,model):modelPayload(request as SemanticRequest,model),now=(options.now||Date.now)();
   const hash=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   for(const [key,value] of cache)if(value.until<now)cache.delete(key);
   const cached=cache.get(hash);if(cached){res.json({...cached.value,contextId:request.contextId,cached:true});return;}
@@ -65,9 +72,9 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
    if(!response.ok){await response.body?.cancel();throw new SemanticError(response.status===429?429:502,'The AI service is unavailable. Rule-based options still work.');}
    let output:any;try{output=await response.json();}catch{throw new SemanticError(502,'AI returned invalid JSON.');}
    const responseId=typeof output.id==='string'?output.id:undefined,rejectedSuggestions:{index:number;code:string}[]=[];
-   let candidates:SemanticCandidate[];
-   try{candidates=parseModelOutput(output,request,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:response.status,rejectedSuggestions};throw error;}
-   const value={candidates,model,responseId,rejectedSuggestions,cached:false};
+   let candidates:SemanticCandidate[]|undefined,proposals:ReturnType<typeof parseDesignChanges>|undefined;
+   try{if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:response.status,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
+   const value={...(changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
    if(cache.size>=100)cache.delete(cache.keys().next().value!);cache.set(hash,{until:now+600000,value});return value;
   })();pending.set(hash,job);
   try{res.json({...await job,contextId:request.contextId});}finally{pending.delete(hash);active--;}

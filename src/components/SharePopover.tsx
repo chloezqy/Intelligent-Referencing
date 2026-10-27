@@ -1,3 +1,4 @@
+import {DraftDesignChanges} from './DesignChangeSuggestions';
 import {createPortal} from 'react-dom';
 import type {CollaborationClient} from '../collaborationClient';
 import MentionNote from './MentionNote';
@@ -26,6 +27,7 @@ export default function SharePopover({inspector=false,inspectorHost,onDesignRefe
   const [inviteNow,setInviteNow]=useState(false);
   useEffect(()=>setInviteNow(false),[draft.elementIds.join('|'),draft.comparison?.snapshotId]);
   useEffect(()=>{if(inspector&&draft.comparison&&!draft.comparison.purpose.trim())onComparisonPurpose('Compare selected elements');},[inspector,draft.comparison?.snapshotId]);
+  const designMode=draft.comparison?.purpose===DESIGN_REFERENCE_PURPOSE;
   const label=shareActionLabel(c.session?.userId),target=c.session?.userId==='B'?'A':'B';
   useEffect(()=>{const el=host.current;if(!el)return;const observer=new ResizeObserver(()=>setViewport({width:el.clientWidth,height:el.clientHeight}));observer.observe(el);return()=>observer.disconnect();},[inspector,inspectorHost]);
   useEffect(()=>{setSendId(requestId());},[draft,note,intent,inviteNow]);
@@ -54,10 +56,11 @@ export default function SharePopover({inspector=false,inspectorHost,onDesignRefe
         <div className="share-form-body" role={inspector?'region':undefined} aria-label={inspector?'Comparison content':undefined} tabIndex={inspector?0:undefined}>{!inspector&&<><p className="share-target-label" title={draft.label}>{draft.label}</p>
         <div className="share-target-meta"><span>{draft.elementIds.length} {draft.elementIds.length===1?'object':'objects'}</span><button type="button" onClick={onLocate}>Locate</button></div>
         {layout?.offscreen&&<p className="subtle">Targets offscreen.</p>}</>}
-        {inspector?<ComparisonOverview showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
+        {inspector&&designMode&&draft.comparison&&<div className="design-reference-setup"><h4>Design reference</h4><ComparisonPurpose context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/></div>}
+        {inspector?<ComparisonOverview proposedChanges={designMode&&draft.comparison?<DraftDesignChanges context={draft.comparison} onChange={onDesignReference}/>:undefined} showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
         {draft.comparison&&comparisonChanged&&<p className="subtle">Selection changed. <button type="button" onClick={onRefreshComparison}>Refresh comparison</button></p>}
         {inspector?<section className="comparison-sharing-options" aria-label="Sharing options"><h4>Sharing options</h4>
-          {draft.comparison&&<ComparisonPurpose context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>}
+          {draft.comparison&&!designMode&&<ComparisonPurpose context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>}
           {sharingControls}
         </section>:sharingControls}
         {!draft.comparison&&intent!=='Compare'&&<PropertyComparison compact={inspector} contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded={false}/>}
