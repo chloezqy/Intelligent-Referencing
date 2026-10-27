@@ -331,7 +331,10 @@ button:disabled { opacity:.45; }
 .inspector-composer textarea {min-height:58px;resize:vertical;max-height:120px;}
 .inspector-composer :is(button,select,textarea):focus-visible {outline:2px solid #7965c6;outline-offset:2px;}
 .reference-detail .review-action {margin-top:10px;}
-.semantic-suggestions {margin-top:8px;}
+.semantic-suggestions {margin-top:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
+.semantic-suggestions > details {width:100%;}
+.semantic-suggestions > p {margin:0;}
+.semantic-suggestions .interpretation-options {padding-top:8px;gap:8px;}
 .semantic-suggestions>button {display:inline-flex;align-items:center;gap:5px;}
 .semantic-suggestions>button:disabled {opacity:.5;cursor:default;}
 
