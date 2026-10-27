@@ -506,3 +506,17 @@ button:disabled { opacity:.45; }
 .interpretation-adjustments .interpretation-options {width:100%;}
 .interpretation-adjustments .interpretation-options button {width:100%;align-items:stretch;flex-shrink:0;}
 .interpretation-adjustments .semantic-suggestions > button svg {flex-shrink:0;}
+
+.semantic-suggestion-card {min-width:0;max-width:100%;border:1px solid #e1dbea;border-radius:9px;background:#fdfcfe;overflow-wrap:anywhere;}
+.semantic-suggestion-card:focus-within,.semantic-suggestion-card:hover {border-color:#b9a9e3;background:#faf8ff;}
+.interpretation-adjustments .interpretation-options .semantic-suggestion-select {border:0;border-radius:9px;background:transparent;padding:10px;gap:6px;color:#514760;}
+.semantic-suggestion-select[aria-pressed=true] {background:#f1edfb!important;}
+.semantic-suggestion-heading {display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0;}
+.semantic-suggestion-heading strong {font-size:12px;line-height:17px;}
+.semantic-object-count {flex-shrink:0;border-radius:20px;background:#efedf4;padding:2px 6px;font-size:9px;color:#655d73;}
+.semantic-suggestion-context {font-size:10px;color:#777080;}
+.semantic-suggestion-reason {font-size:11px;line-height:16px;color:#655d70;}
+.semantic-suggestion-action {align-self:flex-end;font-size:10px;font-weight:600;color:#6954ab;border:1px solid #d8ceee;border-radius:20px;padding:3px 8px;}
+.semantic-suggestion-why {margin:0 10px 8px;font-size:10px;color:#777080;}
+.semantic-suggestion-why summary {cursor:pointer;}
+.semantic-suggestion-why p {margin-top:6px;line-height:15px;}

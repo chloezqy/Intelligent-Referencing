@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Point, UIElement, ToolMode, SelectionState, InferredReference, Interpretation, ScopeLevel } from '../types';
 import ReferencePins from './ReferencePins';
 import ReferenceActions from './ReferenceActions';
+import SemanticSuggestionCard from './SemanticSuggestionCard';
 import { ReferenceIntent, SharedReference } from '../collaboration';
 import { zoomAtPoint } from '../workspace';
 import { SCREEN_CONFIGS, SCREEN_W, SCREEN_H, START_Y } from '../data';
@@ -452,7 +453,7 @@ export default function Canvas({
             className={`selection-context action-context ${detailsOpen?'details-expanded':''} ${inferredRef.selectionMethod === 'conventional' ? 'conventional' : ''} absolute z-40 flex flex-col items-center pointer-events-auto select-none`}
             style={{...actionPosition,width:Math.min(336,Math.max(0,viewport.width-16)),maxHeight:actionAvailableHeight,'--adjustment-space':`${Math.max(0,actionAvailableHeight-collapsedActionSize.current.height-1)}px`} as React.CSSProperties}
           >
-            <ReferenceActions expanded={detailsOpen} onMore={()=>setDetailsOpen(v=>!v)} onCompare={onCompare} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onAction={onAcceptReference} interpretationContent={
+            <ReferenceActions expanded={detailsOpen} onMore={()=>{setDetailsOpen(v=>!v);setHoveredInterpretation(null);}} onCompare={onCompare} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onAction={onAcceptReference} interpretationContent={
             <div id="interpretation-adjustments" className="interpretation-adjustments">
               <header className="interpretation-summary"><strong>{inferredRef.label}</strong><span>{inferredRef.activeInterpretation?.level||(inferredRef.activeInterpretation?interpretationLevel(inferredRef.activeInterpretation):'geometric')} · {inferredRef.activeInterpretation?.source==='model'?'AI':'rule-based'}</span></header>
               <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'Screen'},{scope:'document',label:'All screens'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={inferredRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>
@@ -460,7 +461,11 @@ export default function Canvas({
               <div className="semantic-suggestions">
                 <button type="button" data-semantic-input={JSON.stringify({selectedIds:inferredRef.selectedIds,exemplarIds:inferredRef.exemplarIds,scope:inferredRef.scope})} disabled={ai.loading||ai.done||inferredRef.selectedIds.length>24} title={inferredRef.selectedIds.length>24?'Select up to 24 objects to request AI suggestions':undefined} onClick={()=>{onResearchEvent('ai_interpretation_requested');void ai.request();}}><Sparkles size={12} aria-hidden="true"/> {ai.loading?'Interpreting…':ai.done?'AI suggestions loaded':'AI suggestions'}</button>
                 {ai.message&&<p className="subtle" role="status">{ai.message}</p>}
-                {ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=><button type="button" key={candidate.id} onClick={()=>{const exemplars=candidate.evidenceIds.filter(id=>candidate.elementIds.includes(id));onResearchEvent('ai_interpretation_chosen');commitInterpretation({id:candidate.id,label:candidate.label,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef.scope,confidence:'medium',source:'model',level:'semantic'},true);}}><strong>{candidate.label}</strong><small>semantic · AI</small><small>{candidate.reason}</small></button>)}</div></details>}
+                {ai.candidates.length>0&&<details open><summary>AI interpretations ({ai.candidates.length})</summary><div className="interpretation-options">{ai.candidates.map(candidate=>{
+                  const exemplars=candidate.evidenceIds.filter(id=>candidate.elementIds.includes(id));
+                  const interpretation:Interpretation={id:candidate.id,label:candidate.label,description:candidate.reason,reasoning:candidate.reason,selectedIds:candidate.elementIds,exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef.scope,confidence:'medium',source:'model',level:'semantic'};
+                  return <SemanticSuggestionCard key={candidate.id} candidate={candidate} nodes={nodes} selected={inferredRef.activeInterpretation?.id===candidate.id} onPreview={preview=>setHoveredInterpretation(preview?interpretation:null)} onSelect={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(interpretation,true);setHoveredInterpretation(null);}}/>;
+                })}</div></details>}
               </div>
               <p className="subtle">Click or Shift-click objects to correct the selection. Scope changes apply immediately.</p>
             </div>
