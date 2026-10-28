@@ -32,3 +32,10 @@ test('Unavailable comparison is omitted while confirmed sharing and interpretati
  const html=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareReady:false}));
  assert.doesNotMatch(html,/Compare with|compare-unavailable|disabled=/);assert.match(html,/Share reference/);assert.match(html,/Adjust interpretation/);
 });
+
+test('Contextual actions contain only Compare when available, Share reference and Adjust interpretation',()=>{
+ const one=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareReady:false}));
+ assert.match(one,/Share reference/);assert.match(one,/Adjust interpretation/);assert.doesNotMatch(one,/>Edit<|Compare with/);
+ const many=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareOwn:true}));
+ assert.doesNotMatch(many,/>Edit</);assert.ok(many.indexOf('>Compare</button>')<many.indexOf('>Share reference</button>'));assert.ok(many.indexOf('>Share reference</button>')<many.indexOf('>Adjust interpretation<'));
+});
