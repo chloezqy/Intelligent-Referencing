@@ -7,7 +7,7 @@ import {localComparison} from './comparisonSides';
 import {demoShare,freshDemo} from './demoCollaboration';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
-import {SharedTokenSuggestions} from './components/DesignSystemReview';
+import DesignSystemReview,{SharedTokenSuggestions} from './components/DesignSystemReview';
 test('Library facts use recorded properties, relevant component roles and exact color matches',()=>{
  const facts=tokenFacts(['hc1'],MOCK_NODES);assert.ok(facts.some(f=>f.tokenId==='ds-product-card'&&f.property==='radius'));
  assert.ok(facts.every(f=>MOCK_NODES.find(n=>n.id===f.targetId)?.[f.property]!==undefined));
@@ -37,4 +37,10 @@ test('Same-user comparison shares only checked token properties without applying
  const room=demoShare(freshDemo(),{elementIds:['hc1','sc1'],exemplarIds:['hc1'],scope:'document',label:'Compare',comparison},'Compare','Review this proposal','tokens-share');
  assert.deepEqual(room.references[0].comparison?.tokenSuggestions,comparison.tokenSuggestions);assert.equal(MOCK_NODES.find(n=>n.id===fact.targetId)?.[fact.property],fact.current);
  const html=renderToStaticMarkup(React.createElement(SharedTokenSuggestions,{suggestions:comparison.tokenSuggestions,nodes:MOCK_NODES}));assert.match(html,/AI suggestion/);assert.ok(html.includes(fact.tokenLabel));
+});
+
+test('Design system review omits the explanatory sentence and manual AI trigger',()=>{
+ const html=renderToStaticMarkup(React.createElement(DesignSystemReview,{ids:['hc1'],nodes:MOCK_NODES,onPropose:()=>{},onSelected:()=>{}}));
+ assert.doesNotMatch(html,/Selected objects →|Changes are optional|Suggest relevant tokens/);
+ const empty=renderToStaticMarkup(React.createElement(DesignSystemReview,{ids:[],nodes:MOCK_NODES,onPropose:()=>{},onSelected:()=>{}}));assert.match(empty,/No recorded properties support a library match/);
 });
