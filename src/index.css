@@ -83,7 +83,7 @@ kbd { font-family: inherit; opacity: .55; font-size: 10px; }
 /* Phase 1: one contextual panel and a dock outside the navigable canvas. */
 .right-sidebar { position: relative; top: auto; bottom: auto; right: auto; max-width: 42vw; box-shadow: none; }
 .right-sidebar .panel-resizer { left: -2px; right: auto; }
-.workspace-dock { flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 16px; padding: 12px 20px; background: #e8e8e8; border-top: 1px solid #dedede; min-width: 0; }
+.workspace-dock { position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:38;display:flex;align-items:center;justify-content:center;max-width:calc(100% - 16px);padding:0;background:transparent;border:0;pointer-events:none; }
 .workspace-dock .floating-toolbar { position: static; transform: none; height: 40px; padding: 3px; border-radius: 7px; box-shadow: none; flex-shrink: 0; z-index: auto; }
 .workspace-dock .floating-toolbar button { padding: 0 9px; gap: 6px; border-radius: 4px; }
 .workspace-dock .floating-toolbar button[aria-pressed=true] { background: #eeedff; color: #5146b8; }
@@ -615,7 +615,6 @@ button:disabled { opacity:.45; }
 .ai-loading{display:flex;align-items:center;gap:8px;padding:12px 0;}
 .ai-loading span{height:12px;width:12px;border:2px solid #c7d2fe;border-top-color:#4f46e5;border-radius:50%;animation:spin 1s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-.interaction-status{position:absolute;bottom:12px;left:12px;background:#ffffffed;border:1px solid #e4e4e7;padding:5px 9px;border-radius:6px;font-size:10px;color:#52525b;pointer-events:none;z-index:35;}
 .interaction-stage{font-size:9px!important;text-transform:uppercase;letter-spacing:.06em;}
 .selection-sharing{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:max-content;max-width:calc(100% - 24px);padding-left:13px;overflow:visible;z-index:39;}
 @media(max-width:800px){.editing-toolbar{width:calc(100% - 24px);}.editing-categories button{font-size:10px;padding:5px;}.layout-actions{grid-template-columns:1fr 1fr;}}
@@ -762,3 +761,21 @@ button:disabled { opacity:.45; }
 .working-inspector>.panel-heading{flex-shrink:0;background:white;}
 .working-inspector .mapping-list,.working-inspector .edit-diffs,.working-inspector .comparison-scroll{max-height:none;}
 .working-inspector .mapping-list,.working-inspector .edit-diffs{overflow:visible;}
+
+/* Canvas tool choice and intentionally inactive design-tool placeholders. */
+.canvas-toolstrip{position:relative;pointer-events:auto;z-index:38;display:flex;align-items:center;gap:3px;flex-shrink:0;padding:6px;border:1px solid #dedbe5;border-radius:13px;background:#fff;box-shadow:0 6px 20px #30204b26,0 2px 5px #30204b12;}
+.canvas-toolstrip button{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border:0;border-radius:7px;background:transparent;color:#66606f;}
+.canvas-toolstrip button:hover{background:#f5f2fa;}
+.canvas-toolstrip button:focus-visible{outline:2px solid #8873ce;outline-offset:2px;}
+.canvas-tool-choice{position:relative;display:flex;align-items:center;border-radius:8px;background:#eee8fb;}
+.canvas-toolstrip .canvas-tool-active,.canvas-toolstrip .canvas-tool-chevron{color:#6a52bc;background:transparent;}
+.canvas-toolstrip .canvas-tool-chevron{width:20px;}
+.canvas-tool-divider{width:1px;height:22px;margin:0 3px;background:#ece8f0;}
+.canvas-toolstrip .canvas-tool-placeholder{cursor:default;color:#79727f;}
+.canvas-tool-menu{position:absolute;bottom:calc(100% + 14px);left:-6px;min-width:220px;padding:5px;border:1px solid #ded8e9;border-radius:11px;background:#fff;box-shadow:0 6px 24px #30204b25;}
+.canvas-toolstrip .canvas-tool-menu button{width:100%;height:36px;display:grid;grid-template-columns:16px 18px 1fr auto;gap:9px;padding:0 9px;text-align:left;font-size:12px;}
+.canvas-tool-menu button[aria-checked=true]{color:#6a52bc;background:#f1ecfb;}
+.canvas-tool-check{display:flex;align-items:center;}
+.canvas-tool-menu kbd{font:inherit;color:#938a9e;}
+@media(max-width:1000px){.workspace-dock{bottom:8px;padding:0;}.workspace-dock .ai-input{flex-basis:100%;}}
+@media(max-width:420px){.canvas-toolstrip{gap:1px;padding:4px;}.canvas-toolstrip button{width:30px;height:32px;}.canvas-toolstrip .canvas-tool-chevron{width:16px;}}

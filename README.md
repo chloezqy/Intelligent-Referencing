@@ -30,14 +30,14 @@ The prototype uses six example mobile shopping screens: Home, Search, Product De
 | References | Create or join a room, share references, and read or reply to requests. |
 | Tasks | Choose a research level, read instructions and check progress. |
 | Center canvas | Explore the six mobile screens. Pan and zoom to inspect their contents. |
-| Bottom controls | Use Select to select/move, Rough Reference to draw, or Hand to pan. Add a note to a reference request. |
+| Bottom controls | Use the tool dropdown for Select, Rough Gesture, or Hand. Share and add notes through the contextual menu or inspector. |
 
 The bottom input helps you describe why your collaborator should look at the selected items. It is not a general-purpose AI chat or a design-editing command box.
 
 ## Start with selection
 
 1. Choose **Select** to click an item. Hold **Shift** while clicking to add or remove items from your selection.
-2. Choose **Rough Reference (R)** and draw across related items, such as two category chips on Home. Hold Shift while dragging for a precise rectangular selection.
+2. Choose **Rough Gesture (G)** and draw across related items, such as two category chips on Home. Hold Shift while dragging for a precise rectangular selection.
 3. Inspect the suggested interpretation. Use **Touched**, **Screen** or **All Screens** to adjust how broadly the reference applies. You can also use Select and Shift-click to correct individual targets.
 4. Use **Share to User A/B** when you are ready to discuss the selection with someone.
 
@@ -184,7 +184,7 @@ Manual Compare references within your own selection still work. All five researc
 
 ### One selection tool
 
-**Select (V or S)** selects and moves objects; Shift-click toggles objects and empty-canvas drag / Shift-drag provides box selection. **Rough Reference (R)** draws over any object without moving it. Small movements within 6px remain clicks. **Hand (H)**, Space-drag and middle-button drag pan the canvas.
+**Select (V or S)** selects and moves objects; Shift-click toggles objects and empty-canvas drag / Shift-drag provides box selection. **Rough Gesture (G)** draws over any object without moving it. Small movements within 6px remain clicks. **Hand (H)**, Space-drag and middle-button drag pan the canvas.
 
 ## Hosting online
 
@@ -251,7 +251,7 @@ Tests use injected fake Responses payloads, never a live model. They cover the f
 The bottom toolbar now uses this order, keeping the same styling and icons:
 
 - **Select (V; S alias):** click to select, Shift-click to toggle, drag an object to move locally, or drag empty canvas / Shift-drag for box selection.
-- **Rough Reference (R):** freely draw circles, curves, straight strokes or scribbles, even starting over a parent or child object. This tool never moves objects. The existing interpretation dropdown, scope correction and explicit AI suggestions remain available.
+- **Rough Gesture (G):** freely draw circles, curves, straight strokes or scribbles, even starting over a parent or child object. This tool never moves objects. The existing interpretation dropdown, scope correction and explicit AI suggestions remain available.
 - **Hand (H):** pan. Space-drag and middle-button panning remain available.
 
 Tool choice, not trajectory classification, determines whether a drag moves or references. The 6px threshold still separates clicks from drags. Movement is memory-only, constrained to the authored screen, and carries descendants of moved parents. It is never synchronized; refresh restores positions. Pins and outlines follow local geometry. Switching tools or canceling rolls back an unfinished move. The old trajectory helper remains isolated experimental code and is no longer imported by Canvas.

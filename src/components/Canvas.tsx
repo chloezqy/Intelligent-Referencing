@@ -103,6 +103,7 @@ export default function Canvas({
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest('input, textarea, select, button, summary, [role=dialog], .comparison-inspector, [contenteditable=true]')) return;
 
+      if((e.metaKey||e.ctrlKey||e.altKey)&&!['a','A'].includes(e.key))return;
       if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
         setIsSpacePressed(true);
@@ -114,7 +115,7 @@ export default function Canvas({
       if (e.key === 's' || e.key === 'S') {
         handlePointerCancel();setToolMode('pointer');
       }
-      if(e.key==='r'||e.key==='R'){handlePointerCancel();setToolMode('reference');}
+      if(!e.metaKey&&!e.ctrlKey&&!e.altKey&&(e.key==='g'||e.key==='G')){handlePointerCancel();setToolMode('reference');}
       if (e.key === 'h' || e.key === 'H') {
         handlePointerCancel();
         setToolMode('pan');
@@ -146,6 +147,7 @@ export default function Canvas({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
+      if((e.metaKey||e.ctrlKey||e.altKey)&&!['a','A'].includes(e.key))return;
       if (e.code === 'Space') {
         setIsSpacePressed(false);
       }
