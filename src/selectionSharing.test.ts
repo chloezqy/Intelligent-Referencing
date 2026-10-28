@@ -18,5 +18,5 @@ test('Selection sharing footer is outside the main scrolling content',()=>{
 });
 test('Compare is a communication intent in Edit sharing, without comparison navigation controls',()=>{
  const html=renderToStaticMarkup(React.createElement(SelectionSharing,{selection:{selectedIds:['hc1'],exemplarIds:['hc1'],label:'Card',scope:'exemplars'},nodes:MOCK_NODES,collaboration:c,footerHost:null,note:'',intent:'Compare',onNote:noop,onIntent:noop,onShared:noop}));
- assert.match(html,/Request intent/);assert.match(html,/<option selected="">Compare<\/option>/);assert.doesNotMatch(html,/>Compare<\/button>|Comparison purpose|Selection mode/);
+ assert.match(html,/Request intent/);assert.match(html,/value="Compare"/);assert.doesNotMatch(html,/>Compare<\/button>|Comparison purpose|Selection mode/);
 });

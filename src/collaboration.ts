@@ -3,7 +3,7 @@ import {designChangeContext,validateProposedChanges} from './designChanges.js';
 import {MOCK_NODES} from './data.js';
 import { ScopeLevel } from './types.js';
 export type UserId = 'A' | 'B';
-export type ReferenceIntent = 'Review' | 'Compare' | 'Help' | 'Look at this';
+export type ReferenceIntent = string;
 export interface SharedReference {
   simulated?: boolean;
   id: string; sourceUser: UserId; targetUser: UserId;

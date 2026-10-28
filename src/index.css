@@ -215,10 +215,10 @@ button:disabled { opacity:.45; }
 .share-popover .share-target-label { overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px;color:#555; }
 .share-target-meta { display:flex;justify-content:space-between;align-items:center;margin:4px 0 8px;color:#888;font-size:10px; }
 .share-popover label { display:flex;flex-direction:column;gap:4px;font-size:11px;color:#666;margin:8px 0; }
-.share-popover select,.share-popover textarea { width:100%;min-width:0;border:1px solid #ddd;border-radius:5px;padding:6px 8px;font-size:12px;background:white;color:#222; }
+.share-popover input[type=text],.share-popover select,.share-popover textarea { width:100%;min-width:0;border:1px solid #ddd;border-radius:5px;padding:6px 8px;font-size:12px;background:white;color:#222; }
 .share-popover textarea { min-height:58px;resize:vertical;max-height:120px; }
 .share-popover button { font-size:11px; }.share-popover button:not(:disabled):hover { background:#f3f1f8; }
-.share-popover button:focus-visible,.share-popover select:focus-visible,.share-popover textarea:focus-visible { outline:2px solid #7965c6;outline-offset:2px; }
+.share-popover button:focus-visible,.share-popover input[type=text]:focus-visible,.share-popover select:focus-visible,.share-popover textarea:focus-visible { outline:2px solid #7965c6;outline-offset:2px; }
 .share-popover .action-row { margin-top:10px; }.share-popover .action-row button { padding:7px 9px;border:1px solid #ddd;border-radius:5px; }
 .share-popover .primary-action { color:#6352b8;background:#eeedff;border-color:#d5ccf4!important; }
 .share-popover button:disabled { opacity:.5;cursor:not-allowed; }.share-popover .subtle { font-size:10px;line-height:1.5;margin:6px 0; }

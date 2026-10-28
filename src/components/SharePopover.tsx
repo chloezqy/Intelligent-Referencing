@@ -31,7 +31,7 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
   useEffect(()=>{
     if(!visible)return;
     const element=popup.current;if(!element)return;
-    element.querySelector<HTMLSelectElement>('select')?.focus({preventScroll:true});
+    element.querySelector<HTMLInputElement>('input[type=text]')?.focus({preventScroll:true});
     const observer=new ResizeObserver(()=>setHeight(element.getBoundingClientRect().height));observer.observe(element);
     const outside=(e:PointerEvent)=>{if(!inspector&&!host.current?.contains(e.target as Node))onVisible(false);};
     const escape=(e:KeyboardEvent)=>{if(e.key==='Escape'){if(element.querySelector('[data-mention-options]'))return;e.preventDefault();e.stopPropagation();onVisible(false);pin.current?.focus({preventScroll:true});}};
@@ -44,7 +44,7 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     {!inspector&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
     {visible&&<div ref={popup} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover pointer-events-auto'} style={inspector?undefined:layout?.popup}>
-      {!inspector&&<header><h3>{label}</h3></header>}
+      {!inspector&&<header><h3>Share reference</h3><button type="button" aria-label="Close sharing popup" onClick={onCancel}>×</button></header>}
       <form onSubmit={async e=>{e.preventDefault();const result=await c.share({...draft,...(documentNodes?{document:documentNodes}:{})},intent,note,sendId,inviteNow);if(result)onShared(result.id);}}>
         <div className="share-form-body" onKeyDown={e=>{const target=e.target as HTMLElement;if(e.key==='Enter'&&target.matches('input,select')&&target.closest('.comparison-overview,.comparison-next-steps')){e.preventDefault();e.stopPropagation();}}} role={inspector?'region':undefined} aria-label={inspector?'Comparison content':undefined} tabIndex={inspector?0:undefined}>{!inspector&&<><p className="share-target-label" title={draft.label}>{draft.label}</p>
         <div className="share-target-meta"><span>{draft.elementIds.length} {draft.elementIds.length===1?'object':'objects'}</span><button type="button" onClick={onLocate}>Locate</button></div>
@@ -61,7 +61,7 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
         {!draft.comparison&&intent!=='Compare'&&<PropertyComparison compact={inspector} contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded={false}/>}
         {!c.session||!c.room?<p className="subtle">Create or join a room first. <button type="button" onClick={onRoom}>Open shared workspace</button></p>:!c.room.members.some(m=>m.userId===target)?<p className="subtle">Invite User {target} before sending. <button type="button" onClick={onRoom}>Open room</button></p>:!c.room.members.some(m=>m.userId===target&&m.online)?<p className="subtle">User {target} is offline. They can open this request when they return.</p>:null}
         {c.error&&<p className="connection-error" role="alert">{c.error}</p>}
-        </div><div className="action-row share-form-footer"><button className="primary-action" disabled={c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':`Send to User ${target}`}</button><button type="button" onClick={onCancel}>Cancel draft</button></div>
+        </div><div className="action-row share-form-footer"><button className="primary-action" disabled={!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':'Share reference'}</button><button type="button" onClick={onCancel}>Cancel</button></div>
       </form>
     </div>}
   </div>;
