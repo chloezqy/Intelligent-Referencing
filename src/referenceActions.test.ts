@@ -39,3 +39,9 @@ test('Contextual actions contain only Compare when available, Share reference an
  const many=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareOwn:true}));
  assert.doesNotMatch(many,/>Edit</);assert.ok(many.indexOf('>Compare</button>')<many.indexOf('>Share reference</button>'));assert.ok(many.indexOf('>Share reference</button>')<many.indexOf('>Adjust interpretation<'));
 });
+test('normal selections offer Edit immediately above Share; provisional selections do not',()=>{
+ const html=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,onEdit:()=>{},compareReady:false}));
+ assert.ok(html.indexOf('>Edit</button>')>=0);assert.ok(html.indexOf('>Edit</button>')<html.indexOf('>Share reference</button>'));
+ const pending=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,onEdit:()=>{},selectionPending:true}));
+ assert.doesNotMatch(pending,/>Edit</);
+});

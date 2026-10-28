@@ -1,3 +1,4 @@
+import ReviewFocus from './ReviewFocus';
 import {SharedDesignChanges} from './DesignChangeSuggestions';
 import type {CollaborationClient} from '../collaborationClient';
 import ComparisonContext from './ComparisonContext';
@@ -7,8 +8,8 @@ import PropertyComparison from './PropertyComparison';
 import { SharedReference } from '../collaboration';
 import { UIElement } from '../types';
 import { requestId } from '../useCollaboration';
-interface Props {key?:string;active:SharedReference;nodes:UIElement[];collaboration:CollaborationClient;onLocate:(ref:SharedReference)=>void;onClear:()=>void}
-export default function ReferenceConversation({active,nodes,collaboration:c,onLocate,onClear}:Props){
+interface Props {key?:string;active:SharedReference;nodes:UIElement[];collaboration:CollaborationClient;onLocate:(ref:SharedReference)=>void;onClear:()=>void;onInspect?:(ids:string[])=>void;onCompare?:(ids:string[])=>void}
+export default function ReferenceConversation({active,nodes,collaboration:c,onLocate,onClear,onInspect,onCompare}:Props){
  const [response,setResponse]=useState(''),[replyId,setReplyId]=useState(requestId);
  const isSender=active.sourceUser===c.session?.userId;
  const heading=active.intent==='Look at this'?'Shared reference':`${active.intent} request`;
@@ -27,6 +28,7 @@ export default function ReferenceConversation({active,nodes,collaboration:c,onLo
         <p className="conversation-note-label">{isSender?'Your note':`User ${active.sourceUser}’s note`}</p>
         <p className={active.message?'conversation-body':'conversation-empty'}>{active.message || 'No additional note'}</p>
       </div>
+      {active.intent.trim().toLowerCase()==='review'&&active.message.trim()&&!active.archivedAt&&<ReviewFocus reference={active} nodes={nodes} onInspect={onInspect} onCompare={onCompare}/>}
       {active.intent!=='Compare'&&active.comparison&&<ComparisonContext context={active.comparison} nodes={nodes} user={c.session?.userId}/>}
       {active.intent!=='Compare'&&<PropertyComparison ownership={active.comparison} contextId={active.id} ids={active.elementIds} nodes={nodes} expanded={false}/>}
       <div className="responses" aria-live="polite">{active.responses.map(reply=><div key={reply.id}><strong className={`user-${reply.userId}`}>{reply.userId===c.session?.userId?'You · ':''}User {reply.userId}</strong><p>{reply.message}</p><small>{new Date(reply.createdAt).toLocaleString()}</small></div>)}</div>

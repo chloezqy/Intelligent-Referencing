@@ -838,3 +838,40 @@ button:disabled { opacity:.45; }
 .library-property-value{display:inline-flex;align-items:center;gap:5px;overflow-wrap:anywhere;}
 .library-property-value i{display:inline-block;width:13px;height:13px;border:1px solid #ddd5e6;border-radius:3px;flex-shrink:0;}
 .token-suggestion-source{color:#92869e;font-size:10px;}
+
+/* Compact, non-editing review assistance inside the existing conversation. */
+.review-focus {margin:12px 0;padding:10px 0;border-top:1px solid #eeeaf5;border-bottom:1px solid #eeeaf5;color:#625a70;}
+.review-focus h4 {display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;margin:0 0 7px;}
+.review-focus h4 svg {color:#8065c9;flex-shrink:0;}
+.review-focus h4 small {margin-left:auto;font-size:9px;font-weight:400;color:#8b819b;}
+.review-focus>p {font-size:11px;line-height:1.4;margin:0 0 8px;}
+.review-focus-objects {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.review-focus-objects>div {min-width:0;}
+.review-focus-objects small {display:block;font-size:10px;margin-bottom:4px;}
+.review-focus-objects>div>.element-preview {width:100%;height:64px;display:block;}
+.review-focus-name {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;margin:4px 0;}
+.review-focus-value {display:block;font-size:10px;}
+.review-focus-data,.review-focus-status {font-size:10px;color:#8b819b;line-height:1.4;}
+.review-focus-data {display:block;margin:5px 0;}
+.review-focus-actions>button {border:1px solid #ddd5ee;border-radius:6px;padding:5px 8px;margin-right:5px;color:#7157b6;background:#fcfaff;}
+
+/* Keep the floating review conversation compact; nested sections must not inherit panel padding. */
+.conversation-popover .reference-detail {gap:10px;border-bottom:0;}
+.conversation-popover .reference-detail .conversation-header {padding-bottom:8px;}
+.conversation-popover .reference-detail .conversation-note-label {margin-bottom:4px;}
+.conversation-popover .reference-detail .review-focus {
+  margin:0;padding:8px 0 0;border-bottom:0;text-align:left;
+}
+.conversation-popover .review-focus h4 {justify-content:flex-start;margin-bottom:5px;}
+.conversation-popover .review-focus>p {text-align:left;margin:0 0 6px;line-height:1.35;}
+.conversation-popover .reference-detail .conversation-reply {padding-top:8px;}
+.conversation-popover .reference-detail .responses:empty {display:none;}
+
+.review-focus-actions {display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:5px;margin-top:6px;}
+
+.review-focus-objects>div {
+  padding:8px;
+  border:1px solid #e7e0f1;
+  border-radius:8px;
+  background:#faf8fd;
+}

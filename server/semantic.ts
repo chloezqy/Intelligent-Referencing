@@ -1,3 +1,4 @@
+import {reviewFocusRequest,reviewFocusPayload,parseReviewFocus} from './reviewFocus.js';
 import {comparisonAnalysisRequest,comparisonAnalysisPayload,parseComparisonAnalysis} from './comparisonRecommendations.js';
 import {tokenContext,tokenPayload,parseTokenOutput} from './designSystemReferencing.js';
 import {scopeElements,distinctCandidates,resolveScopeIds} from '../src/gestureContext.js';
@@ -52,6 +53,9 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   // The hosted adapter supplies its own access policy; local Node remains loopback-only.
   if(options.authorize)options.authorize(req);
   else if(process.env.NODE_ENV==='production'||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||'')||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.ip||''))throw new SemanticError(403,'AI requests are limited to this server’s computer until public access controls are configured.');
+  const review=req.body?.task==='review-focus';
+  let reviewContext:ReturnType<typeof reviewFocusRequest>|undefined;
+  if(review)try{reviewContext=reviewFocusRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
   const analysis=req.body?.task==='comparison-analysis';
   let analysisContext:ReturnType<typeof comparisonAnalysisRequest>|undefined;
   if(analysis)try{analysisContext=comparisonAnalysisRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
@@ -62,13 +66,13 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   let editContext:ReturnType<typeof actionContext>|undefined;
   if(editing)try{editContext=actionContext(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
   let changeContext:ReturnType<typeof designChangesRequest>|undefined;
-  if(req.body?.task!==undefined&&!changes&&!editing&&!tokens&&!analysis)throw new SemanticError(400,'Unknown AI task.');
+  if(req.body?.task!==undefined&&!changes&&!editing&&!tokens&&!analysis&&!review)throw new SemanticError(400,'Unknown AI task.');
   if(changes)try{changeContext=designChangesRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
-  const request=changes||editing||tokens||analysis?{contextId:req.body.contextId}:semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini';
+  const request=changes||editing||tokens||analysis||review?{contextId:req.body.contextId}:semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini';
   if(changeContext&&!changeContext.facts.length){res.json({contextId:request.contextId,proposals:[],cached:false,message:'No fully recorded differences for these properties.'});return;}
   if(libraryContext&&!libraryContext.facts.length){res.json({contextId:request.contextId,tokenSuggestions:[],cached:false});return;}
   if(analysisContext&&!analysisContext.differences.length){res.json({contextId:request.contextId,recommendations:[],cached:false});return;}
-  const payload=analysisContext?comparisonAnalysisPayload(analysisContext,model):libraryContext?tokenPayload(libraryContext,model):editContext?actionPayload(editContext,model):changeContext?designChangesPayload(changeContext,model):modelPayload(request as SemanticRequest,model),now=(options.now||Date.now)();
+  const payload=reviewContext?reviewFocusPayload(reviewContext,model):analysisContext?comparisonAnalysisPayload(analysisContext,model):libraryContext?tokenPayload(libraryContext,model):editContext?actionPayload(editContext,model):changeContext?designChangesPayload(changeContext,model):modelPayload(request as SemanticRequest,model),now=(options.now||Date.now)();
   const hash=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   for(const [key,value] of cache)if(value.until<now)cache.delete(key);
   const cached=cache.get(hash);if(cached){res.json({...cached.value,contextId:request.contextId,cached:true});return;}
@@ -84,12 +88,13 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
    if(!response.ok){await response.body?.cancel();throw new SemanticError(response.status===429?429:502,'The AI service is unavailable. Retry or select touched objects manually.');}
    let output:any;try{output=await response.json();}catch{throw new SemanticError(502,'AI returned invalid JSON.');}
    const responseId=typeof output.id==='string'?output.id:undefined,rejectedSuggestions:{index:number;code:string}[]=[];
+   let suggestion:ReturnType<typeof parseReviewFocus>|undefined;
    let recommendations:ReturnType<typeof parseComparisonAnalysis>|undefined;
    let plan:ReturnType<typeof parseActionOutput>|undefined;
    let tokenSuggestions:ReturnType<typeof parseTokenOutput>|undefined;
    let candidates:SemanticCandidate[]|undefined,proposals:ReturnType<typeof parseDesignChanges>|undefined;
-   try{if(analysisContext)recommendations=parseComparisonAnalysis(output,analysisContext);else if(libraryContext)tokenSuggestions=parseTokenOutput(output,libraryContext);else if(editContext)plan=parseActionOutput(output,editContext);else if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:response.status,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
-   const value={...(analysisContext?{recommendations}:libraryContext?{tokenSuggestions}:editContext?{plan}:changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
+   try{if(reviewContext)suggestion=parseReviewFocus(output,reviewContext);else if(analysisContext)recommendations=parseComparisonAnalysis(output,analysisContext);else if(libraryContext)tokenSuggestions=parseTokenOutput(output,libraryContext);else if(editContext)plan=parseActionOutput(output,editContext);else if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:response.status,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
+   const value={...(reviewContext?{suggestion}:analysisContext?{recommendations}:libraryContext?{tokenSuggestions}:editContext?{plan}:changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
    if(cache.size>=100)cache.delete(cache.keys().next().value!);cache.set(hash,{until:now+600000,value});return value;
   })();pending.set(hash,job);
   try{res.json({...await job,contextId:request.contextId});}finally{pending.delete(hash);active--;}
