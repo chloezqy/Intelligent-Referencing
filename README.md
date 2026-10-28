@@ -220,7 +220,7 @@ Reviewed references keep their conversations in References but no longer show ca
 
 ## Optional semantic AI interpretation
 
-Select objects, then open **Adjust interpretation**. Press **AI suggestions**. This explicit action is the only model trigger; drawing and selecting still run deterministic rules immediately. AI interpretations appear in the same dropdown, labeled **semantic · AI**, with a short evidence-based reason. Click a suggestion to apply it, or ignore it. No selection changes on arrival; no notes or replies are generated.
+After a completed rough gesture, Compare and Share remain visible and Adjust interpretation expands immediately with Touched / Screen / All screens. The completed gesture requests AI interpretation once; repeated contexts reuse the existing cache. Candidate hover/focus and activation preview the exact objects without confirming or publishing a new selection. Press **Select objects** to confirm and open the right Selection inspector; editing remains in that inspector, never a floating toolbar. The interpretation surface contains AI candidates only, with a manual touched-object fallback on AI failure or empty results. Design-system review remains under the inspector’s Suggested actions. Ordinary clicks do not request AI; their AI suggestions button remains explicit. Suggestions never apply edits automatically.
 
 ### Local configuration — no live calls until approved
 
@@ -277,3 +277,9 @@ Recorded values, library identities, exact matches and patches are deterministic
 Check individual properties to include them in the ordinary comparison request. **Preview selected changes** temporarily previews only checked differences; **Apply** commits them through existing batch history. Undo/redo remain available. Sharing does not apply changes. The existing saved comparison conversation shows checked property proposals, their original/proposed values and provenance. Changing targets, purpose, selected property categories or committed property values clears or invalidates stale proposals. Exact matches and manual editing remain available when AI is disabled or fails.
 
 The token tests use injected Responses fixtures only. They verify candidate/value validation, partial/no matches, cache/disabled behavior, preview patches and demo/realtime sharing persistence; they do not establish live model quality.
+
+### Selection and Compare inspectors
+
+Manual selection and confirmed AI interpretations open **Selection**, with Details, contextual Suggested actions, and Design system review. No comparison draft or empty second participant is created. Canvas quick-action shortcuts and the detailed inspector use one editing controller, including proposal checkboxes, temporary preview, Apply, and undo/redo. AI editing remains explicitly requested. Closing Selection keeps the selection and its shortcuts available.
+
+Only an explicit **Compare** action creates a frozen comparison draft. Same-user and cross-user comparisons retain the existing preview, purpose, direction, sharing and conversation workflows. An explicit one-object comparison offers **Choose second object on canvas**; the next chosen object is added to the retained first target and opens the completed comparison.

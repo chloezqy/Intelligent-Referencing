@@ -13,7 +13,7 @@ import { CanvasTransform } from '../workspace';
 import { requestId } from '../useCollaboration';
 import { sharePopoverLayout, shareActionLabel } from '../referencePresentation';
 import PropertyComparison from './PropertyComparison';
-interface Props {documentNodes?:UIElement[];editingContent?:React.ReactNode;
+interface Props {onPickSecond?:()=>void;documentNodes?:UIElement[];editingContent?:React.ReactNode;
  inspectorHost?:HTMLElement|null; inspector?:boolean;
   onDesignReference:(value:DesignReference)=>void;onComparisonPurpose:(value:string)=>void;onRefreshComparison:()=>void;comparisonChanged:boolean;
   draft:ReferenceDraft; nodes:UIElement[]; camera:CanvasTransform;
@@ -22,7 +22,7 @@ interface Props {documentNodes?:UIElement[];editingContent?:React.ReactNode;
   onCancel:()=>void; onShared:(id:string)=>void;
   onRoom:()=>void; onLocate:()=>void;
 }
-export default function SharePopover({documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
+export default function SharePopover({onPickSecond,documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
   const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null),pin=useRef<HTMLButtonElement>(null);
   const [viewport,setViewport]=useState({width:800,height:600}),[height,setHeight]=useState(320),[sendId,setSendId]=useState(requestId);
   const [inviteNow,setInviteNow]=useState(false);
@@ -59,6 +59,7 @@ export default function SharePopover({documentNodes,editingContent,inspector=fal
         {layout?.offscreen&&<p className="subtle">Targets offscreen.</p>}</>}
 
         {inspector?<ComparisonOverview purposeControls={draft.comparison?<ComparisonPurpose showDesignControls={false} context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>:undefined}  showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
+        {inspector&&draft.elementIds.length===1&&onPickSecond&&<button type="button" className="choose-second-object" onClick={onPickSecond}>Choose second object on canvas</button>}
         {inspector&&<section className="inspector-suggested-actions" aria-label="Suggested actions"><h4>Suggested actions</h4>{designMode&&draft.comparison&&draft.comparison.designReference&&<><DesignReferenceIntent context={draft.comparison} value={draft.comparison.designReference} onChange={onDesignReference}/><DraftDesignChanges nodes={documentNodes||nodes} context={draft.comparison} onChange={onDesignReference}/></>}{editingContent}</section>}
         {draft.comparison&&comparisonChanged&&<p className="subtle">Selection changed. <button type="button" onClick={onRefreshComparison}>Refresh comparison</button></p>}
         {inspector?<section className="comparison-sharing-options" aria-label="Sharing options"><h4>Sharing options</h4>

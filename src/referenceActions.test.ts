@@ -22,3 +22,13 @@ test('Collapsed third step retains its header and hides interpretation content',
  assert.ok(!html.includes('Hidden controls'));
  assert.ok(html.includes('action-orb'));
 });
+test('Provisional gesture references cannot compare or share until explicit confirmation',()=>{
+ const html=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,selectionPending:true,expanded:true}));
+ assert.doesNotMatch(html,/Share reference|Compare with|disabled=|Confirm an interpretation first/);assert.match(html,/aria-expanded="true"/);
+ const confirmed=renderToStaticMarkup(React.createElement(ReferenceActions,props));assert.doesNotMatch(confirmed,/disabled=""/);
+});
+
+test('Unavailable comparison is omitted while confirmed sharing and interpretation remain usable',()=>{
+ const html=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareReady:false}));
+ assert.doesNotMatch(html,/Compare with|compare-unavailable|disabled=/);assert.match(html,/Share reference/);assert.match(html,/Adjust interpretation/);
+});

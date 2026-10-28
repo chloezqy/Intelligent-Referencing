@@ -3,7 +3,7 @@ import {SemanticCandidate} from './semanticInterpretation';
 import {modelSemanticProvider} from './modelSemanticProvider';
 import {InferredReference,UIElement} from './types';
 import {scopeElements,distinctCandidates,resolveScopeIds} from './gestureContext';
-/** Selection stays deterministic until the user explicitly requests model suggestions. */
+/** Selection remains deterministic; completed rough gestures and explicit requests may load suggestions. */
 export function useSemanticSuggestions(selection:InferredReference|null,nodes:UIElement[]){
  const key=selection?JSON.stringify([selection.exemplarIds,selection.scope,nodes]):'';
  const current=useRef(key);current.current=key;
@@ -11,7 +11,7 @@ export function useSemanticSuggestions(selection:InferredReference|null,nodes:UI
  const [state,setState]=useState<{key:string;loading:boolean;candidates:SemanticCandidate[];message:string;done:boolean}>({key,loading:false,candidates:[],message:'',done:false});
  useEffect(()=>{controller.current?.abort();setState({key,loading:false,candidates:[],message:'',done:false});return()=>controller.current?.abort();},[key]);
  const request=async()=>{
-  if(!selection||state.loading)return;
+  if(!selection||state.key===key&&state.loading)return;
   if(!selection.selectedIds.length){setState({key,loading:false,candidates:[],message:'Select or draw across the objects you mean.',done:true});return;}
   const saved=cache.current.get(key);if(saved){setState({key,loading:false,candidates:saved,message:'',done:true});return;}
   const abort=new AbortController();controller.current?.abort();controller.current=abort;setState({key,loading:true,candidates:[],message:'',done:false});

@@ -4,7 +4,7 @@ import type {UIElement} from '../types';
 import type {UserId} from '../collaboration';
 import {previewElements} from '../visualComparison';
 
-function ElementPreview({element,nodes}:{element:UIElement;nodes:UIElement[]}){
+export function ElementPreview({element,nodes}:{element:UIElement;nodes:UIElement[]}){
  // SVG scales authored coordinates without a live canvas, screenshots or external assets.
  return <svg className="element-preview" viewBox={`0 0 ${Math.max(1,element.w)} ${Math.max(1,element.h)}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Preview of ${element.label}`}>
   {previewElements(element,nodes).map(node=><svg key={node.id} x={node.x-element.x} y={node.y-element.y} width={Math.max(1,node.w)} height={Math.max(1,node.h)} overflow="hidden">

@@ -4,8 +4,8 @@ export function selectionActionLayout(box:{x:number;y:number;w:number;h:number}|
  const right=anchor?anchor.x*camera.scale+camera.x:box?(box.x+box.w)*camera.scale+camera.x:margin;
  const left=anchor?anchor.x*camera.scale+camera.x:box?box.x*camera.scale+camera.x:margin;
  const bottom=anchor?anchor.y*camera.scale+camera.y:box?(box.y+box.h)*camera.scale+camera.y:margin;
- let x=right+gap,y=anchor?bottom-6:bottom-12;
+ let x=right+gap,y=anchor?bottom-6:box?box.y*camera.scale+camera.y:margin;
  if(x+width>viewport.width-margin)x=left-gap-width;
- if(y+height>viewport.height-margin)y=bottom-height-gap;
+ if(anchor&&y+height>viewport.height-margin)y=bottom-height-gap;
  return {left:Math.max(margin,Math.min(viewport.width-width-margin,x)),top:Math.max(margin,Math.min(viewport.height-height-margin,y))};
 }
