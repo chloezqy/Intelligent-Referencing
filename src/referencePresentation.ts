@@ -1,6 +1,6 @@
-import { SharedReference } from './collaboration';
-import { UIElement } from './types';
-import { CanvasTransform } from './workspace';
+import { SharedReference } from './collaboration.js';
+import { UIElement } from './types.js';
+import { CanvasTransform } from './workspace.js';
 
 export interface ReferenceAnchor {
   key: string;

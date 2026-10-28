@@ -1,6 +1,6 @@
-import {comparisonSides,referenceSides} from './comparisonSides';
-import type {ComparisonContext,DesignReference,SharedReference,UserId} from './collaboration';
-import type {UIElement} from './types';
+import {comparisonSides,referenceSides} from './comparisonSides.js';
+import type {ComparisonContext,DesignReference,SharedReference,UserId} from './collaboration.js';
+import type {UIElement} from './types.js';
 export type DesignProperty=DesignReference['properties'][number];
 export interface DesignChangeFact {id:string;category:DesignProperty;property:string;referenceId:string;targetId:string;referenceValue:string;targetValue:string}
 export interface ProposedDesignChange {id:string;title:string;explanation:string;facts:DesignChangeFact[];source:'model';status:'pending'|'accepted'|'dismissed';reviewedAt?:string}

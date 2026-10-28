@@ -1,7 +1,7 @@
-import type {UIElement} from './types';
-import type {ComparisonContext} from './collaboration';
-import {comparisonSides} from './comparisonSides';
-import {compareReferenceElements} from './referencePresentation';
+import type {UIElement} from './types.js';
+import type {ComparisonContext} from './collaboration.js';
+import {comparisonSides} from './comparisonSides.js';
+import {compareReferenceElements} from './referencePresentation.js';
 export const RECOMMENDATION_CATEGORIES=['suggested','review','informational'] as const;
 export type RecommendationCategory=typeof RECOMMENDATION_CATEGORIES[number];
 export const RECOMMENDATION_LABELS={suggested:'Suggested to resolve',review:'Review recommended',informational:'Informational'};

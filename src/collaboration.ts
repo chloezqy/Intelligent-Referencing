@@ -1,7 +1,7 @@
-import {comparisonSides} from './comparisonSides';
+import {comparisonSides} from './comparisonSides.js';
 import {designChangeContext,validateProposedChanges} from './designChanges.js';
 import {MOCK_NODES} from './data.js';
-import { ScopeLevel } from './types';
+import { ScopeLevel } from './types.js';
 export type UserId = 'A' | 'B';
 export type ReferenceIntent = 'Review' | 'Compare' | 'Help' | 'Look at this';
 export interface SharedReference {

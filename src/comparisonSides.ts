@@ -1,6 +1,6 @@
-import type {ComparisonContext,DesignReference,SelectionPresence,UserId} from './collaboration';
-import type {UIElement} from './types';
-import {ruleBasedInterpreter} from './comparisonContext';
+import type {ComparisonContext,DesignReference,SelectionPresence,UserId} from './collaboration.js';
+import type {UIElement} from './types.js';
+import {ruleBasedInterpreter} from './comparisonContext.js';
 export type ComparisonSide='A'|'B';
 export interface ComparisonSideSelection {elementIds:string[];selectedBy:UserId}
 export function comparisonSides(context:Pick<ComparisonContext,'sides'|'selections'>):Record<ComparisonSide,ComparisonSideSelection>{

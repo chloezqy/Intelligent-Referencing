@@ -1,5 +1,5 @@
-import { UIElement } from './types';
-import { compareReferenceElements } from './referencePresentation';
+import { UIElement } from './types.js';
+import { compareReferenceElements } from './referencePresentation.js';
 export interface ContextInterpretation {summary:string;evidence:string[];purposes:string[];provenance:'rule-based'}
 export interface ContextInterpreter {interpret:(a:string[],b:string[],nodes:UIElement[])=>ContextInterpretation}
 export const ruleBasedInterpreter:ContextInterpreter={interpret(a,b,nodes){
