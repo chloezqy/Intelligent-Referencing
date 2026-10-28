@@ -43,3 +43,16 @@ test('One purpose control follows previews and never appears inside compact Shar
  assert.ok(html.indexOf('reference-card-pair')<html.indexOf('Comparison purpose'));assert.ok(html.indexOf('Comparison details')<html.indexOf('Comparison purpose'));assert.equal((html.match(/Comparison purpose/g)||[]).length,1);assert.doesNotMatch(html,/Rule-based insight/);
 
 });
+
+test('Opened collaborator references supply only their sender-owned objects without requiring live presence',async()=>{
+ const {collaboratorReferenceIds,referenceComparison}=await import('./comparisonSides');
+ const context=localComparison('B',['hc1-title','detail-title'],'peer',MOCK_NODES);
+ const ref=demoShare(freshDemo(),{comparison:context,elementIds:['hc1-title','detail-title'],exemplarIds:['hc1-title'],scope:'document',label:'Peer group'},'Compare','','peer',false,'B').references[0];
+ assert.deepEqual(collaboratorReferenceIds(ref,'A',MOCK_NODES),['hc1-title','detail-title']);
+ const result=referenceComparison('A',['sc2'],ref,'saved',MOCK_NODES);
+ assert.deepEqual(result.sides,{A:{elementIds:['sc2'],selectedBy:'A'},B:{elementIds:['hc1-title','detail-title'],selectedBy:'B'}});
+ assert.throws(()=>referenceComparison('B',['sc2'],ref,'self',MOCK_NODES));
+ assert.throws(()=>referenceComparison('A',['sc2'],{...ref,archivedAt:new Date().toISOString()},'archived',MOCK_NODES));
+ const mixed={...ref,comparison:demoComparison(selection('A',['sc2']),selection('B',['detail-title']),'mixed')};
+ assert.deepEqual(collaboratorReferenceIds(mixed,'A',MOCK_NODES),['detail-title']);
+});

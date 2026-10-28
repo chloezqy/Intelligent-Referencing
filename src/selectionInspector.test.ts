@@ -26,3 +26,8 @@ test('Selection summary reuses actual previews, caps groups, and only calls equa
  const single=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1'],nodes:MOCK_NODES}));assert.equal((single.match(/class="element-preview"/g)||[]).length,1);assert.match(single,/165 × 230 px/);
  const unavailable=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1','missing'],nodes:MOCK_NODES}));assert.doesNotMatch(unavailable,/selection-shared-properties/);assert.match(unavailable,/1 unavailable objects/);
 });
+test('Working inspector keeps Selection title and sticky mode switch above its content',()=>{
+ const html=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'compare',workMode:'compare',onModeChange:()=>{},compareAvailable:true,open:true,count:2,onClose:()=>{},contentRef:()=>{}},'Mode content'));
+ assert.match(html,/>Selection<\/strong>/);assert.match(html,/aria-label="Selection mode"/);assert.ok(html.indexOf('inspector-mode-switch')<html.indexOf('comparison-inspector-content'));assert.match(html,/aria-pressed="true"[^>]*>Compare<\/button>/);
+ const single=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'selection',workMode:'edit',onModeChange:()=>{},compareAvailable:false,open:true,count:1,onClose:()=>{},contentRef:()=>{}}));assert.match(single,/disabled=""/);assert.match(single,/Select at least two objects/);assert.match(single,/aria-pressed="true"[^>]*>Edit<\/button>/);
+});

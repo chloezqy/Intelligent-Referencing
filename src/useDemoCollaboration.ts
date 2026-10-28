@@ -1,4 +1,4 @@
-import {localComparison} from './comparisonSides';
+import {localComparison,referenceComparison} from './comparisonSides';
 import {MOCK_NODES} from './data';
 import {decideDesignChange} from './designChanges';
 import {useEffect,useRef,useState} from 'react';
@@ -20,7 +20,7 @@ export function useDemoCollaboration(enabled:boolean):CollaborationClient{
  return {mode:'demo',session:enabled?{code:'demo',userId:user,token:'local-demo-only'}:null,room:enabled?room:null,selections,cursors:{},connected:enabled,busy:false,error,initialCode:'',invitation:'',
  publishSelection:async body=>{const previous=selectionRef.current[user];if(previous&&JSON.stringify([previous.elementIds,previous.exemplarIds,previous.scope,previous.method])===JSON.stringify([body.elementIds,body.exemplarIds,body.scope,body.method]))return;const next={...selectionRef.current,[user]:{...structuredClone(body),userId:user,revision:(previous?.revision||0)+1}};selectionRef.current=next;setSelections(next);},
  cursor:async()=>{},create:async()=>undefined,join:async()=>undefined,
- comparisonDraft:localIds=>action(()=>{if(localIds)return localComparison(user,localIds,crypto.randomUUID(),MOCK_NODES);const a=selectionRef.current.A,b=selectionRef.current.B;if(!a||!b)throw new Error('Select objects before comparing.');return demoComparison(a,b,crypto.randomUUID());}),
+ comparisonDraft:(localIds,referenceId)=>action(()=>{if(referenceId){const reference=current.current.references.find(r=>r.id===referenceId);if(!reference)throw new Error('Reference unavailable.');return referenceComparison(user,localIds||[],reference,crypto.randomUUID(),MOCK_NODES);}if(localIds)return localComparison(user,localIds,crypto.randomUUID(),MOCK_NODES);const a=selectionRef.current.A,b=selectionRef.current.B;if(!a||!b)throw new Error('Select objects before comparing.');return demoComparison(a,b,crypto.randomUUID());}),
  share:(draft,intent,message,id,inviteNow)=>action(()=>{const next=demoShare(current.current,draft,intent,message,id,inviteNow,user);commit(next);return next.references.find(r=>r.id===id)!;}),
  activity:(id,kind,elementIds=[])=>action(()=>mutate(id,r=>{if(r.archivedAt)throw new Error('Restore this reference first.');if(elementIds.some(id=>!r.elementIds.includes(id)))throw new Error('Invalid reference targets.');if(r.activity?.some(e=>e.userId===user&&e.kind===kind&&JSON.stringify(e.elementIds)===JSON.stringify(elementIds)))return r;return {...r,activity:[...(r.activity||[]),{id:crypto.randomUUID(),userId:user,kind,elementIds,at:new Date().toISOString()}]};})),
  respond:(id,message,responseId)=>action(()=>mutate(id,r=>{if(r.archivedAt||!message.trim())throw new Error('Write a response to an active reference.');return r.responses.some(e=>e.id===responseId)?r:{...r,responses:[...r.responses,{id:responseId,userId:user,message,createdAt:new Date().toISOString()}]};})),

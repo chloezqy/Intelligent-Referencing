@@ -6,7 +6,7 @@ export interface CollaborationClient {
  connected:boolean;busy:boolean;error:string;initialCode:string;invitation:string;
  publishSelection(body:Omit<SelectionPresence,'userId'|'revision'>):Promise<void>;
  cursor(x:number,y:number,visible:boolean):Promise<void>;
- comparisonDraft(localIds?:string[]):Promise<ComparisonContext|undefined>;
+ comparisonDraft(localIds?:string[],referenceId?:string):Promise<ComparisonContext|undefined>;
  create():Promise<unknown>;join(input:string):Promise<unknown>;
  share(draft:ReferenceDraft,intent:ReferenceIntent,message:string,id:string,inviteNow?:boolean):Promise<SharedReference|undefined>;
  inviteAttention(id:string,requestId:string):Promise<unknown>;

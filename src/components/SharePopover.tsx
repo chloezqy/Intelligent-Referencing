@@ -1,13 +1,12 @@
+import ReferenceSharingControls from './ReferenceSharingControls';
 import DesignReferenceIntent from './DesignReferenceIntent';
 import {DraftDesignChanges} from './DesignChangeSuggestions';
 import {createPortal} from 'react-dom';
 import type {CollaborationClient} from '../collaborationClient';
-import MentionNote from './MentionNote';
-import {mentionedUsers} from '../mentions';
 import ComparisonOverview from './ComparisonOverview';
 import ComparisonContext, {ComparisonPurpose} from './ComparisonContext';
 import React, { useEffect, useRef, useState } from 'react';
-import { ReferenceDraft, ReferenceIntent, INTENTS, DesignReference, DESIGN_REFERENCE_PURPOSE } from '../collaboration';
+import { ReferenceDraft, ReferenceIntent, DesignReference, DESIGN_REFERENCE_PURPOSE } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
 import { requestId } from '../useCollaboration';
@@ -44,11 +43,7 @@ export default function SharePopover({onPickSecond,documentNodes,editingContent,
   },[visible,inspector,inspectorHost]);
   const layout=sharePopoverLayout(draft.elementIds,nodes,camera,viewport,height);
   if(!layout&&!inspector)return null;
-  const sharingControls=<>
-        {!(inspector&&draft.comparison)&&<label>Action<select aria-label="Intended action" disabled={!!draft.comparison} value={intent} onChange={e=>onIntent(e.target.value as ReferenceIntent)}>{INTENTS.map(value=><option key={value}>{value}</option>)}</select></label>}
-
-        <MentionNote value={note} onChange={onNote} members={c.room?.members||[]} self={c.session?.userId}/><label className="invite-now"><input type="checkbox" checked={inviteNow} onChange={e=>setInviteNow(e.target.checked)}/>{inspector?'Invite mentioned teammates to view now':`Invite User ${target} to view now`}</label>{inspector&&inviteNow&&!mentionedUsers(note,c.room?.members||[]).some(id=>id!==c.session?.userId)&&<p className="subtle">Invites User {target}, the default recipient.</p>}{mentionedUsers(note,c.room?.members||[]).filter(id=>id!==c.session?.userId).length>0&&<p className="subtle">Notifying {mentionedUsers(note,c.room?.members||[]).filter(id=>id!==c.session?.userId).map(id=>`User ${id}`).join(', ')}</p>}
-  </>;
+  const sharingControls=<ReferenceSharingControls comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} inviteNow={inviteNow} setInviteNow={setInviteNow}/>;
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     {!inspector&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
     {visible&&<div ref={popup} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover pointer-events-auto'} style={inspector?undefined:layout?.popup}>

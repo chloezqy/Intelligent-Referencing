@@ -751,3 +751,21 @@ button:disabled { opacity:.45; }
 .selection-inspector .mapping-list,.selection-inspector .edit-diffs{max-height:none;overflow:visible;}
 .selection-inspector .selection-details ul{max-height:none;overflow:visible;}
 .selection-action-accordion:focus-within{border-color:#a38ccc;}
+.selection-inspector-sharing{border-top:1px solid #ece8f1;margin-top:12px;padding-top:4px;}
+.selection-inspector-sharing form{display:flex;flex-direction:column;gap:8px;font-size:11px;}
+.selection-inspector-sharing label:not(.invite-now){display:flex;flex-direction:column;gap:6px;}
+.selection-inspector-sharing textarea,.selection-inspector-sharing select{width:100%;min-width:0;border:1px solid #ded8e9;border-radius:8px;padding:8px;font:inherit;background:white;}
+.selection-inspector-sharing textarea{min-height:70px;resize:vertical;}
+.selection-inspector-sharing .invite-now{display:flex;align-items:center;gap:7px;font-size:11px;}
+.selection-footer-host{flex-shrink:0;background:white;border-top:1px solid #e7e1ef;}
+.selection-footer-host .selection-share-footer{margin:0;border:0;padding:10px 12px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+.selection-share-footer button{border:1px solid #ded8e9;border-radius:7px;padding:7px 12px;font-size:11px;background:white;color:#655a79;}
+.selection-share-footer .primary-action{background:#eee9fc;color:#6952ad;border-color:#d7cbf5;font-weight:600;}
+.selection-share-footer button:disabled{opacity:.5;}
+.inspector-mode-switch{display:flex;gap:4px;flex-shrink:0;margin:8px 12px;padding:3px;border-radius:9px;background:#f4f1f8;}
+.inspector-mode-switch button{flex:1;padding:7px 10px;border:0;border-radius:7px;background:transparent;color:#85798f;font-size:12px;font-weight:500;}
+.inspector-mode-switch button[aria-pressed=true]{background:#eae3f9;color:#6a50aa;box-shadow:0 1px 3px #49346f0c;}
+.inspector-mode-switch button:disabled{opacity:.45;cursor:default;}
+.working-inspector>.panel-heading{flex-shrink:0;background:white;}
+.working-inspector .mapping-list,.working-inspector .edit-diffs,.working-inspector .comparison-scroll{max-height:none;}
+.working-inspector .mapping-list,.working-inspector .edit-diffs{overflow:visible;}

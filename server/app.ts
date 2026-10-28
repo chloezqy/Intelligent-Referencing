@@ -1,3 +1,4 @@
+import {referenceComparison} from '../src/comparisonSides.js';
 import {comparisonTokenFacts,validateTokenSuggestions} from '../src/designSystemReferencing.js';
 import {documentContext} from './documentContext';
 import {localComparison} from '../src/comparisonSides';
@@ -55,6 +56,13 @@ export function collaborationServer(store: RoomStore,options:DeploymentOptions={
   }));
   app.post('/api/rooms/:code/comparison-drafts',route((req,res)=>{
     const user=auth(req),code=String(req.params.code),room=selections.get(code);
+    if(req.body.referenceId!==undefined){
+      const reference=store.snapshot(code,()=>false).references.find(r=>r.id===req.body.referenceId);
+      if(!reference)throw new ApiError(400,'Reference unavailable.');
+      let context:ComparisonContext;try{context=referenceComparison(user,req.body.localIds,reference,randomUUID(),MOCK_NODES);}catch(error){throw new ApiError(400,(error as Error).message);}
+      if(drafts.size>=1000)throw new ApiError(429,'Too many comparison drafts. Try later.');
+      drafts.set(context.snapshotId,{code,user,context,expires:Date.now()+3600000});res.status(201).json(context);return;
+    }
     if(req.body.localIds!==undefined){
       let context:ComparisonContext;try{context=localComparison(user,req.body.localIds,randomUUID(),MOCK_NODES);}catch(error){throw new ApiError(400,(error as Error).message);}
       if(drafts.size>=1000)throw new ApiError(429,'Too many comparison drafts. Try later.');

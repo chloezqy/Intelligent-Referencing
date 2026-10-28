@@ -32,3 +32,18 @@ test('Local realtime comparison opens without peer presence; sharing preserves f
   const saved=new RoomStore(file).snapshot(a.code,()=>false).references[0];assert.equal(saved.comparison!.designReference!.proposedChanges![0].status,'accepted');assert.equal(saved.status,'open');
  }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));rmSync(dir,{recursive:true,force:true});}
 });
+
+test('Saved collaborator reference can be compared and shared while both participants are offline',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'reference-comparison-')),server=createServer(collaborationServer(new RoomStore(join(dir,'rooms.json'))));
+ await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${(server.address() as any).port}/api`;
+ const api=async(path:string,body:unknown,session?:any)=>{const r=await fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',...(session?{Authorization:`Bearer ${session.token}`}:{})},body:JSON.stringify(body)});return {status:r.status,body:await r.json()};};
+ try{
+  const a=(await api('/rooms',{})).body,b=(await api(`/rooms/${a.code}/join`,{token:'c'.repeat(48)})).body,id=randomUUID();
+  assert.equal((await api(`/rooms/${a.code}/references`,{requestId:id,elementIds:['hc1-title','detail-title'],exemplarIds:['hc1-title'],scope:'document',intent:'Review',label:'Saved peer selection',message:'',inviteNow:false},b)).status,201);
+  const draft=await api(`/rooms/${a.code}/comparison-drafts`,{localIds:['sc2'],referenceId:id},a);assert.equal(draft.status,201);
+  assert.deepEqual(draft.body.sides,{A:{elementIds:['sc2'],selectedBy:'A'},B:{elementIds:['hc1-title','detail-title'],selectedBy:'B'}});
+  assert.equal((await api(`/rooms/${a.code}/comparison-drafts`,{localIds:['sc2'],referenceId:id},b)).status,400);
+  assert.equal((await api(`/rooms/${a.code}/comparison-drafts`,{localIds:['sc2'],referenceId:'missing'},a)).status,400);
+  assert.equal((await api(`/rooms/${a.code}/references`,{requestId:randomUUID(),comparison:draft.body,elementIds:['sc2','hc1-title','detail-title'],exemplarIds:['sc2'],scope:'document',intent:'Compare',label:'Compare saved reference',message:'',inviteNow:false},a)).status,201);
+ }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));rmSync(dir,{recursive:true,force:true});}
+});
