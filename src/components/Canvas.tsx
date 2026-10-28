@@ -23,6 +23,7 @@ interface CanvasProps {
   onPickSource:(id:string)=>void;
   shareLabel:string;
   sharing:boolean;
+  inspectorOpen?:boolean;
   onSelectionStart:()=>void;
   onMove:(positions:Positions)=>void;
   onResearchEvent: (type:string)=>void;
@@ -46,7 +47,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,onSelectionStart,onMove,onCompare,compareOwn=false,compareReady,compareHint,
+  onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,inspectorOpen=false,onSelectionStart,onMove,onCompare,compareOwn=false,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -394,7 +395,7 @@ export default function Canvas({
     >
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* One AI review surface; editing is available only after reference confirmation. */}
-      {!sharing&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context absolute z-40 flex flex-col items-stretch pointer-events-auto ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:Math.min(336,viewport.width-16),maxHeight:viewport.height-actionPosition.top-8,'--adjustment-space':`${Math.max(48,viewport.height-actionPosition.top-collapsedActionSize.current.height-8)}px`} as React.CSSProperties}>
+      {!sharing&&!inspectorOpen&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context absolute z-40 flex flex-col items-stretch pointer-events-auto ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:Math.min(336,viewport.width-16),maxHeight:viewport.height-actionPosition.top-8,'--adjustment-space':`${Math.max(48,viewport.height-actionPosition.top-collapsedActionSize.current.height-8)}px`} as React.CSSProperties}>
         <ReferenceActions selectionPending={!!draftRef} compareOwn={compareOwn} compareReady={compareReady} compareHint={compareHint} shareLabel={shareLabel} onCompare={onCompare} onAction={onAcceptReference} expanded={adjustOpen} onMore={()=>{const opening=!adjustOpen;setAdjustOpen(opening);setHoveredInterpretation(null);if(opening&&inferredRef.selectionMethod==='smart-ref'&&!ai.done&&!ai.loading){onResearchEvent('ai_interpretation_requested');void ai.request();}}} interpretationContent={<div id="interpretation-adjustments" className="interpretation-adjustments">
           <header className="interpretation-summary"><strong>{inferredRef.label}</strong><small>{inferredRef.activeInterpretation?.source==='model'?'AI interpretation':draftRef?'Choose a reference':'Current selection'}</small></header>
           <div className="scope-options" role="group" aria-label="Reference scope">{([{scope:'exemplars',label:'Touched'},{scope:'screen',label:'Screen'},{scope:'document',label:'All screens'}] as const).map(option=><button type="button" key={option.scope} aria-pressed={inferredRef.scope===option.scope} onClick={()=>handleScopeChange(option.scope)}>{option.label}</button>)}</div>

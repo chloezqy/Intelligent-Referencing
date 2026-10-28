@@ -1,4 +1,3 @@
-import {createPortal} from 'react-dom';
 import {ACTION_TITLES,inspectorActionPresentation} from '../inspectorActionPresentation';
 import DesignSystemReview from './DesignSystemReview';
 import type {TokenSuggestion} from '../designSystemReferencing';
@@ -11,8 +10,8 @@ import {COLORS,TYPOGRAPHY} from '../designSystem';
 import {EditProposal,Patch,LayoutOperation,TextRole,roots,descendants,textTargets,colorTargets,layoutPatches,matchStyles,libraryProposal,proposalPatches,changedPatches} from '../editing';
 import {compileActionPlan,validateActionPlan} from '../actionIntent';
 type Panel='Align'|'Match Styles'|'Typography'|'Colors'|'Design System'|'Ask AI';
-export interface EditingToolbarProps {selectionInspector?:boolean;quickAccessHost?:HTMLElement|null;onOpenInspector?:()=>void;reviewTokens?:boolean;onTokenChanges?:(s:TokenSuggestion[])=>void;context?:ComparisonContext;inline?:boolean;onEvent?:(type:string)=>void;selection:InferredReference;nodes:UIElement[];onPreview:(patches:Patch[])=>void;onApply:(proposal:EditProposal,patches:Patch[])=>void;onUndo:()=>void;onRedo:()=>void;canUndo:boolean;canRedo:boolean;sourceId:string|null;onSource:(id:string|null)=>void;picking:boolean;onPicking:(value:boolean)=>void;onState:(state:string)=>void}
-export default function EditingToolbar({selectionInspector=false,quickAccessHost,onOpenInspector,reviewTokens,onTokenChanges,context,inline=false,onEvent,selection,nodes,onPreview,onApply,onUndo,onRedo,canUndo,canRedo,sourceId,onSource,picking,onPicking,onState}:EditingToolbarProps){
+export interface EditingToolbarProps {selectionInspector?:boolean;reviewTokens?:boolean;onTokenChanges?:(s:TokenSuggestion[])=>void;context?:ComparisonContext;inline?:boolean;onEvent?:(type:string)=>void;selection:InferredReference;nodes:UIElement[];onPreview:(patches:Patch[])=>void;onApply:(proposal:EditProposal,patches:Patch[])=>void;onUndo:()=>void;onRedo:()=>void;canUndo:boolean;canRedo:boolean;sourceId:string|null;onSource:(id:string|null)=>void;picking:boolean;onPicking:(value:boolean)=>void;onState:(state:string)=>void}
+export default function EditingToolbar({selectionInspector=false,reviewTokens,onTokenChanges,context,inline=false,onEvent,selection,nodes,onPreview,onApply,onUndo,onRedo,canUndo,canRedo,sourceId,onSource,picking,onPicking,onState}:EditingToolbarProps){
  const editorRoot=useRef<HTMLDivElement|null>(null);
 
  const availability=inspectorActions(selection.selectedIds,nodes,context);
@@ -73,7 +72,6 @@ export default function EditingToolbar({selectionInspector=false,quickAccessHost
   {inline&&availability.reason&&<p className="action-compatibility" role="status">{availability.reason}</p>}
   {design&&context?.designReference?.proposedChanges?.length>0&&<button type="button" onClick={previewReference}>Preview selected suggestions</button>}
   {selectionInspector&&<h4 className="selection-section-title">Suggested actions</h4>}
-  {quickAccessHost&&availability.actions.length>0&&createPortal(<div className="selection-quick-tools" role="toolbar" aria-label="Selection quick actions">{availability.actions.map(name=>{const Icon=icons[name];return <button type="button" key={name} title={ACTION_TITLES[name]} aria-label={ACTION_TITLES[name]} aria-pressed={panel===name} onClick={()=>{onOpenInspector?.();activateAction(name);}}><Icon size={14}/></button>;})}</div>,quickAccessHost)}
   {inline?<><div className="inspector-action-list" aria-label="Recommended editing actions">{presentation.primary.map(actionCard)}</div>{presentation.secondary.length>0&&<details className="other-editing-actions" open={inline&&panel&&presentation.secondary.includes(panel)?true:undefined}><summary>More editing tools</summary><div className="inspector-action-list">{presentation.secondary.map(actionCard)}</div></details>}</>:<div className="editing-categories" role="toolbar" aria-label="Selection editing actions">{(Object.keys(icons) as Panel[]).map(actionCard)}</div>}
 
   {selectionInspector&&<section className="selection-design-system"><h4 className="selection-section-title">Design system</h4>{availability.actions.includes('Design System')?actionCard('Design System'):<p className="subtle">No recorded properties support a library match.</p>}</section>}

@@ -280,11 +280,11 @@ The token tests use injected Responses fixtures only. They verify candidate/valu
 
 ### Selection and Compare inspectors
 
-Manual selection and confirmed AI interpretations open **Selection**, with Details, contextual Suggested actions, and Design system review. No comparison draft or empty second participant is created. Canvas quick-action shortcuts and the detailed inspector use one editing controller, including proposal checkboxes, temporary preview, Apply, and undo/redo. AI editing remains explicitly requested. Closing Selection keeps the selection and its shortcuts available.
+Manual selection and confirmed AI interpretations open **Selection**, with Details, contextual Suggested actions, and Design system review. No comparison draft or empty second participant is created. The inspector uses one editing controller, including proposal checkboxes, temporary preview, Apply, and undo/redo. AI editing remains explicitly requested. Closing Selection keeps the selection available.
 
 Only an explicit **Compare** action creates a frozen comparison draft. Same-user and cross-user comparisons retain the existing preview, purpose, direction, sharing and conversation workflows. Compare becomes available for at least two selected objects or an eligible collaborator selection.
 
-The canvas contextual action stack remains available in Edit mode. Compare is a quick shortcut into Compare mode, while editing shortcuts open Edit mode. Sharing remains an optional final action. Selection includes the same intent, optional note/@mention and invitation fields as shared-reference composition, with Share reference in a pinned footer outside the content scroller. Sharing remains an explicit action and retains research-request metadata where applicable.
+The canvas contextual action stack is hidden while the right-side inspector is open and remains available when it is closed. Compare is a quick shortcut into Compare mode, Editing controls remain inside the inspector; there is no floating editing toolbar. Sharing remains an optional final action. Selection includes the same intent, optional note/@mention and invitation fields as shared-reference composition, with Share reference in a pinned footer outside the content scroller. Sharing remains an explicit action and retains research-request metadata where applicable.
 
 ### Edit / Compare modes
 
