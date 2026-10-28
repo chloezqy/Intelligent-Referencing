@@ -3,7 +3,7 @@ import type {ComparisonContext} from './collaboration';
 import {DESIGN_REFERENCE_PURPOSE} from './collaboration';
 import {comparisonSides,referenceSides} from './comparisonSides';
 import type {UIElement} from './types';
-import {roots,textTargets,descendants,layoutPatches,libraryProposal,matchStyles,validatePatches,EditProposal,Patch} from './editing';
+import {roots,textTargets,descendants,layoutPatches,libraryProposal,matchStyles,validatePatches,changedPatches,EditProposal,Patch} from './editing';
 export type InspectorAction='Align'|'Match Styles'|'Typography'|'Colors'|'Design System'|'Ask AI';
 const categories={typography:['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing'],colors:['bg','color','border'],spacing:['spacing'],cornerRadius:['radius']};
 export function inspectorTargets(context:ComparisonContext|undefined,ids:string[]){return context?.purpose===DESIGN_REFERENCE_PURPOSE?referenceSides(context).target.elementIds:ids;}
@@ -32,9 +32,9 @@ export function referenceTransfer(context:ComparisonContext,nodes:UIElement[]):E
  const sides=referenceSides(context);if(sides.reference.elementIds.length!==1)throw new Error('Choose one reference object for style transfer; grouped references can still be compared or shared.');
  const original=matchStyles(sides.target.elementIds,nodes,sides.reference.elementIds[0]);
  const allowed=new Set((context.designReference?.properties||[]).flatMap(key=>categories[key]));
- const mappings=original.mappings.map(m=>({...m,patches:m.patches.map(p=>({id:p.id,changes:Object.fromEntries(Object.entries(p.changes).filter(([key])=>allowed.has(key)||context.designReference?.properties.includes('spacing')&&m.id==='match-spacing'))})).filter(p=>Object.keys(p.changes).length)})).filter(m=>m.patches.length);
+ const mappings=original.mappings.map(m=>({...m,patches:m.patches.map(p=>({id:p.id,changes:Object.fromEntries(Object.entries(p.changes).filter(([key])=>allowed.has(key)||context.designReference?.properties.includes('spacing')&&m.id==='match-spacing'))})).filter(p=>Object.keys(p.changes).length&&changedPatches(nodes,[p]).length>0)})).filter(m=>m.patches.length);
  if(!mappings.length)throw new Error('No recorded reference values match the chosen properties and target objects.');
- return {...original,title:'Match selected reference properties',mappings};
+ return {...original,title:'Match selected reference properties',mappings:mappings.flatMap(m=>m.id==='match-spacing'?[m]:m.patches.flatMap(p=>Object.entries(p.changes).map(([key,value])=>({id:`${m.id}-${key}`,label:`${nodes.find(n=>n.id===p.id)?.label} · ${key}`,patches:[{id:p.id,changes:{[key]:value}}]}))))};
 }
 export function proposedReferenceEdits(context:ComparisonContext,nodes:UIElement[]):EditProposal{
  if(overlappingReference(context,nodes))throw new Error('Reference and target overlap. Choose separate objects before editing.');

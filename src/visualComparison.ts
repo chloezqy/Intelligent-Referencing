@@ -7,20 +7,20 @@ const priority=['role','text','dimensions','spacing','background','color','radiu
 export const readableMetadata=(value:string)=>value.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/([A-Z])([A-Z][a-z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase());
 export interface VisualDifference {row:ComparisonRow;groups:{label:string;user?:'A'|'B';values:string[]}[]}
 /** Derive a bounded presentation from existing rows; never pair objects or mutate comparisons. */
-export function visualDifferences(comparison:PropertyComparison,ownership?:ComparisonContext){
+export function visualDifferences(comparison:PropertyComparison,ownership?:ComparisonContext,limit=5,includeAll=false){
  const all:VisualDifference[]=[];
- for(const key of priority){
+ for(const key of includeAll?[...priority,...comparison.rows.map(row=>row.key).filter(key=>!priority.includes(key))]:priority){
   const row=comparison.rows.find(row=>row.key===key&&row.state==='different');
   if(!row)continue;
   const groups=ownership?(['A','B'] as const).map(user=>({label:sideLabel(ownership,user),user:comparisonSides(ownership)[user].selectedBy,values:[...new Set(comparison.elements.flatMap((element,index)=>comparisonSides(ownership)[user].elementIds.includes(element.id)?[row.values[index]]:[]))]}))
    :[{label:'Selected references',values:[...new Set(row.values)]}];
   // A missing group is not a comparison. Equal sets can reflect variation within both
   // selections, but are not evidence of a difference between the participants.
-  if(groups.some(group=>!group.values.length))continue;
-  if(ownership&&groups[0].values.length===groups[1].values.length&&groups[0].values.every(value=>groups[1].values.includes(value)))continue;
+  if(!includeAll&&groups.some(group=>!group.values.length))continue;
+  if(!includeAll&&ownership&&groups[0].values.length===groups[1].values.length&&groups[0].values.every(value=>groups[1].values.includes(value)))continue;
   all.push({row,groups});
  }
- return {rows:all.slice(0,5),total:all.length};
+ return {rows:all.slice(0,limit),total:all.length};
 }
 /** Preview the selected element and its existing descendants in document order. */
 export function previewElements(root:UIElement,nodes:UIElement[]){

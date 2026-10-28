@@ -16,8 +16,8 @@ test('Contextual cards prioritize actual style differences and retain every othe
 test('Missing values and equal properties do not become primary typography or color recommendations',()=>{
  const ids=['hc1-img'],p=inspectorActionPresentation(['Colors','Typography','Ask AI','Design System'],ids,MOCK_NODES);assert.ok(!p.primary.includes('Typography'));assert.ok(!p.primary.includes('Colors'));assert.ok(p.primary.includes('Ask AI'));
 });
-test('Comparison details and its internal detailed-properties disclosure precede purpose options',()=>{
+test('Purpose options precede their comparison details and internal property disclosure',()=>{
  const context=localComparison('A',['hc1','sc1'],'order',MOCK_NODES);
  const html=renderToStaticMarkup(React.createElement(ComparisonOverview,{context,contextId:'order',ids:['hc1','sc1'],nodes:MOCK_NODES,purposeControls:React.createElement('div',null,'Comparison purpose options')}));
- assert.ok(html.indexOf('Comparison details')<html.indexOf('Comparison purpose options'));assert.ok(html.indexOf('View detailed properties')<html.indexOf('Comparison purpose options'));assert.equal((html.match(/View detailed properties/g)||[]).length,1);
+ assert.ok(html.indexOf('Comparison purpose options')<html.indexOf('Comparison details'));assert.ok(html.indexOf('Comparison purpose options')<html.indexOf('View detailed properties'));assert.equal((html.match(/View detailed properties/g)||[]).length,1);
 });

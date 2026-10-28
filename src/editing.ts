@@ -64,7 +64,7 @@ export function layoutPatches(ids:string[],nodes:UIElement[],op:LayoutOperation)
  validatePatches(nodes,ids,patches);return patches;
 }
 function styleOf(n:UIElement,keys:readonly (keyof UIElement)[]=STYLE_KEYS):Partial<UIElement>{return Object.fromEntries(keys.filter(k=>n[k]!==undefined).map(k=>[k,n[k]]));}
-function internalSpacing(ids:string[],nodes:UIElement[],inset:number):Patch[]{
+export function internalSpacing(ids:string[],nodes:UIElement[],inset:number):Patch[]{
  const tree=descendants(ids,nodes),patches:Patch[]=[];
  for(const card of tree.filter(n=>n.type==='card'&&n.component==='ProductCard')){
   for(const n of tree.filter(n=>n.parent===card.id&&!['productImage','favorite','badge'].includes(n.role||''))){
@@ -107,3 +107,11 @@ export function libraryProposal(ids:string[],nodes:UIElement[]):EditProposal{
 }
 export function proposalPatches(proposal:EditProposal,enabled:string[],nodes:UIElement[]){const patches=proposal.mappings.filter(m=>enabled.includes(m.id)).flatMap(m=>m.patches);validatePatches(nodes,proposal.targetIds,patches);return patches;}
 export const tokenColor=(name:string)=>COLORS[name as keyof typeof COLORS];
+
+/** Explicit root resizing; contents retain their authored layout (no inferred reflow). */
+export function matchDimensions(ids:string[],nodes:UIElement[],sourceId:string):Patch[]{
+ const source=nodes.find(n=>n.id===sourceId);if(!source||source.type==='screen')throw new Error('Choose an existing size source.');
+ const targets=roots(ids,nodes);if(!targets.length||targets.some(n=>n.id===sourceId||descendants([n.id],nodes).some(child=>child.id===sourceId)))throw new Error('Choose separate size targets.');
+ const patches=targets.map(target=>{const parent=nodes.find(n=>n.id===target.parent);if(parent&&(target.x+source.w>parent.x+parent.w+.01||target.y+source.h>parent.y+parent.h+.01))throw new Error('The requested size exceeds the target frame.');return {id:target.id,changes:{w:source.w,h:source.h}};});
+ validatePatches(nodes,ids,patches);return changedPatches(nodes,patches);
+}

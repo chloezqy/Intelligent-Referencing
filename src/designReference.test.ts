@@ -40,7 +40,7 @@ test('Purpose controls show two modes and design properties only in reference mo
  const normal=render({...ctx,purpose:'Compare selected elements'});
  assert.match(normal,/Use as a design reference/);assert.ok(!normal.includes('type="checkbox"'));
  const design=render({...ctx,purpose:DESIGN_REFERENCE_PURPOSE,designReference:intent});
- assert.match(design,/Properties to reference/);assert.match(design,/User A · Reference/);assert.match(design,/User B · Target/);
+ assert.match(design,/Properties to match/);assert.match(design,/User A · Reference/);assert.match(design,/User B · Target/);
  assert.equal((design.match(/type="checkbox"/g)||[]).length,4);
  const custom=render({...ctx,purpose:'Check the purchase flow'});
  assert.match(custom,/Compare differences/);assert.match(custom,/Use as a design reference/);assert.ok(!custom.includes('<select'));

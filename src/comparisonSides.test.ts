@@ -40,7 +40,7 @@ test('One purpose control follows previews and never appears inside compact Shar
  const context=localComparison('A',['sc2','sc3'],'local',MOCK_NODES);
  const controls=React.createElement(ComparisonPurpose,{context,onPurpose:()=>{},onDesignReference:()=>{}});
  const html=renderToStaticMarkup(React.createElement(ComparisonOverview,{context,contextId:'local',ids:['sc2','sc3'],nodes:MOCK_NODES,purposeControls:controls}));
- assert.ok(html.indexOf('reference-card-pair')<html.indexOf('Comparison purpose'));assert.ok(html.indexOf('Comparison details')<html.indexOf('Comparison purpose'));assert.equal((html.match(/Comparison purpose/g)||[]).length,1);assert.doesNotMatch(html,/Rule-based insight/);
+ assert.ok(html.indexOf('reference-card-pair')<html.indexOf('Comparison purpose'));assert.ok(html.indexOf('Comparison purpose')<html.indexOf('Comparison details'));assert.equal((html.match(/Comparison purpose/g)||[]).length,1);assert.doesNotMatch(html,/Rule-based insight/);
 
 });
 

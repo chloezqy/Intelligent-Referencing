@@ -1,3 +1,6 @@
+import {recommendationPriority,ruleBasedRecommendations,RECOMMENDATION_LABELS,RECOMMENDATION_REASONS} from '../comparisonRecommendations';
+import {useComparisonRecommendations} from '../useComparisonRecommendations';
+import {editableDifferences} from '../comparisonResolution';
 import {comparisonSides,sideLabel} from '../comparisonSides';
 import React, { useEffect, useState } from 'react';
 import {Ruler,Palette,Type,MousePointer2,Scan,Square,Weight,CaseSensitive} from 'lucide-react';
@@ -5,8 +8,10 @@ import {visualDifferences,readableMetadata} from '../visualComparison';
 import { ComparisonContext } from '../collaboration';
 import { UIElement } from '../types';
 import { compareReferenceElements, ComparisonRow } from '../referencePresentation';
-interface Props { ownership?:ComparisonContext; contextId:string; ids:string[]; nodes:UIElement[]; expanded:boolean; compact?:boolean;visual?:boolean }
-export default function PropertyComparison({contextId,ids,nodes,expanded,ownership,compact=false,visual=false}:Props){
+interface Props {selectedKeys?:string[];onSelectedKeys?:(keys:string[])=>void; ownership?:ComparisonContext; contextId:string; ids:string[]; nodes:UIElement[]; expanded:boolean; compact?:boolean;visual?:boolean }
+export default function PropertyComparison({selectedKeys=[],onSelectedKeys,contextId,ids,nodes,expanded,ownership,compact=false,visual=false}:Props){
+  const ai=useComparisonRecommendations(onSelectedKeys?ownership:undefined,nodes);
+  const recommendations=ownership?ruleBasedRecommendations(ownership,nodes):[];
   const [isOpen,setIsOpen]=useState(expanded);
   useEffect(()=>setIsOpen(expanded),[contextId,expanded]);
   const comparison=compareReferenceElements(ids,nodes);
@@ -20,21 +25,33 @@ export default function PropertyComparison({contextId,ids,nodes,expanded,ownersh
     :node[(row.key==='background'?'bg':row.key) as keyof UIElement]!==undefined);
   const different=comparison.rows.filter(r=>r.state==='different'),matching=comparison.rows.filter(r=>r.state==='matching'),unknown=comparison.rows.filter(r=>r.state==='unavailable'&&hasRecordedValue(r));
   if(visual){
-   const summary=visualDifferences(comparison,ownership);
+   const summary=visualDifferences(comparison,ownership,onSelectedKeys?Infinity:5,!!onSelectedKeys);
+   if(onSelectedKeys){const activeRecommendations=ai.results.length?ai.results:recommendations;summary.rows.sort((a,b)=>recommendationPriority(a.row.key,activeRecommendations)-recommendationPriority(b.row.key,activeRecommendations));}
+   const editable=ownership&&onSelectedKeys?editableDifferences(ownership,nodes):[];
    const icons:Record<string,typeof Ruler>={role:MousePointer2,text:Type,dimensions:Ruler,background:Palette,color:Palette,radius:Square,fontSize:CaseSensitive,fontWeight:Weight,border:Scan};
-   const labels:Record<string,string>={background:'Fill',color:'Text color',dimensions:'Size',radius:'Corners'};
+   const labels:Record<string,string>={background:'Fill',color:'Text color',dimensions:'Size',radius:'Corner radius'};
    return <section className="visual-properties" aria-label="Comparison details">
     <header><h4>Comparison details</h4><span>{comparison.elements.length<2?'One selection':different.length?`${different.length} recorded ${different.length===1?'difference':'differences'}`:unknown.length||comparison.missingIds.length?'Partial comparison':'Recorded values match'}</span></header>
+    {onSelectedKeys&&(ai.loading||ai.message)&&<div className="comparison-analysis" role="status">{ai.loading?<small>Analyzing differences…</small>:<p className="subtle">{ai.message}</p>}</div>}
     {summary.rows.length?<ul className="visual-differences">{summary.rows.map(({row,groups})=>{
      const Icon=icons[row.key]||Square;
-     return <li key={row.key} data-summary-property={row.key}><div className="difference-label"><Icon size={15} aria-hidden="true"/><strong>{labels[row.key]||row.label}</strong></div>
-      <div className="difference-groups">{groups.map((group,index)=><div className={group.user?`user-${group.user}`:''} key={index}><small>{group.label}</small><div className="difference-values">{group.values.slice(0,2).map(value=><span className="difference-value" key={value}>
+     const recommendation=ai.results.find(r=>r.key===row.key)||recommendations.find(r=>r.key===row.key);
+     if(onSelectedKeys)return <li key={row.key} data-summary-property={row.key} className="actionable-difference">
+      <div className="difference-copy"><strong>{labels[row.key]||row.label}</strong>
+       <div className="difference-inline-values">{groups.map((group,index)=><span key={index}><span className="difference-inline-owner">{group.label}: </span>{group.values.length?group.values.slice(0,2).map(value=>row.key==='role'?readableMetadata(value):value||'Empty text').join(' / '):'No objects selected'}{group.values.length>2&&` (+${group.values.length-2} more)`}</span>)}</div>
+       {recommendation&&<small className={`difference-recommendation ${recommendation.category}`}>{RECOMMENDATION_LABELS[recommendation.category]} · {RECOMMENDATION_REASONS[recommendation.reason]}{recommendation.source==='model'&&' · AI'}</small>}
+      </div>
+      {editable.includes(row.key)?<label className="difference-select"><input aria-label={`Resolve ${row.label}`} type="checkbox" checked={selectedKeys.includes(row.key)} onChange={e=>onSelectedKeys(e.target.checked?[...selectedKeys,row.key]:selectedKeys.filter(key=>key!==row.key))}/>Resolve</label>:<span className="difference-info" title="No supported matching operation">Info</span>}
+     </li>;
+     return <li key={row.key} data-summary-property={row.key}><div className="difference-label"><Icon size={15} aria-hidden="true"/><strong>{labels[row.key]||row.label}</strong>{onSelectedKeys&&(editable.includes(row.key)?<label className="difference-select"><input aria-label={`Resolve ${row.label}`} type="checkbox" checked={selectedKeys.includes(row.key)} onChange={e=>onSelectedKeys(e.target.checked?[...selectedKeys,row.key]:selectedKeys.filter(key=>key!==row.key))}/>Resolve</label>:<small className="subtle">No matching operation</small>)}</div>
+      {onSelectedKeys&&recommendation&&<small className={`difference-recommendation ${recommendation.category}`}>{RECOMMENDATION_LABELS[recommendation.category]} · {RECOMMENDATION_REASONS[recommendation.reason]}{recommendation.source==='model'&&' · AI'}</small>}
+      <div className="difference-groups">{groups.map((group,index)=><div className={group.user?`user-${group.user}`:''} key={index}><small>{group.label}</small><div className="difference-values">{!group.values.length&&<span className="subtle">No objects selected</span>}{group.values.slice(0,2).map(value=><span className="difference-value" key={value}>
        {['background','color'].includes(row.key)&&/^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%a-z]+\)|transparent)$/i.test(value)&&<i className="comparison-swatch" style={{backgroundColor:value}} aria-hidden="true"/>}
        <span>{row.key==='role'?readableMetadata(value):value||'Empty text'}</span>
       </span>)}{group.values.length>2&&<span className="difference-more">+{group.values.length-2} more</span>}</div></div>)}</div>
      </li>;
     })}</ul>:<p className="no-visual-differences">{comparison.elements.length<2?'Select another object to compare; available editing actions are below.':different.length?'Differences are available in detailed properties.':unknown.length||comparison.missingIds.length?'Some properties cannot be compared because values are missing.':'No differences in the recorded values.'}</p>}
-    {summary.total>5&&<p className="subtle">{summary.total-5} more differences in detailed properties.</p>}
+    {!onSelectedKeys&&summary.total>5&&<p className="subtle">{summary.total-5} more differences in detailed properties.</p>}
     {comparison.missingIds.length>0&&<p className="subtle" role="status">{comparison.missingIds.length} referenced {comparison.missingIds.length===1?'element is':'elements are'} unavailable.</p>}
     <details key={contextId} className="visual-property-details"><summary>View detailed properties</summary>
      {different.length?table(different,'Property differences'):<p>No differences in the available properties.</p>}
