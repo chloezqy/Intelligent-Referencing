@@ -999,3 +999,20 @@ button:disabled { opacity:.45; }
 .color-style-review .color-style-recommendation small{font-size:10px;margin-top:2px;color:#82788f;}
 .color-style-review .color-style-alternative{display:inline-flex;font-size:11px;padding:6px 9px;margin:4px 6px 4px 0;}
 .color-style-review .color-style-alternative>i{width:18px;height:18px;}
+
+.text-style-library{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px;}
+.text-style-library button{display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:10px;min-width:0;overflow:hidden;font-size:11px;text-align:left;}
+.text-style-library button[aria-pressed=true]{border-color:#8b5cf6;background:#faf7ff;}
+.text-style-sample{display:block;max-width:100%;}
+
+.text-style-review .text-style-choice{display:flex;align-items:center;flex-wrap:wrap;gap:8px;}
+.text-style-review .text-style-choice small{margin:0;font-size:10px;}
+.text-style-review .color-style-recommendation{margin:8px 0 4px;}
+.text-style-review .color-style-browser{margin:10px 0;}
+.compact-style-confirmation{padding-top:12px;}
+.compact-style-confirmation .confirmation-changes{margin:10px 0;}
+.compact-style-confirmation .confirmation-changes li{padding:0;}
+.compact-style-confirmation .confirmation-changes dl>div{font-size:11px;padding:4px 0;gap:10px;}
+.compact-style-confirmation .confirmation-changes dt{font-weight:400;color:#82788f;}
+.compact-style-confirmation .comparison-before-after>div{padding:8px;}
+.compact-style-confirmation .confirmation-actions{margin-top:12px;}

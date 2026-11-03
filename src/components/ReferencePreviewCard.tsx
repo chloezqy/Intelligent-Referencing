@@ -9,7 +9,7 @@ export function ElementPreview({element,nodes}:{element:UIElement;nodes:UIElemen
  return <svg className="element-preview" viewBox={`0 0 ${Math.max(1,element.w)} ${Math.max(1,element.h)}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Preview of ${element.label}`}>
   {previewElements(element,nodes).map(node=><svg key={node.id} x={node.x-element.x} y={node.y-element.y} width={Math.max(1,node.w)} height={Math.max(1,node.h)} overflow="hidden">
    <rect width="100%" height="100%" rx={node.radius||0} fill={node.bg||'transparent'} stroke={node.border?.match(/#[0-9a-f]{3,8}|rgba?\([^)]+\)/i)?.[0]||'none'}/>
-   {node.text&&<text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill={node.color||'#18181b'} fontSize={node.fontSize||12} fontWeight={node.fontWeight||400}>{node.text}</text>}
+   {node.text&&<text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" fill={node.color||'#18181b'} fontSize={node.fontSize||12} fontWeight={node.fontWeight||400} fontFamily={node.fontFamily} letterSpacing={node.letterSpacing}>{node.text}</text>}
   </svg>)}
  </svg>;
 }
