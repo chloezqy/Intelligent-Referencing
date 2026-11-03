@@ -42,6 +42,7 @@ export interface UIElement {
   border?: string;
   fontWeight?: string;
   fontFamily?: string;
+  textAlign?: 'left'|'center'|'right';
   lineHeight?: number;
   letterSpacing?: number;
   shadow?: string;

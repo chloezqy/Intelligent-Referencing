@@ -92,8 +92,9 @@ export function libraryProposal(ids:string[],nodes:UIElement[]):EditProposal{
  const tree=descendants(ids,nodes).filter(n=>!n.library),mappings:Mapping[]=[];
  const libraryStyle=(id:string)=>{const source=nodes.find(n=>n.id===id&&n.library);if(!source)throw new Error('The in-file library source is unavailable.');return styleOf(source);};
  const map=(id:string,label:string,predicate:(n:UIElement)=>boolean,style:Partial<UIElement>)=>{const patches=tree.filter(predicate).map(n=>({id:n.id,changes:{...style,token:label}}));if(patches.length)mappings.push({id,label,patches});};
- map('cards','Product Card → Surface / Radius 12 / Shadow Small',n=>n.type==='card',libraryStyle('ds-product-card'));
- map('titles','Product title → Typography / Body Semibold',n=>n.role==='productTitle',libraryStyle('ds-product-card-title'));
+ map('cards','Product Card / Default',n=>n.type==='card'&&n.component==='ProductCard',libraryStyle('ds-product-card'));
+ map('images','Product image → library corner radius (preserve image fill)',n=>n.role==='productImage',{radius:libraryStyle('ds-product-card-img').radius});
+ map('titles','Product title → Typography / Body',n=>n.role==='productTitle',libraryStyle('ds-product-card-title'));
  map('prices','Price → Typography / Price',n=>n.role==='price',libraryStyle('ds-product-card-price'));
  map('cta','CTA → Primary Button / Brand Primary',n=>n.role==='primaryCTA',libraryStyle('ds-product-card-cta'));
  map('secondary','Secondary CTA → Secondary Button',n=>n.type==='button'&&n.role==='secondaryCTA',libraryStyle('ds-component-1'));
@@ -103,7 +104,7 @@ export function libraryProposal(ids:string[],nodes:UIElement[]):EditProposal{
  // Layout spacing is applied using existing geometry, preserving image and text content.
  const spacing=internalSpacing(ids,nodes,nodes.find(n=>n.id==='ds-product-card')?.spacing||16);
  if(spacing.length)mappings.push({id:'spacing',label:'Internal spacing → Spacing / 16',patches:spacing});
- if(!mappings.length)throw new Error('No library styles match this selection.');return {title:`Match ${roots(ids,nodes).length} objects to Design System`,targetIds:[...ids],sourceId:'ds-product-card',mappings};
+ if(!mappings.length)throw new Error('No library styles match this selection.');return {title:`Match ${roots(ids,nodes).length} objects to Design System`,targetIds:[...ids],sourceId:'ds-product-card',mappings:mappings.map(m=>({...m,patches:m.patches.map(p=>({...p,changes:Object.fromEntries(Object.entries(p.changes).filter(([key,value])=>nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]!==value))})).filter(p=>Object.keys(p.changes).length)}))};
 }
 export function proposalPatches(proposal:EditProposal,enabled:string[],nodes:UIElement[]){const patches=proposal.mappings.filter(m=>enabled.includes(m.id)).flatMap(m=>m.patches);validatePatches(nodes,proposal.targetIds,patches);return patches;}
 export const tokenColor=(name:string)=>COLORS[name as keyof typeof COLORS];
