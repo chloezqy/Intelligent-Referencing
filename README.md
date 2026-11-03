@@ -1,3 +1,5 @@
+> **User study update (November 3, 2026):** [Study protocol and facilitator script](docs/USER_STUDY_PROTOCOL.md) · [Current feature inventory](docs/FEATURE_INVENTORY.md). Use **User study mode** in the top bar for a fresh baseline, P# entry, four automatically sequenced tasks (Task 1 has three selection levels), completion detection, timing/interaction recording and JSON export. Verbal surveys stay in the written protocol. **Reset prototype** restores the original document and a fresh local User A demo while retaining study records. Guided mode uses manually controlled A/B roles; real-time collaboration remains separate. Later README sections include historical descriptions; consult the inventory for current behavior.
+
 > Current workflow: **gesture → live AI interpretations → explicit reference confirmation → editing actions → preview/apply → undo/redo**. See [Intelligent editing](docs/INTELLIGENT_EDITING.md) for the current architecture, five research tasks, and verification. Earlier sections below describe the retained collaboration infrastructure and its history.
 
 # Smart Reference
