@@ -93,7 +93,7 @@ export function rectIntersect(r1: {x:number,y:number,w:number,h:number}, r2: {x:
 }
 
 export function getBoundingBox(ids: string[], nodes: UIElement[]): { x: number; y: number; w: number; h: number } | null {
-  const selectedNodes = nodes.filter(n => ids.includes(n.id) && n.type !== 'screen');
+  const selectedNodes = nodes.filter(n => ids.includes(n.id));
   if (selectedNodes.length === 0) return null;
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;

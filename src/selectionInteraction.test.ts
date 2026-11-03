@@ -17,3 +17,25 @@ test('A two-point stroke can establish a rough reference',()=>{
  const results=inferSelection([{x:chip.x-4,y:chip.y+chip.h/2},{x:chip.x+chip.w+4,y:chip.y+chip.h/2}],MOCK_NODES);
  assert.ok(results.some(r=>r.exemplarIds.includes(chip.id)));
 });
+
+import {canvasSelectionTarget,nestedSelection,mergeLayerSelection,canvasMarqueeTargets} from './selectionInteraction';
+test('normal canvas click selects a product card before its nested button or image',()=>{
+ assert.equal(canvasSelectionTarget('hc1-cta',MOCK_NODES,[])?.id,'hc1');
+ assert.equal(canvasSelectionTarget('hc1-img',MOCK_NODES,[])?.id,'hc1');
+ assert.equal(canvasSelectionTarget('hc1-cta',MOCK_NODES,['hc1'])?.id,'hc1');
+ assert.equal(canvasSelectionTarget('hc1-cta',MOCK_NODES,['hc1'],{drill:true})?.id,'hc1-cta');
+ assert.equal(canvasSelectionTarget('hc1-img',MOCK_NODES,['hc1-cta'])?.id,'hc1-img');
+});
+test('deep selection and matching Shift-click retain Figma-style access to nested layers',()=>{
+ assert.equal(canvasSelectionTarget('hc1-cta',MOCK_NODES,[],{deep:true})?.id,'hc1-cta');
+ assert.equal(canvasSelectionTarget('hc2-cta',MOCK_NODES,['hc1-cta'],{extend:true})?.id,'hc2-cta');
+ assert.equal(canvasSelectionTarget('hc2-img',MOCK_NODES,['hc1-cta'],{extend:true})?.id,'hc2');
+ assert.deepEqual(mergeLayerSelection(['hc1'],'hc1-cta',MOCK_NODES,true),['hc1-cta']);
+ assert.deepEqual(mergeLayerSelection(['hc1-cta','hc2-cta'],'hc1-cta',MOCK_NODES,true),['hc2-cta']);
+});
+test('Enter selects children; Shift-Enter selects parents; ordinary marquee does not deep-select',()=>{
+ assert.ok(nestedSelection(['hc1'],MOCK_NODES,'children').includes('hc1-cta'));
+ assert.deepEqual(nestedSelection(['hc1-cta'],MOCK_NODES,'parent'),['hc1']);
+ assert.deepEqual(canvasMarqueeTargets(['hc1','hc1-img','hc1-cta','hc2-cta'],MOCK_NODES,[]),['hc1','hc2']);
+ assert.deepEqual(canvasMarqueeTargets(['hc1','hc1-cta'],MOCK_NODES,[],true),['hc1-cta']);
+});

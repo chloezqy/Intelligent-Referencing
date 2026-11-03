@@ -618,18 +618,41 @@ button:disabled { opacity:.45; }
 .interaction-stage{font-size:9px!important;text-transform:uppercase;letter-spacing:.06em;}
 .selection-sharing{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;align-items:flex-start;gap:8px;width:max-content;max-width:calc(100% - 24px);padding-left:13px;overflow:visible;z-index:39;}
 @media(max-width:800px){.editing-toolbar{width:calc(100% - 24px);}.editing-categories button{font-size:10px;padding:5px;}.layout-actions{grid-template-columns:1fr 1fr;}}
-.layers-tree{display:flex;flex-direction:column;height:100%;font-size:11px;}
-.layers-tree header{display:flex;gap:6px;padding:12px;border-bottom:1px solid #e4e4e7;align-items:center;}
-.layers-tree header small{margin-left:auto;font-size:9px;color:#71717a;}
-.layer-scroll{overflow:auto;flex:1;min-height:0;}
-.layer-row{display:flex;align-items:center;min-height:30px;border-bottom:1px solid #f4f4f5;gap:2px;}
-.layer-row.selected{background:#eef2ff;color:#4338ca;}
-.layer-row button{padding:4px;background:none;border:0;cursor:pointer;}
-.layer-row .layer-name{display:flex;align-items:center;gap:6px;flex:1;min-width:0;text-align:left;}
-.layer-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.layer-name small{font-size:8px;margin-left:auto;}
-.layer-expand{width:20px;flex-shrink:0;}
-.layers-tree>p{font-size:10px;color:#71717a;padding:8px;border-top:1px solid #e4e4e7;}
+.layers-tree{display:flex;flex-direction:column;height:100%;min-height:0;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;color:#1e1e1e;background:#fff;}
+.file-panel-header{min-height:76px;padding:14px 12px 12px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;border-bottom:1px solid #e6e6e6;}
+.file-panel-header>div{min-width:0;display:flex;flex-direction:column;gap:5px;}
+.file-panel-header strong{font-size:12px;font-weight:600;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.file-panel-header span{font-size:11px;color:#8a8a8a;}
+.figma-file-panel button{background:transparent;border:0;color:inherit;}
+.file-panel-header>button,.file-layers-header>div>button{height:24px;width:24px;display:grid;place-items:center;border-radius:4px;flex-shrink:0;}
+.file-panel-header>button:hover,.file-layers-header>div>button:hover{background:#f0f0f0;}
+.file-pages{padding:6px 8px 12px;border-bottom:1px solid #e6e6e6;}
+.file-section-title{height:36px;display:flex;align-items:center;gap:6px;font-weight:600;font-size:12px;padding:0 4px;}
+.file-section-title>svg{color:#aaa;}
+.file-page{height:28px;width:100%;display:flex;align-items:center;gap:10px;border-radius:5px;padding:0 12px;text-align:left;font-size:12px;}
+.figma-file-panel .file-page.active{background:#f5f5f5;}
+.file-page>svg{color:#555;}
+.file-layers-header{height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 8px;}
+.file-layers-header>div{display:flex;align-items:center;gap:2px;}
+.layer-scroll{overflow:auto;flex:1;min-height:0;padding:0 8px 12px;scrollbar-gutter:stable;}
+.layer-row{height:32px;display:flex;align-items:center;gap:0;border:0;border-radius:4px;position:relative;}
+.layer-row:hover{background:#f5f5f5;}
+.layer-row.selected,.layer-row.selected:hover{background:#e5f4ff;color:#1e1e1e;}
+.layer-row.selected .layer-type-icon{color:#0d99ff;}
+.layer-row:focus-within{box-shadow:inset 0 0 0 1px #0d99ff;}
+.layer-row .layer-name{display:flex;align-items:center;gap:8px;flex:1;min-width:0;height:100%;padding:0 6px 0 2px;text-align:left;font-size:11px;font-weight:400;}
+.layer-row.is-frame .layer-name{font-weight:500;}
+.layer-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:16px;}
+.layer-type-icon{flex-shrink:0;color:#727272;}
+.layer-row.is-frame .layer-type-icon{color:#444;}
+.layer-expand,.layer-expand-spacer{width:16px;height:24px;display:grid;place-items:center;flex-shrink:0;}
+.layer-expand{color:#999!important;border-radius:3px;padding:0;}
+.layer-expand:hover{background:#e9e9e9!important;color:#333!important;}
+.layer-readonly{color:#aaa;margin-right:8px;flex-shrink:0;}
+.layer-find{display:flex;align-items:center;gap:6px;height:30px;flex-shrink:0;margin:0 12px 8px;padding:0 7px;border:1px solid #0d99ff;border-radius:5px;color:#777;}
+.layer-find input{min-width:0;flex:1;border:0;outline:0!important;background:transparent;font-size:11px;}
+.layer-find button{padding:2px;display:grid;place-items:center;}
+.layer-empty{padding:20px 12px;color:#888;text-align:center;font-size:11px;}
 .editing-toolbar.is-previewing .editing-panel> :not(.edit-proposal):not(.comparison-confirmation){display:none;}
 .editing-toolbar.is-previewing .edit-proposal .mapping-list,.editing-toolbar.is-previewing .edit-proposal details{display:none;}
 .editing-toolbar.is-previewing .edit-proposal{margin-top:0;}
@@ -1062,3 +1085,18 @@ button:disabled { opacity:.45; }
 .adjust-color-preview h4{font-size:12px;margin:0 0 8px;}
 .adjust-color-preview .element-preview{height:80px;display:block;}
 .design-smart-tool .confirmation-actions{padding-bottom:12px;}
+
+.study-panel label{display:flex;flex-direction:column;gap:6px;margin:10px 0;font-size:12px;}
+.study-panel input,.study-panel select,.study-panel textarea{width:100%;border:1px solid #d4d4d8;border-radius:8px;padding:8px;background:white;}
+.study-panel textarea{min-height:100px;resize:vertical;}
+.study-panel ul{padding-left:0;list-style:none;font-size:12px;line-height:1.6;}
+.header-actions{flex-wrap:wrap;}
+.header-actions [aria-pressed=true]{background:#ede9fe;color:#6d28d9;}
+@media(max-width:1450px){.header-identity .document-name{display:none;}}
+
+.library-property-details>summary{cursor:pointer;color:#6d28d9;font-size:11px;padding:8px 0;}
+.library-confirmation .confirmation-actions{position:sticky;bottom:0;background:white;padding:12px 0;border-top:1px solid #ece6f2;z-index:1;}
+
+.design-library-source-link{font-size:10px;color:#7c6b91;padding:4px 8px;background:transparent;border:0;text-decoration:underline;}
+
+.navigation-rail .rail-button[aria-label="Layers"].active{color:#0d99ff;background:#e5f4ff;}

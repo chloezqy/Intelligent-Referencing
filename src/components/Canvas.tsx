@@ -1,5 +1,5 @@
 import ReferenceActions from './ReferenceActions';
-import {isSelectionDrag} from '../selectionInteraction';
+import {canvasSelectionTarget,nestedSelection,mergeLayerSelection,canvasMarqueeTargets,isSelectionDrag} from '../selectionInteraction';
 import {toolDragIntent,moveTargets,movePositions,Positions} from '../toolInteraction';
 import {useSemanticSuggestions} from '../useSemanticSuggestions';
 import {gestureTouched} from '../gestureContext';
@@ -26,7 +26,7 @@ interface CanvasProps {
   inspectorOpen?:boolean;
   onSelectionStart:()=>void;
   onMove:(positions:Positions)=>void;
-  onResearchEvent: (type:string)=>void;
+  onResearchEvent: (type:string,details?:{ids?:string[];method?:string})=>void;
   sharedReferences: SharedReference[];
   activeSharedId: string | null;
   onOpenShared: (id:string)=>void;
@@ -68,7 +68,7 @@ export default function Canvas({
   // Completing a rough gesture (or changing its scope) requests interpretation once.
   // Loading/error updates do not retrigger this effect; failed requests remain retryable.
   useEffect(()=>{if(draftRef){onResearchEvent('ai_interpretation_requested');void ai.request();}},[draftRef]);
-  useEffect(()=>{if(selectionState==='idle'){setHoveredInterpretation(null);}},[selectionState]);
+  useEffect(()=>{if(selectionState==='idle'){setHoveredInterpretation(null);setDraftRef(null);setActiveInterpretation(null);setAdjustOpen(false);setCurrentPath([]);}},[selectionState]);
   useEffect(()=>{if(inferredRef){setHoveredInterpretation(null);}},[inferredRef]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
@@ -88,7 +88,8 @@ export default function Canvas({
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  const pendingPointer=useRef<{id:number;start:Point;screenStart:Point;screenPoints:Point[];path:Point[];node:UIElement|null;shift:boolean;previous:InferredReference|null;dragging:boolean;tool:ToolMode;moveNodes:UIElement[]}|null>(null);
+  const pendingPointer=useRef<{id:number;start:Point;screenStart:Point;screenPoints:Point[];path:Point[];node:UIElement|null;rawNodeId:string|null;shift:boolean;deep:boolean;previous:InferredReference|null;dragging:boolean;tool:ToolMode;moveNodes:UIElement[]}|null>(null);
+  const lastLayerClick=useRef<{id:string;at:number;point:Point}|null>(null);
   const [movingIds,setMovingIds]=useState<string[]>([]);
   const panPoint=useRef<Point|null>(null);
   // Gesture & Marquee Path
@@ -133,7 +134,8 @@ export default function Canvas({
       // Cmd+A / Ctrl+A: Select all selectable layers
       if ((e.metaKey || e.ctrlKey) && (e.key === 'a' || e.key === 'A')) {
         e.preventDefault();
-        const allSelectable = nodes.filter(n => !n.library && n.type !== 'screen' && n.type !== 'header' && n.type !== 'tabbar').map(n => n.id);
+        const parent=confirmedRef?.selectedIds.length===1?nodes.find(n=>n.id===confirmedRef.selectedIds[0])?.parent:undefined;
+        const allSelectable = nodes.filter(n => !n.library && n.type !== 'screen' && (parent?n.parent===parent:nodes.find(p=>p.id===n.parent)?.type==='screen')).map(n => n.id);
         setInferredRef({
           selectedIds: allSelectable,
           exemplarIds: allSelectable,
@@ -144,7 +146,7 @@ export default function Canvas({
         });
         setSelectionState('preview');
       }
-      if(e.key==='Enter'&&(selectionState==='preview'||!!draftRef)){if(activeInterpretation){e.preventDefault();commitInterpretation(activeInterpretation);}else if(!draftRef)onAcceptReference();}
+      if(e.key==='Enter'){if(activeInterpretation){e.preventDefault();commitInterpretation(activeInterpretation);}else if(!draftRef&&confirmedRef){e.preventDefault();const ids=nestedSelection(confirmedRef.selectedIds,nodes,e.shiftKey?'parent':'children');setInferredRef({...confirmedRef,selectedIds:ids,exemplarIds:ids,selectionMethod:'conventional',label:`${ids.length} layers selected`});setSelectionState('preview');}}
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -160,7 +162,7 @@ export default function Canvas({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectionState, onAcceptReference, setToolMode, nodes, clicksCounter,draftRef,activeInterpretation]);
+  }, [selectionState, onAcceptReference, setToolMode, nodes, clicksCounter,draftRef,activeInterpretation,confirmedRef]);
 
   // Wheel handling: zoom and pan
   useEffect(() => {
@@ -211,8 +213,10 @@ export default function Canvas({
     if(pickingSource){if(node)onPickSource(node.id);return;}
     if(node?.library&&toolMode==='pointer'){commitClick(node,false,inferredRef);return;}
     setDraftRef(null);setActiveInterpretation(null);setHoveredInterpretation(null);
+    const rawNodeId=node?.id||null;
+    if(node&&toolMode==='pointer')node=canvasSelectionTarget(node.id,nodes,confirmedRef?.selectedIds||[],{deep:e.metaKey||e.ctrlKey,extend:e.shiftKey})||node;
     const start=getCanvasCoords(e),screenStart={x:e.clientX,y:e.clientY};
-    pendingPointer.current={id:e.pointerId,start,screenStart,screenPoints:[screenStart],path:[start],node,shift:e.shiftKey,previous:confirmedRef,dragging:false,tool:toolMode,moveNodes:[]};
+    pendingPointer.current={id:e.pointerId,start,screenStart,screenPoints:[screenStart],path:[start],node,rawNodeId,shift:e.shiftKey,deep:e.metaKey||e.ctrlKey,previous:confirmedRef,dragging:false,tool:toolMode,moveNodes:[]};
     containerRef.current?.setPointerCapture(e.pointerId);
   };
   const handlePointerMove=(e:React.PointerEvent)=>{
@@ -221,7 +225,7 @@ export default function Canvas({
     pending.screenPoints.push({x:e.clientX,y:e.clientY});pending.path.push(getCanvasCoords(e));
     const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(!pending.dragging&&isSelectionDrag(pending.screenStart,pending.screenPoints)){
-      onSelectionStart();pending.dragging=true;
+      onSelectionStart();lastLayerClick.current=null;pending.dragging=true;
       if(intent==='move'){pending.moveNodes=moveTargets(nodes,pending.node!.id,pending.previous?.selectedIds||[]);setMovingIds(pending.previous?.selectedIds.includes(pending.node!.id)?pending.previous.selectedIds:[pending.node!.id]);}
     }
     if(pending.dragging){
@@ -235,7 +239,7 @@ export default function Canvas({
     setAdjustOpen(false);onSelectionStart();setHoveredInterpretation(null);
     if(!node){if(!shift){setInferredRef(null);setSelectionState('idle');}return;}
     const count=clicksCounter+1;setClicksCounter(count);
-    const ids=shift?(previous?.selectedIds.includes(node.id)?previous.selectedIds.filter(id=>id!==node.id):[...(previous?.selectedIds||[]),node.id]):[node.id];
+    const ids=mergeLayerSelection(previous?.selectedIds||[],node.id,nodes,shift);
     if(!ids.length){setInferredRef(null);setSelectionState('idle');return;}
     setInferredRef({selectedIds:ids,exemplarIds:ids,label:ids.length===1?nodes.find(n=>n.id===ids[0])!.label:`${ids.length} layers selected`,...(ids.length===1?{matchingRole:nodes.find(n=>n.id===ids[0])?.role,matchingComponent:nodes.find(n=>n.id===ids[0])?.component}:{}),scope:'exemplars',selectionMethod:'conventional',clicksCount:count});
     setSelectionState('preview');
@@ -255,7 +259,7 @@ export default function Canvas({
     if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);
     setActionAnchor(end);setCurrentPath([]);setRectStart(null);
     if(!isSelectionDrag(pending.screenStart,pending.screenPoints)){
-      if(pending.tool==='pointer')commitClick(pending.node,pending.shift,pending.previous);
+      if(pending.tool==='pointer'){const last=lastLayerClick.current;const double=last&&pending.rawNodeId===last.id&&e.timeStamp-last.at<500&&Math.hypot(e.clientX-last.point.x,e.clientY-last.point.y)<6;const target=double&&pending.rawNodeId?canvasSelectionTarget(pending.rawNodeId,nodes,pending.previous?.selectedIds||[],{drill:true,deep:pending.deep}):pending.node;commitClick(target||null,pending.shift,pending.previous);lastLayerClick.current=!double&&pending.rawNodeId?{id:pending.rawNodeId,at:e.timeStamp,point:{x:e.clientX,y:e.clientY}}:null;}
       else if(pending.tool==='reference'){
         // A tap ends the previous rough reference; only a stroke starts a new one.
         commitClick(null,false,pending.previous);
@@ -272,7 +276,7 @@ export default function Canvas({
     }
     if(intent==='box'){
       const r={x:Math.min(pending.start.x,end.x),y:Math.min(pending.start.y,end.y),w:Math.abs(end.x-pending.start.x),h:Math.abs(end.y-pending.start.y)};
-      const hitIds=nodes.filter(n=>!n.library&&n.type!=='screen'&&rectIntersect(n,r)).map(n=>n.id);
+      const hitIds=canvasMarqueeTargets(nodes.filter(n=>!n.library&&n.type!=='screen'&&rectIntersect(n,r)).map(n=>n.id),nodes,pending.previous?.selectedIds||[],pending.deep);
       const ids=[...new Set([...(pending.shift?(pending.previous?.selectedIds||[]):[]),...hitIds])];
       const count=clicksCounter+1;setClicksCounter(count);
       setInferredRef(ids.length?{selectedIds:ids,exemplarIds:ids,label:`${ids.length} layers selected`,scope:'exemplars',selectionMethod:'conventional',clicksCount:count}:null);setSelectionState(ids.length?'preview':'idle');return;
@@ -288,7 +292,7 @@ export default function Canvas({
   const commitInterpretation=(interp:Interpretation,record=true)=>{
     const selection:InferredReference={selectedIds:[...interp.selectedIds],exemplarIds:interp.exemplarIds.filter(id=>interp.selectedIds.includes(id)),label:interp.label,activeInterpretation:interp,matchingRole:interp.matchingRole,matchingComponent:interp.matchingComponent,scope:interp.scope,selectionMethod:'smart-ref'};
     setDraftRef(null);setActiveInterpretation(null);setInferredRef(selection);
-    if(record){onResearchEvent('interpretation_choice');setAdjustOpen(false);onInterpretationConfirmed();}setHoveredInterpretation(null);setSelectionState('preview');
+    if(record){onResearchEvent('interpretation_choice',{ids:[...selection.selectedIds],method:selection.selectionMethod});setAdjustOpen(false);onInterpretationConfirmed();}setHoveredInterpretation(null);setSelectionState('preview');
   };
   const handleScopeChange=(scope:ScopeLevel)=>{if(!inferredRef)return;setDraftRef({...inferredRef,scope});setSelectionState('disambiguating');setActiveInterpretation(null);setHoveredInterpretation(null);onResearchEvent('scope_changed');};
   const candidateInterpretation=(candidate:typeof ai.candidates[number]):Interpretation=>{
@@ -341,12 +345,12 @@ export default function Canvas({
                 key={node.id}
                 data-canvas-node={node.id}
                 onPointerDown={(e) => !isScreen && handleNodePointerDown(e, node)}
-                onMouseEnter={() => !isScreen && setHoveredNodeId(node.id)}
+                onMouseEnter={() => !isScreen && setHoveredNodeId(toolMode==='pointer'?canvasSelectionTarget(node.id,nodes,confirmedRef?.selectedIds||[])?.id||node.id:node.id)}
                 onMouseLeave={() => !isScreen && setHoveredNodeId(null)}
                 className={`absolute transition-opacity duration-150 ${
                   isScreen
                     ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none'
-                    : 'pointer-events-auto flex items-center justify-center text-center overflow-hidden cursor-pointer'
+                    : `pointer-events-auto flex items-center ${node.textAlign==='left'?'justify-start text-left':node.textAlign==='right'?'justify-end text-right':'justify-center text-center'} overflow-hidden cursor-pointer`
                 } ${isHovered && !isSelected ? 'ring-1 ring-[#0d99ff] ring-offset-1 ring-offset-transparent' : ''}`}
                 style={{
                   left: node.x - (frame?.x || 0),
@@ -359,7 +363,7 @@ export default function Canvas({
                   border: isScreen ? 'none' : node.border || 'none',
                   fontSize: node.fontSize,
                   fontWeight: node.fontWeight as any,
-                  fontFamily:node.fontFamily,lineHeight:node.lineHeight,letterSpacing:node.letterSpacing,boxShadow:node.shadow,
+                  textAlign:node.textAlign,fontFamily:node.fontFamily,paddingInline:node.library&&node.type==='text'&&node.bg?8:undefined,lineHeight:node.lineHeight,letterSpacing:node.letterSpacing,boxShadow:node.shadow,
                   opacity: 1
                 }}
               >
@@ -383,7 +387,7 @@ export default function Canvas({
 
                 {/* Text / Label */}
                 {!isScreen && (
-                  <span title={node.text} className={`truncate pointer-events-none select-none ${node.role === 'price' || node.role === 'originalPrice' ? 'tabular-nums' : 'px-1'}`}>
+                  <span title={node.text} className={`truncate pointer-events-none select-none ${node.role === 'price' || node.role === 'originalPrice' ? 'tabular-nums' : node.library&&node.textAlign==='left'?'':'px-1'}`}>
                     {node.text || ''}
                   </span>
                 )}
