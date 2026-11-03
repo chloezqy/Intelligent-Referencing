@@ -36,3 +36,13 @@ test('classified provider failures are logged safely without keys, notes or raw 
  });
  }
 });
+test('palette requests return the versioned real-library recommendations expected by the client',async()=>{
+ const {MOCK_NODES}=await import('../src/data');const {colorStyleFacts,validateColorSuggestions}=await import('../src/colorStyleMatching');
+ const facts=colorStyleFacts(['sc4-img'],MOCK_NODES),fact=facts.find(f=>f.property==='bg')!;
+ assert.ok(fact);
+ const app=express();app.use(express.json());app.post('/api/semantic/interpret',semanticHandler({enabled:true,key:'fixture',authorize:()=>{},logger:()=>{},fetcher:async()=>Response.json({id:'palette-fixture',status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({suggestions:[{factId:fact.id,reason:'Relevant background style'}]})}]}]})}));
+ const server=createServer(app);await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));
+ try{const response=await fetch(`http://127.0.0.1:${(server.address() as any).port}/api/semantic/interpret`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task:'design-system',colorPalette:true,colorPaletteVersion:1,contextId:'palette-client',targetIds:['sc4-img'],properties:['colors'],document:MOCK_NODES})});
+ assert.equal(response.status,200);const result=await response.json();assert.equal(result.colorPaletteVersion,1);assert.equal(validateColorSuggestions(result.tokenSuggestions,facts)[0].fact.id,fact.id);
+ }finally{server.closeAllConnections();await new Promise<void>(r=>server.close(()=>r()));}
+});

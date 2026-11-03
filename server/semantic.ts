@@ -103,7 +103,7 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
    let tokenSuggestions:ReturnType<typeof parseTokenOutput>|undefined;
    let candidates:SemanticCandidate[]|undefined,proposals:ReturnType<typeof parseDesignChanges>|undefined;
    try{if(reviewContext)suggestion=parseReviewFocus(output,reviewContext);else if(analysisContext)recommendations=parseComparisonAnalysis(output,analysisContext);else if(libraryContext)tokenSuggestions=parseTokenOutput(output,libraryContext);else if(editContext)plan=parseActionOutput(output,editContext);else if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:200,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
-   const value={...(reviewContext?{suggestion}:analysisContext?{recommendations}:libraryContext?{tokenSuggestions}:editContext?{plan}:changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
+   const value={...(reviewContext?{suggestion}:analysisContext?{recommendations}:libraryContext?{tokenSuggestions,...(libraryContext.paletteMode?{colorPaletteVersion:1}:{})}:editContext?{plan}:changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
    if(cache.size>=100)cache.delete(cache.keys().next().value!);cache.set(hash,{until:now+600000,value});return value;
    }finally{release();}
   })();pending.set(hash,job);

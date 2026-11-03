@@ -22,3 +22,13 @@ test('Multiple mappings retain optional inclusion and preview only enabled chang
  const preview=applyPatches(MOCK_NODES,proposalPatches(proposal,enabled,MOCK_NODES));assert.equal(preview.find(n=>n.id==='sc2')!.radius,14);assert.equal(preview.find(n=>n.id==='sc2')!.w,165);
  const empty=renderToStaticMarkup(React.createElement(ComparisonPreview,{...props,proposal,enabled:[]}));assert.match(empty,/disabled=""[^>]*>Apply changes/);assert.deepEqual(applyPatches(MOCK_NODES,[]),MOCK_NODES);
 });
+test('Typography confirmation hides unchanged values and metadata, retaining token and ordered actions',()=>{
+ const node=MOCK_NODES.find(n=>n.id==='hc2-title')!;
+ const proposal={title:'Typography / Body',targetIds:[node.id],mappings:[{id:'batch',label:'Typography / Body',patches:[{id:node.id,changes:{fontSize:node.fontSize,fontWeight:node.fontWeight,fontFamily:'Arial',token:'Typography / Body'}}]}]};
+ const html=renderToStaticMarkup(React.createElement(ComparisonPreview,{...props,variant:'typography',proposal,enabled:['batch']}));
+ assert.match(html,/Typography \/ Body/);assert.match(html,/<dt>Font family<\/dt>/);assert.doesNotMatch(html,/<dt>Font size|<dt>Font weight|<dt>token|type="checkbox"|Rule-based proposal|No changes applied yet/);
+ assert.ok(html.indexOf('>Apply changes<')<html.indexOf('>Cancel<'));
+ const same={...proposal,mappings:[{...proposal.mappings[0],patches:[{id:node.id,changes:{fontSize:node.fontSize,token:'Typography / Body'}}]}]};
+ const unchanged=renderToStaticMarkup(React.createElement(ComparisonPreview,{...props,variant:'typography',proposal:same,enabled:['batch']}));
+ assert.match(unchanged,/Already matches this style/);assert.match(unchanged,/disabled="">Apply changes/);
+});
