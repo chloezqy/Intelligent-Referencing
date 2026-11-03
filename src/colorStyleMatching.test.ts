@@ -26,3 +26,11 @@ test('manual palette override previews only chosen colors without changing conte
  const nodes=MOCK_NODES.map(n=>n.id===original.id?{...n,color:COLORS.Primary}:n),exact=colorStyleFacts(ids,nodes).find(f=>f.proposed===COLORS.Primary&&f.property==='color')!;
  assert.equal(colorStyleProposal([{fact:exact,reason:'Manual',source:'deterministic'}],ids,nodes).mappings.length,0);
 });
+test('picked color source preserves target identity and can target one specific property',async()=>{
+ const {sourceColorPatches}=await import('./colorStyleMatching'),ids=['hc1','hc2'],before=JSON.stringify(MOCK_NODES);
+ const patches=sourceColorPatches(ids,MOCK_NODES,'ds-product-card','bg','hc1');
+ assert.ok(patches.length);assert.ok(patches.every(p=>p.id==='hc1'&&Object.keys(p.changes).every(k=>k==='bg')));
+ const after=applyPatches(MOCK_NODES,patches),original=MOCK_NODES.find(n=>n.id==='hc1')!,target=after.find(n=>n.id==='hc1')!;
+ assert.equal(target.text,original.text);assert.equal(target.color,original.color);assert.equal(target.w,original.w);assert.equal(JSON.stringify(MOCK_NODES),before);
+ assert.throws(()=>sourceColorPatches(ids,MOCK_NODES,'hc1'));
+});

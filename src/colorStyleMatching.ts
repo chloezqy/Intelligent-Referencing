@@ -19,3 +19,9 @@ export function colorStyleProposal(suggestions:TokenSuggestion[],ids:string[],no
  const mappings=suggestions.flatMap(s=>{const f=facts.find(f=>f.id===s.fact.id),key=`${s.fact.targetId}:${s.fact.property}`;if(!f||JSON.stringify(f)!==JSON.stringify(s.fact)||seen.has(key))throw Error('Unsupported or conflicting color style.');seen.add(key);return f.exact?[]:[{id:f.id,label:f.tokenLabel,patches:[{id:f.targetId,changes:{[f.property]:f.proposed}}]}];});
  validatePatches(nodes,ids,mappings.flatMap(m=>m.patches));return {title:'Existing color styles',targetIds:ids,mappings};
 }
+export function sourceColorPatches(ids:string[],nodes:UIElement[],sourceId:string,property?:string,targetId?:string){
+ const targets=descendants(ids,nodes).filter(n=>!n.library&&n.type!=='screen'),source=nodes.find(n=>n.id===sourceId);
+ if(!source||source.type==='screen'||targets.some(n=>n.id===sourceId))throw Error('Choose a color source outside the target selection.');
+ const patches=targets.filter(target=>!targetId||target.id===targetId).flatMap(target=>{const changes:Partial<UIElement>={};for(const key of ['bg','color','border'] as const){if(property&&key!==property||target[key]===undefined||source[key]===undefined)continue;changes[key]=source[key];}return Object.keys(changes).length?[{id:target.id,changes}]:[];});
+ if(!patches.length)throw Error('This layer has no compatible colors. Choose another source.');validatePatches(nodes,ids,patches);return patches;
+}

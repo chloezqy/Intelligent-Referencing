@@ -65,6 +65,9 @@ export default function Canvas({
   const inferredRef=draftRef||confirmedRef;
   const [adjustOpen,setAdjustOpen]=useState(false);
   const ai=useSemanticSuggestions(inferredRef,nodes);
+  // Completing a rough gesture (or changing its scope) requests interpretation once.
+  // Loading/error updates do not retrigger this effect; failed requests remain retryable.
+  useEffect(()=>{if(draftRef){onResearchEvent('ai_interpretation_requested');void ai.request();}},[draftRef]);
   useEffect(()=>{if(selectionState==='idle'){setHoveredInterpretation(null);}},[selectionState]);
   useEffect(()=>{if(inferredRef){setHoveredInterpretation(null);}},[inferredRef]);
   const containerRef = useRef<HTMLDivElement>(null);

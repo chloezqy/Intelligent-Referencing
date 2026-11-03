@@ -1,6 +1,6 @@
 # AI reliability for research testing
 
-All six task types use POST /api/semantic/interpret and the same server-side Responses transport. Explicit suggestion actions initiate requests directly: Find library styles/tokens, Adjust interpretation, and design-reference AI suggestions need no second AI button. Identical requests reuse the shared cache. Selecting objects, drawing a gesture, changing scope, switching ordinary panels, and opening a review do not call the model. Failed requests offer Retry AI. Rule-based interpretation and deterministic editing/matching remain available.
+All six task types use POST /api/semantic/interpret and the same server-side Responses transport. Explicit suggestion actions initiate requests directly: Find library styles/tokens, Adjust interpretation, and design-reference AI suggestions need no second AI button. Identical requests reuse the shared cache. Ordinary selection, switching panels, and opening a review do not call the model. Completing a rough gesture or changing its interpretation scope automatically requests AI; cached identical contexts are reused and failures require an explicit retry. Failed requests offer Retry AI. Rule-based interpretation and deterministic editing/matching remain available.
 
 ## Recovery and usage controls
 
