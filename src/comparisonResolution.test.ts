@@ -43,10 +43,10 @@ test('Difference selection supports size independently of recommendations and ke
 
 test('Purpose-specific next steps render separately, including empty comparison and unavailable properties',async()=>{
  const {default:EditingToolbar}=await import('./components/EditingToolbar');
- const props={inline:true,selection:{selectedIds:['hc1','sc2'],exemplarIds:['hc1','sc2'],scope:'exemplars' as const,label:'Cards',selectionMethod:'conventional' as const},nodes:MOCK_NODES,onPreview:()=>{},onApply:()=>{},onUndo:()=>{},onRedo:()=>{},canUndo:false,canRedo:false,sourceId:null,onSource:()=>{},picking:false,onPicking:()=>{},onState:()=>{},onDesignReference:()=>{},onRequestReview:()=>{}};
+ const props={inline:true,selection:{selectedIds:['hc1','sc2'],exemplarIds:['hc1','sc2'],scope:'exemplars' as const,label:'Cards',selectionMethod:'conventional' as const},nodes:MOCK_NODES,onPreview:()=>{},onApply:()=>{},onUndo:()=>{},onRedo:()=>{},canUndo:false,canRedo:false,sourceId:null,onSource:()=>{},picking:false,onPicking:()=>{},onState:()=>{},onDesignReference:()=>{}};
  const compare=renderToStaticMarkup(React.createElement(EditingToolbar,{...props,context:context(),comparisonKeys:['radius']}));
- assert.match(compare,/Resolve selected differences/);assert.match(compare,/Request collaborator review/);assert.doesNotMatch(compare,/Properties to match/);
+ assert.match(compare,/Resolve selected differences/);assert.doesNotMatch(compare,/Request collaborator review/);assert.doesNotMatch(compare,/Properties to match/);
  const c=context();c.purpose='Use as a design reference';c.designReference={direction:sideDirection(c),properties:['cornerRadius']};
  const design=renderToStaticMarkup(React.createElement(EditingToolbar,{...props,context:c}));assert.match(design,/Preview changes/);assert.match(design,/Properties to match/);assert.match(design,/unavailable/);assert.doesNotMatch(design,/Resolve selected differences|Request collaborator review/);
- const single=localComparison('A',['hc1'],'single',MOCK_NODES),html=renderToStaticMarkup(React.createElement(EditingToolbar,{...props,context:single}));assert.match(html,/No compatible editable differences/);assert.match(html,/Request collaborator review/);
+ const single=localComparison('A',['hc1'],'single',MOCK_NODES),html=renderToStaticMarkup(React.createElement(EditingToolbar,{...props,context:single}));assert.match(html,/No compatible editable differences/);assert.doesNotMatch(html,/Request collaborator review/);
 });

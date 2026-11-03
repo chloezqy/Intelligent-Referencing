@@ -13,7 +13,7 @@ test('Selection sharing reuses explicit intent, note, mention and invitation con
  const compare=renderToStaticMarkup(React.createElement(ReferenceSharingControls,{comparison:true,c,note:'',intent:'Compare',onNote:noop,onIntent:noop,inviteNow:false,setInviteNow:noop}));assert.doesNotMatch(compare,/Intended action/);assert.match(compare,/Reference note/);
 });
 test('Selection sharing footer is outside the main scrolling content',()=>{
- const html=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'selection',open:true,onClose:noop,contentRef:noop,footer:React.createElement('footer',{id:'selection-footer'},'Share reference')},React.createElement('section',null,'Selection content')));
+ const html=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'selection',contentRef:noop,footer:React.createElement('footer',{id:'selection-footer'},'Share reference')},React.createElement('section',null,'Selection content')));
  assert.ok(html.includes('Selection content</section></div><footer id="selection-footer">Share reference</footer>'));
 });
 test('Compare is a communication intent in Edit sharing, without comparison navigation controls',()=>{
