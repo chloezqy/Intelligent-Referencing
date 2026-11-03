@@ -1016,3 +1016,8 @@ button:disabled { opacity:.45; }
 .compact-style-confirmation .confirmation-changes dt{font-weight:400;color:#82788f;}
 .compact-style-confirmation .comparison-before-after>div{padding:8px;}
 .compact-style-confirmation .confirmation-actions{margin-top:12px;}
+
+.text-reference-options{margin:12px 0;padding:10px 0;border-top:1px solid #e9e5ef;border-bottom:1px solid #e9e5ef;}
+.text-reference-options-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.text-reference-options-header h4,.text-style-changes-heading{font-size:11px;margin:0;font-weight:600;}
+.text-reference-options-header button{display:inline-flex;align-items:center;gap:6px;}

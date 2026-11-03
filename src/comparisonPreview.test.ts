@@ -32,3 +32,11 @@ test('Typography confirmation hides unchanged values and metadata, retaining tok
  const unchanged=renderToStaticMarkup(React.createElement(ComparisonPreview,{...props,variant:'typography',proposal:same,enabled:['batch']}));
  assert.match(unchanged,/Already matches this style/);assert.match(unchanged,/disabled="">Apply changes/);
 });
+test('unified typography preview keeps reference options between visual comparison and changed properties',()=>{
+ const node=MOCK_NODES.find(n=>n.id==='hc2-title')!,proposal={title:'Text styles',targetIds:[node.id],mappings:[{id:'text',label:'Caption',patches:[{id:node.id,changes:{fontSize:11}}]}]};
+ const html=renderToStaticMarkup(React.createElement(ComparisonPreview,{...props,compact:true,selectable:false,variant:'typography',proposal,enabled:['text'],beforeChanges:React.createElement('section',null,'Choose another reference')}));
+ assert.ok(html.indexOf('comparison-before-after')<html.indexOf('Choose another reference'));
+ assert.ok(html.indexOf('Choose another reference')<html.indexOf('confirmation-changes'));
+ assert.doesNotMatch(html,/>Preview changes<|type="checkbox"/);
+ assert.equal((html.match(/>Before</g)||[]).length,1);assert.equal((html.match(/>After</g)||[]).length,1);
+});

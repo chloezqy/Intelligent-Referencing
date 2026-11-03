@@ -29,3 +29,19 @@ test('text style browser remains available before AI responds with actual styled
  assert.match(html,/Other available text styles/);for(const name of Object.keys(TYPOGRAPHY))assert.ok(html.includes(name));
  assert.match(html,/text-style-sample/);assert.doesNotMatch(html,/>Propose|>Preview</);assert.ok(html.indexOf('>Apply changes<')<html.indexOf('>Cancel<'));
 });
+test('unified references accept compatible canvas text and reject self, descendants and invented sources',()=>{
+ const ids=['hc2-title'],suggestion={targetId:ids[0],styleId:'hc1-title',reason:'Corresponding product title',source:'model'};
+ assert.equal(validateTextStyleSuggestions([suggestion],ids,MOCK_NODES,true)[0].styleId,'hc1-title');
+ assert.throws(()=>validateTextStyleSuggestions([{...suggestion,styleId:ids[0]}],ids,MOCK_NODES,true));
+ assert.throws(()=>textStyleProposal([{targetId:ids[0],styleId:ids[0]}],ids,MOCK_NODES));
+ assert.throws(()=>textStyleProposal([{targetId:ids[0],styleId:'hc1-img'}],ids,MOCK_NODES));
+ const nodes=MOCK_NODES.map(n=>n.id==='hc1-title'?{...n,fontSize:30,color:'#ff0000'}:n),p=textStyleProposal([{targetId:ids[0],styleId:'hc1-title'}],ids,nodes),after=applyPatches(nodes,p.mappings.flatMap(m=>m.patches)),target=after.find(n=>n.id===ids[0])!,before=nodes.find(n=>n.id===ids[0])!;
+ assert.equal(target.fontSize,30);assert.equal(target.color,'#ff0000');assert.equal(target.text,before.text);assert.equal(target.x,before.x);
+ const c=textStyleContext({contextId:'unified',targetIds:ids,document:MOCK_NODES,canvasReferences:true});
+ assert.ok(c.styles.some(s=>s.id==='hc1-title'));assert.match(textStylePayload(c,'fixture').instructions,/Prefer a relevant design system style/);
+});
+test('unified browser exposes source picking alongside actual library styles',()=>{
+ const noop=()=>{},html=renderToStaticMarkup(React.createElement(TextStyleReview,{ids:['hc2-title'],nodes:MOCK_NODES,picking:true,onPicking:noop,onPreview:noop,onApply:noop,onCancel:noop}));
+ assert.match(html,/Choose another reference/);assert.match(html,/Pick source/);assert.match(html,/Escape to cancel/);assert.match(html,/Other available text styles/);
+ assert.doesNotMatch(html,/Source object|Find source in file|Propose changes/);
+});

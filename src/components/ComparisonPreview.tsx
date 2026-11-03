@@ -5,7 +5,7 @@ import {ElementPreview} from './ReferencePreviewCard';
 const fields:Record<string,string>={bg:'Background color',color:'Text color',border:'Border',radius:'Corner radius',w:'Width',h:'Height',fontFamily:'Font family',fontSize:'Font size',fontWeight:'Font weight',lineHeight:'Line height',letterSpacing:'Letter spacing',spacing:'Spacing',x:'Horizontal position',y:'Vertical position'};
 const value=(key:string,v:unknown)=>`${v===undefined?'Not recorded':String(v)}${v!==undefined&&['radius','w','h','fontSize','letterSpacing','spacing','x','y'].includes(key)?' px':''}`;
 const shortName=(node:UIElement|undefined)=>node?.label.replace(/^Product Card \((.*)\)$/,'$1').replace(/^Image · /,'')||'Selected object';
-export default function ComparisonPreview({compact=false,selectable=true,variant='comparison',proposal,enabled,nodes,onToggle,onApply,onCancel}:{compact?:boolean;selectable?:boolean;variant?:'comparison'|'design-system'|'typography';proposal:EditProposal;enabled:string[];nodes:UIElement[];onToggle:(id:string)=>void;onApply:()=>void;onCancel:()=>void}){
+export default function ComparisonPreview({applyDisabled=false,beforeChanges,emptyMessage='Already matches this style',compact=false,selectable=true,variant='comparison',proposal,enabled,nodes,onToggle,onApply,onCancel}:{applyDisabled?:boolean;beforeChanges?:React.ReactNode;emptyMessage?:string;compact?:boolean;selectable?:boolean;variant?:'comparison'|'design-system'|'typography';proposal:EditProposal;enabled:string[];nodes:UIElement[];onToggle:(id:string)=>void;onApply:()=>void;onCancel:()=>void}){
  const typography=variant==='typography';
  const visibleEntries=(p:EditProposal['mappings'][number]['patches'][number])=>Object.entries(p.changes).filter(([key,next])=>!typography||key!=='token'&&nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]!==next);
  const hasChanges=proposal.mappings.filter(m=>enabled.includes(m.id)).some(m=>m.patches.some(p=>visibleEntries(p).length));
@@ -21,7 +21,7 @@ export default function ComparisonPreview({compact=false,selectable=true,variant
     <dl className="library-change-summary">{changes.flatMap(p=>Object.entries(p.changes).map(([key,next])=><div key={`${p.id}-${key}`}><dt>{fields[key]||key}{p.id!==root.id&&` · ${shortName(nodes.find(n=>n.id===p.id))}`}</dt><dd>{displayValue(key,nodes.find(n=>n.id===p.id)?.[key as keyof UIElement])}<span aria-label="to">→</span>{displayValue(key,next)}</dd></div>))}</dl>
    </div>;})}
    {!targets.length&&<p className="confirmation-note">No applicable property changes.</p>}
-   {typography&&!hasChanges&&<p role="status">Already matches this style</p>}
+   {typography&&!hasChanges&&<p role="status">{emptyMessage}</p>}
   {!typography&&<p className="confirmation-note">No changes applied yet.</p>}<div className="confirmation-actions"><button type="button" className="primary-action" disabled={!patches.length} onClick={onApply}>Apply changes</button><button type="button" onClick={onCancel}>Cancel</button></div>
   </section>;
  }
@@ -30,6 +30,7 @@ export default function ComparisonPreview({compact=false,selectable=true,variant
   {typography&&!compact&&<p className="confirmation-change-title">{proposal.title}</p>}
   {!typography&&proposal.mappings.length===1&&<p className="confirmation-change-title">{description(proposal.mappings[0])}</p>}
   {first&&proposed&&<div className="comparison-before-after"><div><small>Before</small><ElementPreview element={first} nodes={nodes}/></div><div><small>After</small><ElementPreview element={proposed} nodes={after}/></div></div>}
+  {beforeChanges}
   <ul className="confirmation-changes">{proposal.mappings.map(mapping=>{
    const keys=[...new Set(mapping.patches.flatMap(p=>Object.keys(p.changes)))],name=shortName(nodes.find(n=>n.id===mapping.patches[0]?.id));
    const property=keys.length===2&&keys.includes('w')&&keys.includes('h')?'Size':mapping.id==='match-spacing'?'Spacing':keys.map(key=>fields[key]||key).join(', ');
@@ -37,8 +38,8 @@ export default function ComparisonPreview({compact=false,selectable=true,variant
     <dl>{mapping.patches.flatMap(p=>visibleEntries(p).map(([key,next])=><div key={`${p.id}-${key}`}><dt>{fields[key]||key}</dt><dd><span>{compact&&nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]===undefined?'Default':value(key,nodes.find(n=>n.id===p.id)?.[key as keyof UIElement])}</span><span aria-label="to">→</span><span>{value(key,next)}</span></dd></div>))}</dl>
    </li>;
   })}</ul>
-  {typography&&!hasChanges&&<p role="status">Already matches this style</p>}
+  {typography&&!hasChanges&&<p role="status">{emptyMessage}</p>}
   {!typography&&<p className="confirmation-note">No changes applied yet.</p>}
-  <div className="confirmation-actions"><button type="button" className="primary-action" disabled={!enabled.length||typography&&!hasChanges} onClick={onApply}>Apply changes</button><button type="button" onClick={onCancel}>Cancel</button></div>
+  <div className="confirmation-actions"><button type="button" className="primary-action" disabled={applyDisabled||!enabled.length||typography&&!hasChanges} onClick={onApply}>Apply changes</button><button type="button" onClick={onCancel}>Cancel</button></div>
  </section>;
 }
