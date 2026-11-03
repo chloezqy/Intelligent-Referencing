@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node --import tsx server/index.ts",
+    "dev": "node --watch-path=server --watch-path=src --import tsx server/index.ts",
     "build": "vite build",
     "dev:standalone": "vite --host 0.0.0.0 --port 3000",
     "preview:standalone": "vite preview --host 0.0.0.0 --port 3000",

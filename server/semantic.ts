@@ -115,7 +115,7 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   })();pending.set(hash,job);
   try{res.json({...await job,contextId:request.contextId});}finally{pending.delete(hash);}
  }catch(error){
-  const service=error instanceof AIServiceError?error:undefined,status=service?.status||(error instanceof SemanticError?error.status:500),code=service?.code||(error instanceof SemanticError?(error.status<500?'invalid_request':'invalid_response'):'server_error');
+  const service=error instanceof AIServiceError?error:undefined,status=service?.status||(error instanceof SemanticError?error.status:500),code=service?.code||(error instanceof SemanticError?(error.status<500?(['Invalid document snapshot.','Invalid document IDs.'].includes(error.message)?'document_mismatch':'invalid_request'):'invalid_response'):'server_error');
   const retryable=service?.retryable??status>=500;
   const log={event:'semantic_ai_failure',traceId,task:typeof req.body?.task==='string'&&['text-styles','review-focus','comparison-analysis','design-system','design-changes','editing'].includes(req.body.task)?req.body.task:'interpretation',code,status,upstreamStatus:service?.upstreamStatus,elapsedMs:Date.now()-started};
   (options.logger||((entry)=>console.warn(JSON.stringify(entry))))(log);

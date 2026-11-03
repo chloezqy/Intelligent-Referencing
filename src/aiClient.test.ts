@@ -33,3 +33,7 @@ test('opening comparison, library suggestions and review popup renders explicit 
  const compare=renderToStaticMarkup(React.createElement(PropertyComparison,{ownership:localComparison('A',['hc1','sc2'],'explicit',MOCK_NODES),contextId:'explicit',ids:['hc1','sc2'],nodes:MOCK_NODES,expanded:true,visual:true,onSelectedKeys:()=>{}}));assert.match(compare,/Analyze differences with AI/);assert.match(compare,/Rule-based/);assert.equal(calls,0);
  }finally{globalThis.fetch=original;}
 });
+
+test('stale document requests explain refresh recovery instead of a generic AI failure',async()=>{
+ await assert.rejects(requestAI({contextId:'stale-document'},{fetcher:async()=>Response.json({code:'document_mismatch',error:'Invalid document snapshot.',retryable:false},{status:400})}),(error:AIRequestError)=>error.code==='document_mismatch'&&/Refresh the prototype/.test(error.message));
+});

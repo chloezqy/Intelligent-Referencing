@@ -1,5 +1,7 @@
 /** Shared explicit AI transport. Credentials stay server-side; success cache is scoped to this tab. */
 const messages:Record<string,string>={
+ document_mismatch:'The design document is out of date. Refresh the prototype and retry AI.',
+ invalid_request:'AI could not use this selection or document. Refresh the prototype, select the objects again, and retry.',
  insufficient_quota:'AI project quota is unavailable. Please contact the study organizer; rule-based tools still work.',
  invalid_api_key:'AI authentication is unavailable. Please contact the study organizer; rule-based tools still work.',
  configuration_error:'AI is disabled or not configured. Please contact the study organizer; rule-based tools still work.',
