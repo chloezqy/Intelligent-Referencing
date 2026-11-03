@@ -32,6 +32,7 @@ export default function PropertyComparison({selectedKeys=[],onSelectedKeys,conte
    const labels:Record<string,string>={background:'Fill',color:'Text color',dimensions:'Size',radius:'Corner radius'};
    return <section className="visual-properties" aria-label="Comparison details">
     <header><h4>Comparison details</h4><span>{comparison.elements.length<2?'One selection':different.length?`${different.length} recorded ${different.length===1?'difference':'differences'}`:unknown.length||comparison.missingIds.length?'Partial comparison':'Recorded values match'}</span></header>
+    {onSelectedKeys&&ai.eligible&&<button type="button" disabled={ai.loading||!!ai.message&&!ai.retryable} onClick={()=>void ai.request()}>{ai.loading?'Analyzing differences…':ai.message?'Retry AI':ai.results.length?'Analyze again with AI':'Analyze differences with AI'}</button>}
     {onSelectedKeys&&(ai.loading||ai.message)&&<div className="comparison-analysis" role="status">{ai.loading?<small>Analyzing differences…</small>:<p className="subtle">{ai.message}</p>}</div>}
     {summary.rows.length?<ul className="visual-differences">{summary.rows.map(({row,groups})=>{
      const Icon=icons[row.key]||Square;
@@ -39,12 +40,12 @@ export default function PropertyComparison({selectedKeys=[],onSelectedKeys,conte
      if(onSelectedKeys)return <li key={row.key} data-summary-property={row.key} className="actionable-difference">
       <div className="difference-copy"><strong>{labels[row.key]||row.label}</strong>
        <div className="difference-inline-values">{groups.map((group,index)=><span key={index}><span className="difference-inline-owner">{group.label}: </span>{group.values.length?group.values.slice(0,2).map(value=>row.key==='role'?readableMetadata(value):value||'Empty text').join(' / '):'No objects selected'}{group.values.length>2&&` (+${group.values.length-2} more)`}</span>)}</div>
-       {recommendation&&<small className={`difference-recommendation ${recommendation.category}`}>{RECOMMENDATION_LABELS[recommendation.category]} · {RECOMMENDATION_REASONS[recommendation.reason]}{recommendation.source==='model'&&' · AI'}</small>}
+       {recommendation&&<small className={`difference-recommendation ${recommendation.category}`}>{RECOMMENDATION_LABELS[recommendation.category]} · {RECOMMENDATION_REASONS[recommendation.reason]}{recommendation.source==='model'?' · AI':' · Rule-based'}</small>}
       </div>
       {editable.includes(row.key)?<label className="difference-select"><input aria-label={`Resolve ${row.label}`} type="checkbox" checked={selectedKeys.includes(row.key)} onChange={e=>onSelectedKeys(e.target.checked?[...selectedKeys,row.key]:selectedKeys.filter(key=>key!==row.key))}/>Resolve</label>:<span className="difference-info" title="No supported matching operation">Info</span>}
      </li>;
      return <li key={row.key} data-summary-property={row.key}><div className="difference-label"><Icon size={15} aria-hidden="true"/><strong>{labels[row.key]||row.label}</strong>{onSelectedKeys&&(editable.includes(row.key)?<label className="difference-select"><input aria-label={`Resolve ${row.label}`} type="checkbox" checked={selectedKeys.includes(row.key)} onChange={e=>onSelectedKeys(e.target.checked?[...selectedKeys,row.key]:selectedKeys.filter(key=>key!==row.key))}/>Resolve</label>:<small className="subtle">No matching operation</small>)}</div>
-      {onSelectedKeys&&recommendation&&<small className={`difference-recommendation ${recommendation.category}`}>{RECOMMENDATION_LABELS[recommendation.category]} · {RECOMMENDATION_REASONS[recommendation.reason]}{recommendation.source==='model'&&' · AI'}</small>}
+      {onSelectedKeys&&recommendation&&<small className={`difference-recommendation ${recommendation.category}`}>{RECOMMENDATION_LABELS[recommendation.category]} · {RECOMMENDATION_REASONS[recommendation.reason]}{recommendation.source==='model'?' · AI':' · Rule-based'}</small>}
       <div className="difference-groups">{groups.map((group,index)=><div className={group.user?`user-${group.user}`:''} key={index}><small>{group.label}</small><div className="difference-values">{!group.values.length&&<span className="subtle">No objects selected</span>}{group.values.slice(0,2).map(value=><span className="difference-value" key={value}>
        {['background','color'].includes(row.key)&&/^(#[0-9a-f]{3,8}|rgba?\([\d\s.,%]+\)|hsla?\([\d\s.,%a-z]+\)|transparent)$/i.test(value)&&<i className="comparison-swatch" style={{backgroundColor:value}} aria-hidden="true"/>}
        <span>{row.key==='role'?readableMetadata(value):value||'Empty text'}</span>

@@ -8,13 +8,13 @@ import {useDesignChangeSuggestions} from '../useDesignChangeSuggestions';
 function ChangeDetails({change}:{key?:string;change:ProposedDesignChange}){
  return <><strong>{change.title}</strong><p>{change.explanation}</p><div className="proposed-change-values">{change.facts.map(f=><small key={f.id}>{f.property} · Reference: {f.referenceValue} · Target: {f.targetValue}</small>)}</div></>;
 }
-export function DraftDesignChanges({context,onChange,nodes}:{nodes?:UIElement[];context:ComparisonContext;onChange:(value:DesignReference)=>void}){
- const ai=useDesignChangeSuggestions(context,onChange,nodes),selected=context.designReference?.proposedChanges||[];
+export function DraftDesignChanges({requestOnOpen=false,context,onChange,nodes}:{requestOnOpen?:boolean;nodes?:UIElement[];context:ComparisonContext;onChange:(value:DesignReference)=>void}){
+ const ai=useDesignChangeSuggestions(context,onChange,nodes,requestOnOpen),selected=context.designReference?.proposedChanges||[];
  // Checked proposals persist in the draft across closing/resuming the inspector.
  const proposals=ai.proposals.length?ai.proposals:selected;
- return <section className="design-change-suggestions" aria-label="Suggested changes"><div className="suggested-changes-heading"><h4><Sparkles size={14} aria-hidden="true"/> Suggested changes</h4><button type="button" disabled={ai.loading||!context.designReference?.properties.length} onClick={()=>void ai.request()}>{ai.loading?'Suggesting…':'Suggest changes'}</button></div>
+ return <section className="design-change-suggestions" aria-label="Suggested changes"><div className="suggested-changes-heading"><h4><Sparkles size={14} aria-hidden="true"/> Suggested changes</h4>{(!requestOnOpen||ai.failed)&&<button type="button" disabled={ai.loading||!context.designReference?.properties.length} onClick={()=>void ai.request()}>{ai.loading?'Suggesting…':ai.failed?'Retry AI':'Suggest changes'}</button>}</div>
  {context.designReference?.properties.includes('spacing')&&<p className="subtle">Spacing suggestions require recorded values on both sides.</p>}
- {ai.message&&<p className="subtle" role="status">{ai.message}</p>}
+ {ai.loading&&<p role="status">Suggesting changes…</p>}{ai.message&&<p className="subtle" role="status">{ai.message}</p>}
  {proposals.map(change=><label className="proposed-change" key={change.id}><input type="checkbox" checked={selected.some(s=>s.id===change.id)} onChange={e=>ai.toggle(change,e.target.checked)}/><div><span className="proposed-change-source">AI suggestion</span><ChangeDetails change={change}/></div></label>)}
  <p className="proposed-change-count" aria-live="polite">{selected.length} proposed {selected.length===1?'change':'changes'} selected</p>
  </section>;

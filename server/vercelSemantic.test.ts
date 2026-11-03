@@ -67,7 +67,7 @@ test('Hosted disabled AI, malformed requests and unavailable OpenAI retain deter
  });assert.equal(calls,0);
  await hosted({enabled:true,key:'fixture',fetcher:async()=>{calls++;throw new Error('private upstream details');}},async url=>{
   const result=await post(url);assert.equal(result.status,504);const text=await result.text();
-  assert.match(text,/Retry or select touched objects manually/);assert.doesNotMatch(text,/private upstream details/);
+  assert.match(text,/retry|rule-based/i);assert.doesNotMatch(text,/private upstream details/);
  });assert.equal(calls,1);
 });
 test('Hosted requests reuse candidate validation and timeouts',async()=>{

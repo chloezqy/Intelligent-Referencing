@@ -19,13 +19,20 @@ export function ReviewFocusContent({focus,nodes,onInspect,onCompare}:{key?:strin
  </section>;
 }
 export default function ReviewFocus({reference,nodes,onInspect,onCompare}:{reference:SharedReference;nodes:UIElement[];onInspect?:(ids:string[])=>void;onCompare?:(ids:string[])=>void}){
- const [state,setState]=useState<{focus?:Focus|null;error?:boolean}>({});
+
+ const [state,setState]=useState<{key:string;focus?:Focus|null;loading?:boolean;error?:string;retryable?:boolean}>({key:''});
  const key=JSON.stringify([reference.id,reference.elementIds,reference.message,nodes]);
- useEffect(()=>{let current=true;setState({});
- loadReviewFocus(reference.elementIds,reference.message,nodes).then(focus=>{if(current)setState({focus});},()=>{if(current)setState({error:true});});
- return()=>{current=false;};},[key]);
- if(state.error)return <p className="review-focus-status" role="status">AI review assistance unavailable.</p>;
- if(state.focus===undefined)return <p className="review-focus-status" role="status">Finding a possible review focus…</p>;
- if(!state.focus)return <p className="review-focus-status">No additional review focus found.</p>;
- return <ReviewFocusContent key={key} focus={state.focus} nodes={nodes} onInspect={onInspect} onCompare={onCompare}/>;
+ const current=React.useRef(key);current.current=key;
+ const pending=React.useRef(false);
+ useEffect(()=>{pending.current=false;setState({key});},[key]);
+ async function request(){
+  if(pending.current)return;pending.current=true;setState({key,loading:true});
+  try{const focus=await loadReviewFocus(reference.elementIds,reference.message,nodes);if(current.current===key)setState({key,focus});}
+  catch(error){if(current.current===key)setState({key,error:(error as Error).message,retryable:(error as any).retryable!==false});}
+  finally{if(current.current===key)pending.current=false;}
+ }
+ return <>{state.key===key&&state.focus&&<ReviewFocusContent key={key} focus={state.focus} nodes={nodes} onInspect={onInspect} onCompare={onCompare}/>}
+ <button type="button" disabled={state.loading||!!state.error&&state.retryable===false} onClick={()=>void request()}>{state.loading?'Finding a possible review focus…':state.error?'Retry AI':'Suggest review focus with AI'}</button>
+ {state.error&&<p className="review-focus-status" role="status">{state.error}</p>}
+ {state.focus===null&&<p className="review-focus-status">No additional review focus found.</p>}</>;
 }

@@ -39,7 +39,7 @@ Before enabling AI, configure **Settings → Deployment Protection → Vercel Au
 
 The application intentionally has no account system. The function's origin check blocks other websites' browser calls, **not scripts that forge Origin**. Deployment Protection is the access control; keeping the key private alone does not prevent strangers from invoking an unprotected paid endpoint. The application cannot verify your dashboard protection settings.
 
-Existing cache, duplicate coalescing, six uncached requests/minute per client, two simultaneous calls and twenty attempts/hour are retained **per warm function instance**. Cold starts and horizontal scaling reset or split those limits. They are not a durable global budget. A cache miss after a cold start is expected. Keep the protected demo audience small; public unrestricted use needs durable rate/budget enforcement. Setting `AI_ENABLED=false` and redeploying disables new calls in that deployment.
+Cache and duplicate coalescing, 20 uncached requests/minute and 120/hour per browser session, four concurrent jobs and a bounded waiting queue apply **per warm function instance**. Cold starts and horizontal scaling reset or split those limits. They are not a durable global budget. A cache miss after a cold start is expected. Keep the protected demo audience small; public unrestricted use needs durable rate/budget enforcement. Setting `AI_ENABLED=false` and redeploying disables new calls in that deployment.
 
 ## Verify after deploying
 
@@ -73,3 +73,5 @@ No live model call or Vercel deployment was performed during implementation. All
 The Vercel adapter tests exercise the existing frontend provider against a production-mode HTTP function with non-loopback forwarded client addresses and deployed-style origins. They verify structured candidates, response IDs, cache hits, no browser key, validation, disabled AI, errors/timeouts, origin checks and JSON boundaries. The bundle smoke test builds the real function entry and serves it with the static frontend while AI is forced off; it does not start the collaboration server. These checks validate the deployment path locally, not Vercel's remote infrastructure or a live OpenAI call.
 
 Official references: [Vercel Node functions](https://vercel.com/docs/functions/runtimes/node-js), [function duration](https://vercel.com/docs/functions/configuring-functions/duration), [Vercel Authentication](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments/vercel-authentication), [OpenAI server-side authentication](https://developers.openai.com/api/reference/overview).
+
+See [AI reliability](AI_RELIABILITY.md) for retry behavior, safe errors, explicit-only request triggers, and the manual testing configuration checklist.

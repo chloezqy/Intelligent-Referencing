@@ -31,5 +31,5 @@ test('Classification cannot invent keys, actions, values, duplicate rows or free
 });
 test('Every recorded difference is visible and counted, with rule-based labels and manual Resolve controls',()=>{
  const c=context('hc1','sc2'),html=renderToStaticMarkup(React.createElement(PropertyComparison,{ownership:c,contextId:'c',ids:['hc1','sc2'],nodes:MOCK_NODES,expanded:true,visual:true,selectedKeys:[],onSelectedKeys:()=>{}})),r=ruleBasedRecommendations(c,MOCK_NODES);
- assert.equal((html.match(/data-summary-property=/g)||[]).length,r.length);assert.match(html,new RegExp(`${r.length} recorded differences`));assert.match(html,/Analyzing differences…/);assert.doesNotMatch(html,/Analyze again with AI|AI recommendations/);assert.match(html,/Resolve Dimensions/);assert.match(html,/Review recommended/);assert.doesNotMatch(html,/AI recommendations|checked=""/);
+ assert.equal((html.match(/data-summary-property=/g)||[]).length,r.length);assert.match(html,new RegExp(`${r.length} recorded differences`));assert.match(html,/Analyze differences with AI/);assert.doesNotMatch(html,/Analyze again with AI|AI recommendations/);assert.match(html,/Resolve Dimensions/);assert.match(html,/Review recommended/);assert.doesNotMatch(html,/AI recommendations|checked=""/);
 });

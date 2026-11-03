@@ -1,3 +1,4 @@
+import {requestOpenAI,AIServiceError} from './openaiTransport.js';
 import {reviewFocusRequest,reviewFocusPayload,parseReviewFocus} from './reviewFocus.js';
 import {comparisonAnalysisRequest,comparisonAnalysisPayload,parseComparisonAnalysis} from './comparisonRecommendations.js';
 import {tokenContext,tokenPayload,parseTokenOutput} from './designSystemReferencing.js';
@@ -6,7 +7,7 @@ import {documentContext} from './documentContext.js';
 import {actionContext,actionPayload,parseActionOutput} from './actionIntent.js';
 import {designChangesRequest,designChangesPayload,parseDesignChanges} from './designChanges.js';
 import type {Express,Request,RequestHandler} from 'express';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {MOCK_NODES} from '../src/data.js';
 import type {SemanticCandidate,SemanticRequest} from '../src/semanticInterpretation.js';
 import {validSemanticCandidate} from '../src/semanticInterpretation.js';
@@ -44,12 +45,15 @@ export function parseModelOutput(response:any,request:SemanticRequest,onRejected
  if(parsed.suggestions.length&&!accepted.length)throw new SemanticError(502,'AI returned unsupported object references.');
  return distinctCandidates(accepted);
 }
-export interface SemanticOptions {enabled?:boolean;key?:string;model?:string;fetcher?:typeof fetch;timeoutMs?:number;now?:()=>number;authorize?:(req:Request)=>void}
+export interface SemanticOptions {enabled?:boolean;key?:string;model?:string;fetcher?:typeof fetch;timeoutMs?:number;now?:()=>number;authorize?:(req:Request)=>void;sleep?:(ms:number)=>Promise<void>;random?:()=>number;sessionMinuteLimit?:number;sessionHourLimit?:number;logger?:(entry:Record<string,unknown>)=>void}
 export function semanticHandler(options:SemanticOptions={}):RequestHandler{
  const cache=new Map<string,{until:number;value:any}>(),pending=new Map<string,Promise<any>>(),limits=new Map<string,{until:number;count:number}>();
- let windowStart=0,calls=0,active=0;
- return async(req,res)=>{res.setHeader('Cache-Control','private, no-store');try{
-  if(!(options.enabled??process.env.AI_ENABLED==='true')||!(options.key??process.env.OPENAI_API_KEY))throw new SemanticError(503,'AI is disabled. Set AI_ENABLED=true and configure OPENAI_API_KEY on the server. Retry or select touched objects manually.');
+ let active=0;
+ const queue:Array<()=>void>=[],hours=new Map<string,{until:number;count:number}>();
+ const acquire=async()=>{if(active<4){active++;return;}if(queue.length>=20)throw new AIServiceError(503,'server_busy','AI is busy with other testers. Please retry shortly.',true,5);await new Promise<void>((resolve,reject)=>{const start=()=>{clearTimeout(timer);resolve();};const timer=setTimeout(()=>{const i=queue.indexOf(start);if(i>=0)queue.splice(i,1);reject(new AIServiceError(503,'server_busy','AI is busy with other testers. Please retry shortly.',true,5));},8000);queue.push(start);});};
+ const release=()=>{const next=queue.shift();if(next)next();else active--;};
+ return async(req,res)=>{const traceId=randomUUID(),started=Date.now();res.setHeader('Cache-Control','private, no-store');try{
+  if(!(options.enabled??process.env.AI_ENABLED==='true')||!(options.key??process.env.OPENAI_API_KEY))throw new AIServiceError(503,'configuration_error','AI is disabled or unavailable. Rule-based tools remain available.');
   // The hosted adapter supplies its own access policy; local Node remains loopback-only.
   if(options.authorize)options.authorize(req);
   else if(process.env.NODE_ENV==='production'||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress||'')||!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.ip||''))throw new SemanticError(403,'AI requests are limited to this server’s computer until public access controls are configured.');
@@ -78,26 +82,40 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   const cached=cache.get(hash);if(cached){res.json({...cached.value,contextId:request.contextId,cached:true});return;}
   if(pending.has(hash)){res.json({...await pending.get(hash),contextId:request.contextId,cached:true});return;}
   for(const [key,value] of limits)if(value.until<now)limits.delete(key);
-  const ip=req.ip||'local',limit=limits.get(ip)||{until:now+60000,count:0};if(limits.size>=500&&!limits.has(ip))throw new SemanticError(429,'AI request limit reached.');limits.set(ip,limit);
-  if(++limit.count>6)throw new SemanticError(429,'AI limit reached. Wait a minute and retry.');
-  if(now-windowStart>=3600000){windowStart=now;calls=0;}
-  if(calls>=20||active>=2)throw new SemanticError(429,'AI budget or concurrency limit reached. Try later.');
-  calls++;active++;
+  const session=req.get('X-Smart-Reference-Session'),identity=session&&/^[a-f0-9-]{36}$/i.test(session)?session:(req.ip||'local');
+  const client=createHash('sha256').update(identity).digest('hex'),limit=limits.get(client)||{until:now+60000,count:0};
+  if(limits.size>=1000&&!limits.has(client))throw new AIServiceError(503,'server_busy','AI is busy. Please retry shortly.',true,5);
+  limits.set(client,limit);if(++limit.count>(options.sessionMinuteLimit??20))throw new AIServiceError(429,'session_limit','Session AI request limit reached. Wait a minute and retry; rule-based tools still work.',true,60);
+  for(const [key,value] of hours)if(value.until<now)hours.delete(key);
+  if(hours.size>=1000&&!hours.has(client))throw new AIServiceError(503,'server_busy','AI is busy. Please retry shortly.',true,5);
+  const hourly=hours.get(client)||{until:now+3600000,count:0};hours.set(client,hourly);
+  if(++hourly.count>(options.sessionHourLimit??120))throw new AIServiceError(429,'session_limit','Session AI limit reached. Please contact the study organizer or continue with rule-based tools.',false);
+  const ipKey='ip:'+createHash('sha256').update(req.ip||'local').digest('hex'),ipLimit=limits.get(ipKey)||{until:now+60000,count:0};limits.set(ipKey,ipLimit);
+  if(++ipLimit.count>240)throw new AIServiceError(429,'session_limit','AI request limit reached for this network. Please wait and retry.',true,60);
   const job=(async()=>{
-   let response:Response;try{response=await (options.fetcher||fetch)('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:`Bearer ${options.key??process.env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(options.timeoutMs||15000)});}catch{throw new SemanticError(504,'AI timed out or is unreachable. Retry or select touched objects manually.');}
-   if(!response.ok){await response.body?.cancel();throw new SemanticError(response.status===429?429:502,'The AI service is unavailable. Retry or select touched objects manually.');}
-   let output:any;try{output=await response.json();}catch{throw new SemanticError(502,'AI returned invalid JSON.');}
+   await acquire();
+   try{
+   const output=await requestOpenAI(payload,options.key??process.env.OPENAI_API_KEY!,{fetcher:options.fetcher,timeoutMs:Math.max(1,(options.timeoutMs??25000)-(Date.now()-started)),sleep:options.sleep,random:options.random});
    const responseId=typeof output.id==='string'?output.id:undefined,rejectedSuggestions:{index:number;code:string}[]=[];
    let suggestion:ReturnType<typeof parseReviewFocus>|undefined;
    let recommendations:ReturnType<typeof parseComparisonAnalysis>|undefined;
    let plan:ReturnType<typeof parseActionOutput>|undefined;
    let tokenSuggestions:ReturnType<typeof parseTokenOutput>|undefined;
    let candidates:SemanticCandidate[]|undefined,proposals:ReturnType<typeof parseDesignChanges>|undefined;
-   try{if(reviewContext)suggestion=parseReviewFocus(output,reviewContext);else if(analysisContext)recommendations=parseComparisonAnalysis(output,analysisContext);else if(libraryContext)tokenSuggestions=parseTokenOutput(output,libraryContext);else if(editContext)plan=parseActionOutput(output,editContext);else if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:response.status,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
+   try{if(reviewContext)suggestion=parseReviewFocus(output,reviewContext);else if(analysisContext)recommendations=parseComparisonAnalysis(output,analysisContext);else if(libraryContext)tokenSuggestions=parseTokenOutput(output,libraryContext);else if(editContext)plan=parseActionOutput(output,editContext);else if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:200,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
    const value={...(reviewContext?{suggestion}:analysisContext?{recommendations}:libraryContext?{tokenSuggestions}:editContext?{plan}:changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
    if(cache.size>=100)cache.delete(cache.keys().next().value!);cache.set(hash,{until:now+600000,value});return value;
+   }finally{release();}
   })();pending.set(hash,job);
-  try{res.json({...await job,contextId:request.contextId});}finally{pending.delete(hash);active--;}
- }catch(error){res.status(error instanceof SemanticError?error.status:502).json({error:error instanceof SemanticError?error.message:'AI interpretation failed. Retry or select touched objects manually.',...(error instanceof SemanticError&&error.details?{diagnostics:error.details}:{})});}};
+  try{res.json({...await job,contextId:request.contextId});}finally{pending.delete(hash);}
+ }catch(error){
+  const service=error instanceof AIServiceError?error:undefined,status=service?.status||(error instanceof SemanticError?error.status:500),code=service?.code||(error instanceof SemanticError?(error.status<500?'invalid_request':'invalid_response'):'server_error');
+  const retryable=service?.retryable??status>=500;
+  const log={event:'semantic_ai_failure',traceId,task:typeof req.body?.task==='string'&&['review-focus','comparison-analysis','design-system','design-changes','editing'].includes(req.body.task)?req.body.task:'interpretation',code,status,upstreamStatus:service?.upstreamStatus,elapsedMs:Date.now()-started};
+  (options.logger||((entry)=>console.warn(JSON.stringify(entry))))(log);
+  if(service?.retryAfter)res.setHeader('Retry-After',String(service.retryAfter));
+  res.status(status).json({error:service?.message||(error instanceof SemanticError&&error.status<500?error.message:(error instanceof SemanticError?'AI returned an unsupported response. Rule-based tools remain available.':'The AI server encountered a temporary error. Rule-based tools remain available.')),code,retryable,requestId:traceId,...(service?.retryAfter?{retryAfter:service.retryAfter}:{})});
+ }};
+
 }
 export function installSemantic(app:Express,options?:SemanticOptions){app.post('/api/semantic/interpret',semanticHandler(options));}

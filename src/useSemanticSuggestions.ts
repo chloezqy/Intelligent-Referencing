@@ -3,7 +3,7 @@ import {SemanticCandidate} from './semanticInterpretation';
 import {modelSemanticProvider} from './modelSemanticProvider';
 import {InferredReference,UIElement} from './types';
 import {scopeElements,distinctCandidates,resolveScopeIds} from './gestureContext';
-/** Selection remains deterministic; completed rough gestures and explicit requests may load suggestions. */
+/** Selection remains deterministic; only an explicit AI action loads model suggestions. */
 export function useSemanticSuggestions(selection:InferredReference|null,nodes:UIElement[]){
  const key=selection?JSON.stringify([selection.exemplarIds,selection.scope,nodes]):'';
  const current=useRef(key);current.current=key;
