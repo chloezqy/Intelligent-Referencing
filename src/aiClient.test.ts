@@ -30,7 +30,7 @@ test('opening comparison, library suggestions and review popup renders explicit 
  const openedLibrary=renderToStaticMarkup(React.createElement(DesignSystemReview,{requestOnOpen:true,ids:['hc2-img'],nodes:MOCK_NODES,onPropose:()=>{},onSelected:()=>{}}));
  assert.doesNotMatch(openedLibrary,/Suggest library matches with AI|Retry AI|No library style changes needed/);
  const review=renderToStaticMarkup(React.createElement(ReviewFocus,{reference:{id:'review',elementIds:['hc2-img'],message:'review the shape'} as any,nodes:MOCK_NODES}));assert.match(review,/Suggest review focus with AI/);
- const compare=renderToStaticMarkup(React.createElement(PropertyComparison,{ownership:localComparison('A',['hc1','sc2'],'explicit',MOCK_NODES),contextId:'explicit',ids:['hc1','sc2'],nodes:MOCK_NODES,expanded:true,visual:true,onSelectedKeys:()=>{}}));assert.match(compare,/Analyze differences with AI/);assert.match(compare,/Rule-based/);assert.equal(calls,0);
+ const compare=renderToStaticMarkup(React.createElement(PropertyComparison,{ownership:localComparison('A',['hc1','sc2'],'explicit',MOCK_NODES),contextId:'explicit',ids:['hc1','sc2'],nodes:MOCK_NODES,expanded:true,visual:true,onSelectedKeys:()=>{}}));assert.match(compare,/Analyzing differences/);assert.doesNotMatch(compare,/Analyze differences with AI|Rule-based/);assert.equal(calls,0);
  }finally{globalThis.fetch=original;}
 });
 

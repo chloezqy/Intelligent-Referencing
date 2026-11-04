@@ -10,8 +10,8 @@ import { UIElement } from '../types';
 import { compareReferenceElements, ComparisonRow } from '../referencePresentation';
 interface Props {selectedKeys?:string[];onSelectedKeys?:(keys:string[])=>void; ownership?:ComparisonContext; contextId:string; ids:string[]; nodes:UIElement[]; expanded:boolean; compact?:boolean;visual?:boolean }
 export default function PropertyComparison({selectedKeys=[],onSelectedKeys,contextId,ids,nodes,expanded,ownership,compact=false,visual=false}:Props){
-  const ai=useComparisonRecommendations(onSelectedKeys?ownership:undefined,nodes);
-  const recommendations=ownership?ruleBasedRecommendations(ownership,nodes):[];
+  const ai=useComparisonRecommendations(onSelectedKeys&&visual?ownership:undefined,nodes);
+  const recommendations=ownership&&!ai.loading?ruleBasedRecommendations(ownership,nodes):[];
   const [isOpen,setIsOpen]=useState(expanded);
   useEffect(()=>setIsOpen(expanded),[contextId,expanded]);
   const comparison=compareReferenceElements(ids,nodes);
@@ -32,7 +32,7 @@ export default function PropertyComparison({selectedKeys=[],onSelectedKeys,conte
    const labels:Record<string,string>={background:'Fill',color:'Text color',dimensions:'Size',radius:'Corner radius'};
    return <section className="visual-properties" aria-label="Comparison details">
     <header><h4>Comparison details</h4><span>{comparison.elements.length<2?'One selection':different.length?`${different.length} recorded ${different.length===1?'difference':'differences'}`:unknown.length||comparison.missingIds.length?'Partial comparison':'Recorded values match'}</span></header>
-    {onSelectedKeys&&ai.eligible&&<button type="button" disabled={ai.loading||!!ai.message&&!ai.retryable} onClick={()=>void ai.request()}>{ai.loading?'Analyzing differences…':ai.message?'Retry AI':ai.results.length?'Analyze again with AI':'Analyze differences with AI'}</button>}
+    {onSelectedKeys&&ai.message&&ai.retryable&&<button type="button" onClick={ai.request}>Retry AI</button>}
     {onSelectedKeys&&(ai.loading||ai.message)&&<div className="comparison-analysis" role="status">{ai.loading?<small>Analyzing differences…</small>:<p className="subtle">{ai.message}</p>}</div>}
     {summary.rows.length?<ul className="visual-differences">{summary.rows.map(({row,groups})=>{
      const Icon=icons[row.key]||Square;

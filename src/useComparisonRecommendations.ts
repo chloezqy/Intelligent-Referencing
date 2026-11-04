@@ -1,19 +1,33 @@
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useState} from 'react';
 import type {ComparisonContext} from './collaboration';
 import type {UIElement} from './types';
 import type {DifferenceRecommendation} from './comparisonRecommendations';
-import {comparisonAnalysisKey,canAnalyzeComparison,loadComparisonRecommendations,cachedComparisonRecommendations} from './comparisonAnalysisClient';
+import {comparisonAnalysisKey,canAnalyzeComparison,loadComparisonRecommendations} from './comparisonAnalysisClient';
+
 export function useComparisonRecommendations(context:ComparisonContext|undefined,nodes:UIElement[]){
- const key=context?comparisonAnalysisKey(context,nodes):'',eligible=canAnalyzeComparison(context,nodes),current=useRef(key);current.current=key;
- const [state,setState]=useState<{key:string;loading:boolean;results:DifferenceRecommendation[];message:string;retryable:boolean}>({key,loading:false,results:[],message:'',retryable:true});
- const pending=useRef(false);
- useEffect(()=>{pending.current=false;setState({key,loading:false,results:context?cachedComparisonRecommendations(context,nodes)||[]:[],message:'',retryable:true});},[key]);
- const request=async()=>{
-  if(!eligible||!context||pending.current)return;pending.current=true;
-  setState({key,loading:true,results:[],message:'',retryable:true});
-  try{const results=await loadComparisonRecommendations(context,nodes,{force:true});if(current.current===key)setState({key,loading:false,results,message:'',retryable:true});}
-  catch(error){if(current.current===key)setState({key,loading:false,results:[],message:(error as Error).message+' Using rule-based recommendations.',retryable:(error as any).retryable!==false});}
-  finally{if(current.current===key)pending.current=false;}
+ const key=context?comparisonAnalysisKey(context,nodes):'';
+ const eligible=canAnalyzeComparison(context,nodes);
+ const [retry,setRetry]=useState<{key:string;attempt:number}>();
+ const attempt=retry?.key===key?retry.attempt:0;
+ const [state,setState]=useState<{key:string;attempt:number;results:DifferenceRecommendation[];message:string;retryable:boolean}>();
+
+ useEffect(()=>{
+  if(!eligible||!context)return;
+  let active=true;
+  loadComparisonRecommendations(context,nodes,{force:attempt>0}).then(
+   results=>{if(active)setState({key,attempt,results,message:'',retryable:false});},
+   error=>{if(active)setState({key,attempt,results:[],message:(error as Error).message+' Using rule-based recommendations.',retryable:error?.retryable!==false});},
+  );
+  return()=>{active=false;};
+ },[key,eligible,attempt]);
+
+ const resolved=eligible&&state?.key===key&&state.attempt===attempt?state:undefined;
+ return {
+  eligible,
+  request:()=>setRetry({key,attempt:attempt+1}),
+  loading:eligible&&!resolved,
+  results:resolved?.results??[],
+  message:resolved?.message??'',
+  retryable:resolved?.retryable??false,
  };
- return {eligible,request,loading:state.key===key&&state.loading,results:state.key===key?state.results:[],message:state.key===key?state.message:'',retryable:state.retryable};
 }
