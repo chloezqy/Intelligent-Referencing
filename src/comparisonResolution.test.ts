@@ -38,7 +38,7 @@ test('Review handoff preserves objects and ownership, adds selected values as no
 });
 test('Difference selection supports size independently of recommendations and keeps content informational',()=>{
  const html=renderToStaticMarkup(React.createElement(PropertyComparison,{ownership:context(),contextId:'comparison',ids:['hc1','sc2'],nodes:MOCK_NODES,expanded:true,visual:true,selectedKeys:['radius'],onSelectedKeys:()=>{}}));
- assert.match(html,/Resolve Corner radius/);assert.match(html,/Informational/);assert.match(html,/Resolve Dimensions/);
+ assert.match(html,/Resolve Corner radius/);assert.match(html,/Analyzing differences/);assert.match(html,/Resolve Dimensions/);
 });
 
 test('Purpose-specific next steps render separately, including empty comparison and unavailable properties',async()=>{

@@ -1196,3 +1196,6 @@ button:disabled { opacity:.45; }
 .native-design-editor .design-fill-opacity input::-webkit-inner-spin-button {appearance:none;}
 .native-design-editor button.design-fill-icon {display:grid;place-items:center;padding:4px;border:0;background:transparent;color:#655b70;}
 .native-design-editor button.design-fill-icon:hover {background:#f1edf6;}
+
+.comparison-match-direction {display:flex;align-items:center;gap:8px;padding:8px 10px;}
+.comparison-match-direction select {min-width:0;}
