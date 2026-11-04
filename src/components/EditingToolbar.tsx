@@ -132,7 +132,6 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
    const textSelection=selected.every(n=>n.type==='text'||n.type==='button');
    const styleSection=textSelection?'Typography':'Appearance';
    if(section==='Layout'&&availability.actions.includes('Align'))list.push(tool(section,'Align','Align and distribute'));
-   if(section==='Fill'&&availability.actions.includes('Colors'))list.push(tool(section,'Colors','Adjust color'));
    const categories:Partial<Record<DesignSection,string[]>>={Layout:['spacing'],Appearance:['cornerRadius'],Typography:['typography'],Fill:['colors']};
    const category=categories[section];
    if(category&&!(section==='Appearance'&&completeLibrary)&&(section==='Typography'||filterTokenFacts(tokenFacts(selection.selectedIds,nodes),category).some(f=>!f.exact)))list.push(tool(section,'Design System',section==='Typography'?'Match text styles':section==='Fill'?'Find existing color styles':section==='Layout'?'Find spacing tokens':'Find corner radius tokens',category));
