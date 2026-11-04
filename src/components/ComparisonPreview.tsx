@@ -1,11 +1,19 @@
-import React from 'react';
+import React, {useState} from 'react';
 import type {UIElement} from '../types';
 import {applyPatches,proposalPatches,roots,descendants,EditProposal} from '../editing';
 import {ElementPreview} from './ReferencePreviewCard';
 const fields:Record<string,string>={bg:'Background color',color:'Text color',border:'Border',radius:'Corner radius',w:'Width',h:'Height',fontFamily:'Font family',fontSize:'Font size',fontWeight:'Font weight',lineHeight:'Line height',letterSpacing:'Letter spacing',spacing:'Spacing',shadow:'Shadow',x:'Horizontal position',y:'Vertical position'};
 const value=(key:string,v:unknown)=>`${v===undefined?'Not recorded':String(v)}${v!==undefined&&['radius','w','h','fontSize','letterSpacing','spacing','x','y'].includes(key)?' px':''}`;
+const styleCategories=[
+ ['Colors',['bg','color']],
+ ['Typography',['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','textAlign']],
+ ['Borders and corners',['border','radius']],
+ ['Effects',['shadow','opacity']],
+ ['Layout',['spacing','x','y','w','h']],
+] as const;
 const shortName=(node:UIElement|undefined)=>node?.label.replace(/^Product Card \((.*)\)$/,'$1').replace(/^Image · /,'')||'Selected object';
 export default function ComparisonPreview({beforeActions,applyDisabled=false,beforeChanges,emptyMessage='Already matches this style',compact=false,selectable=true,variant='comparison',proposal,enabled,nodes,onToggle,onApply,onCancel}:{beforeActions?:React.ReactNode;applyDisabled?:boolean;beforeChanges?:React.ReactNode;emptyMessage?:string;compact?:boolean;selectable?:boolean;variant?:'comparison'|'design-system'|'typography';proposal:EditProposal;enabled:string[];nodes:UIElement[];onToggle:(id:string)=>void;onApply:()=>void;onCancel:()=>void}){
+ const [expandedChanges,setExpandedChanges]=useState<Record<string,boolean>>({});
  const typography=variant==='typography';
  const visibleEntries=(p:EditProposal['mappings'][number]['patches'][number])=>Object.entries(p.changes).filter(([key,next])=>!typography||key!=='token'&&nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]!==next);
  const hasChanges=proposal.mappings.filter(m=>enabled.includes(m.id)).some(m=>m.patches.some(p=>visibleEntries(p).length));
@@ -18,7 +26,29 @@ export default function ComparisonPreview({beforeActions,applyDisabled=false,bef
    {targets.map(root=>{const proposed=after.find(n=>n.id===root.id)!,ids=new Set(descendants([root.id],nodes).map(n=>n.id)),changes=patches.filter(p=>ids.has(p.id));return <div key={root.id} className="library-object-preview">
     {targets.length>1&&<strong className="library-object-title">{shortName(root)}</strong>}
     <div className="comparison-before-after"><div><small>Current</small><ElementPreview element={root} nodes={nodes}/></div><div><small>With library styles</small><ElementPreview element={proposed} nodes={after}/></div></div>
-    <details className="library-property-details" open={targets.length===1}><summary>{changes.reduce((count,p)=>count+Object.keys(p.changes).filter(key=>key!=='token').length,0)} style changes</summary><dl className="library-change-summary">{changes.flatMap(p=>Object.entries(p.changes).filter(([key])=>key!=='token').map(([key,next])=><div key={`${p.id}-${key}`}><dt>{fields[key]||key}{p.id!==root.id&&` · ${shortName(nodes.find(n=>n.id===p.id))}`}</dt><dd>{displayValue(key,nodes.find(n=>n.id===p.id)?.[key as keyof UIElement])}<span aria-label="to">→</span>{displayValue(key,next)}</dd></div>))}</dl></details>
+    {(() => {
+     const entries=changes.flatMap(p=>Object.entries(p.changes)
+      .filter(([key])=>key!=='token')
+      .map(([key,next])=>({id:p.id,key,next})));
+     const knownKeys=new Set<string>(styleCategories.flatMap(([,keys])=>[...keys]));
+     const groups=[...styleCategories.map(([label,keys])=>({
+      label, entries:entries.filter(({key})=>(keys as readonly string[]).includes(key)),
+     })),{label:'Other styles',entries:entries.filter(({key})=>!knownKeys.has(key))}];
+     return <details className="library-property-details" open={expandedChanges[root.id]??targets.length===1}
+      onToggle={event=>{
+       const open=event.currentTarget.open;
+       setExpandedChanges(previous=>previous[root.id]===open?previous:{...previous,[root.id]:open});
+      }}>
+      <summary>{entries.length} style changes</summary>
+      {groups.filter(group=>group.entries.length).map(group=><details className="library-change-category" key={group.label}>
+       <summary>{group.label} <small>({group.entries.length})</small></summary>
+       <dl className="library-change-summary">{group.entries.map(({id,key,next})=><div key={`${id}-${key}`}>
+        <dt>{fields[key]||key}{id!==root.id&&` · ${shortName(nodes.find(n=>n.id===id))}`}</dt>
+        <dd>{displayValue(key,nodes.find(n=>n.id===id)?.[key as keyof UIElement])}<span aria-label="to">→</span>{displayValue(key,next)}</dd>
+       </div>)}</dl>
+      </details>)}
+     </details>;
+    })()}
    </div>;})}
    {!targets.length&&<p className="confirmation-note">No applicable property changes.</p>}
    {typography&&!hasChanges&&<p role="status">{emptyMessage}</p>}

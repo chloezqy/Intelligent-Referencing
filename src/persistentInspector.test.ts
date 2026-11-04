@@ -18,12 +18,12 @@ test('persistent header puts presence above tabs and perspective in top bar with
  const top=renderToStaticMarkup(React.createElement(TopBar,{...controls,scale:1,connected:true,onZoomIn:noop,onZoomOut:noop,onZoomFit:noop,onShowHelp:noop,onOpenRoom:noop}));
  assert.doesNotMatch(top,/header-presence/);assert.match(top,/Demo perspective/);assert.ok(top.indexOf('Demo · Simulated collaboration')<top.indexOf('Demo perspective'));assert.match(top,/Shared room/);
 });
-test('typography suggestions share a single labelled group and retain the planned order',()=>{
+test('typography suggestions offer style matching beside the direct inspector controls',()=>{
  const html=renderToStaticMarkup(React.createElement(EditingToolbar,{selectionInspector:true,inline:true,selection:{selectedIds:['hc2-title'],exemplarIds:['hc2-title'],label:'Title',scope:'exemplars'},nodes:MOCK_NODES,onPreview:noop,onApply:noop,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,sourceId:null,onSource:noop,picking:false,onPicking:noop,onState:noop}));
  const start=html.indexOf('aria-label="Typography suggested actions"'),end=html.indexOf('<summary>Fill',start),group=html.slice(start,end);
  assert.ok(start>=0);assert.equal((group.match(/<h4>Suggested actions/g)||[]).length,1);
- const labels=['Adjust typography','Match text styles'];
- for(let i=0;i<labels.length-1;i++)assert.ok(group.indexOf('>'+labels[i]+'<')<group.indexOf('>'+labels[i+1]+'<'));
+ assert.match(group,/>Match text styles</);
+ assert.doesNotMatch(group,/>Adjust typography</);
  assert.doesNotMatch(html,/inspector-action-card|>Ask AI<|>Match another layer<|>Find matching text styles</);
 });
 test('application keeps shell independent from sharing, Apply, selection and confirmed gesture state',()=>{

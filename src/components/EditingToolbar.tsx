@@ -19,7 +19,7 @@ import type {TokenSuggestion} from '../designSystemReferencing';
 import {inspectorActions,referenceTransfer,proposedReferenceEdits} from '../inspectorEditing';
 import {ComparisonContext,DESIGN_REFERENCE_PURPOSE} from '../collaboration';
 import React,{useState,useEffect,useRef,useLayoutEffect} from 'react';
-import {AlignLeft,Palette,Type,Layers,Sparkles,Copy,Undo2,Redo2,ChevronRight,X,MousePointer2,Check} from 'lucide-react';
+import {AlignLeft,Palette,Type,Layers,Sparkles,Copy,Undo2,Redo2,ChevronRight,X,MousePointer2,Check,ArrowUpRight} from 'lucide-react';
 import type {UIElement,InferredReference} from '../types';
 import {COLORS,TYPOGRAPHY} from '../designSystem';
 import {EditProposal,Patch,LayoutOperation,TextRole,roots,descendants,textTargets,colorTargets,layoutPatches,matchStyles,libraryProposal,proposalPatches,changedPatches} from '../editing';
@@ -128,11 +128,10 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
   };
   const tools=(section:DesignSection)=>{
    const list:React.ReactNode[]=[];
-   if(section==='Appearance'&&completeLibrary){const open=fullLibraryPreview&&!!proposal&&previewing;list.push(<div key="apply-library" className={"design-smart-tool selection-action-accordion "+(open?'is-open':'')}><button type="button" className="design-smart-row" data-action-header="Apply design system" aria-expanded={open} onClick={openLibraryPreview}><Layers size={13}/><span>Apply design system</span><ChevronRight size={12}/></button>{open&&<ComparisonPreview variant="design-system" proposal={proposal!} enabled={enabled} nodes={nodes} onToggle={toggleMapping} onApply={apply} onCancel={clearProposal}/>}<button className="design-library-source-link" type="button" onClick={onLocateLibrary}>View design system</button></div>);}
+   if(section==='Appearance'&&completeLibrary){const open=fullLibraryPreview&&!!proposal&&previewing;list.push(<div key="apply-library" className={"design-smart-tool selection-action-accordion "+(open?'is-open':'')}><button type="button" className="design-smart-row" data-action-header="Apply design system" aria-expanded={open} onClick={open?clearProposal:openLibraryPreview}><Layers size={13}/><span>Apply design system</span><ChevronRight size={12}/></button>{open&&<ComparisonPreview variant="design-system" proposal={proposal!} enabled={enabled} nodes={nodes} onToggle={toggleMapping} onApply={apply} onCancel={clearProposal}/>}<div className="layer-reference-pick design-library-source-action"><button type="button" onClick={onLocateLibrary}><ArrowUpRight size={14} aria-hidden="true"/>View design system</button></div></div>);}
    const textSelection=selected.every(n=>n.type==='text'||n.type==='button');
    const styleSection=textSelection?'Typography':'Appearance';
    if(section==='Layout'&&availability.actions.includes('Align'))list.push(tool(section,'Align','Align and distribute'));
-   if(section==='Typography'&&availability.actions.includes('Typography'))list.push(tool(section,'Typography','Adjust typography'));
    if(section==='Fill'&&availability.actions.includes('Colors'))list.push(tool(section,'Colors','Adjust color'));
    const categories:Partial<Record<DesignSection,string[]>>={Layout:['spacing'],Appearance:['cornerRadius'],Typography:['typography'],Fill:['colors']};
    const category=categories[section];

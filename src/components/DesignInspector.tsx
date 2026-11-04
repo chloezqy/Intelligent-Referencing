@@ -1,5 +1,5 @@
 import React,{useState} from 'react';
-import {AlignLeft,AlignCenter,AlignRight,AlignStartVertical,AlignCenterVertical,AlignEndVertical,ChevronDown,Maximize2} from 'lucide-react';
+import {AlignLeft,AlignCenter,AlignRight,AlignStartVertical,AlignCenterVertical,AlignEndVertical,ArrowDownToLine,ArrowUpToLine,AlignVerticalJustifyCenter,ChevronDown,Maximize2} from 'lucide-react';
 import type {UIElement} from '../types';
 import {roots,textTargets,layoutPatches,LayoutOperation} from '../editing';
 import {SECTION_FIELDS,FIELD_LABELS,selectedProperty,DesignSection} from '../designInspectorProperties';
@@ -28,9 +28,18 @@ function PropertySection({section,ids,nodes,onProperties,children,tools,preview}
  return <details className="design-property-section" open={section!=='Stroke'&&section!=='Effects'}><summary>{section}<ChevronDown size={12}/></summary>
  {children}
  {fields.length?<form onSubmit={e=>{e.preventDefault();const values=Object.fromEntries(Object.entries(draft).map(([k,v])=>[k,['x','y','w','h','spacing','radius','fontSize','lineHeight','letterSpacing'].includes(k)?Number(v):v]));onProperties(section,values);}}>
- <div className="design-property-grid">{fields.map(key=>{const state=selectedProperty(ids,nodes,key),numeric=typeof state.value==='number'||['x','y','w','h','spacing','radius','fontSize','lineHeight','letterSpacing'].includes(key),color=key==='bg'||key==='color';return <label className={key==='fontFamily'||key==='border'||key==='shadow'?'wide':''} key={key} title={!state.editable?'Read only: this property is unavailable on part of the selection or belongs to the library.':undefined}>
- {color&&typeof state.value==='string'&&<i className="design-color-swatch" style={{backgroundColor:state.value}}/>}<span>{FIELD_LABELS[key]}</span><input aria-label={section+' '+FIELD_LABELS[key]} type={numeric?'number':'text'} step="any" readOnly={!state.editable} placeholder={state.mixed?'Mixed':'Not recorded'} value={draft[key]??(state.value===undefined?'':String(state.value))} onChange={e=>setDraft({...draft,[key]:e.target.value})}/>{!state.editable&&<small>Read only</small>}
- </label>;})}</div>
+ <div className={`design-property-grid ${section==='Typography'?'design-typography-grid':''}`}>{fields.filter(key=>key!=='textAlign'&&key!=='textVerticalAlign').map(key=>{const state=selectedProperty(ids,nodes,key),numeric=typeof state.value==='number'||['x','y','w','h','spacing','radius','fontSize','lineHeight','letterSpacing'].includes(key),color=key==='bg'||key==='color';return <label className={key==='fontFamily'||key==='border'||key==='shadow'?'wide':''} key={key} title={!state.editable?'Read only: this property is unavailable on part of the selection or belongs to the library.':undefined}>
+ {color&&typeof state.value==='string'&&<i className="design-color-swatch" style={{backgroundColor:state.value}}/>}{(section!=='Typography'||key==='lineHeight'||key==='letterSpacing')&&<span aria-hidden={section==='Typography'}>{section==='Typography'?(key==='lineHeight'?'↕':'↔'):FIELD_LABELS[key]}</span>}{section==='Typography'&&key==='fontWeight'?<select aria-label="Typography Weight" disabled={!state.editable} value={draft[key]??String(state.value??'')} onChange={e=>setDraft({...draft,[key]:e.target.value})}><option value="">Mixed</option>{Object.entries({'100':'Thin','200':'Extra Light','300':'Light','400':'Regular','500':'Medium','600':'Semibold','700':'Bold','800':'Extra Bold','900':'Black',...(state.value&&!/^\d00$/.test(String(state.value))?{[String(state.value)]:String(state.value)}:{})}).map(([value,name])=><option key={value} value={value}>{name}</option>)}</select>:<><input aria-label={section+' '+FIELD_LABELS[key]} type={numeric?'number':'text'} step="any" readOnly={!state.editable} list={section==='Typography'&&key==='fontFamily'?'typography-fonts':undefined} placeholder={state.mixed?'Mixed':key==='lineHeight'?'Auto':'Not recorded'} value={draft[key]??(state.value===undefined?'':String(state.value))} onChange={e=>setDraft({...draft,[key]:e.target.value})}/>{key==='fontFamily'&&<datalist id="typography-fonts">{['Inter, sans-serif','Arial','Georgia','Helvetica','Times New Roman','monospace'].map(font=><option key={font} value={font}/>)}</datalist>}</>}{!state.editable&&<small>Read only</small>}
+ </label>;})}
+ {section==='Typography'&&([
+  ['textAlign','Horizontal text alignment',[['left',AlignLeft],['center',AlignCenter],['right',AlignRight]]],
+  ['textVerticalAlign','Vertical text alignment',[['top',ArrowUpToLine],['middle',AlignVerticalJustifyCenter],['bottom',ArrowDownToLine]]],
+ ] as const).map(([key,label,options])=>{
+  const state=selectedProperty(ids,nodes,key);
+  return <div key={key} className="design-text-alignment" role="group" aria-label={label}>
+   {options.map(([value,Icon])=><button key={value} type="button" aria-label={`Align text ${value}`} title={`Align text ${value}`} disabled={!state.editable} aria-pressed={(draft[key]??state.value)===value} onClick={()=>setDraft({...draft,[key]:value})}><Icon size={14}/></button>)}
+  </div>;
+ })}</div>
  {Object.keys(draft).length>0&&<div className="design-field-actions"><button type="submit">Preview changes</button><button type="button" onClick={()=>setDraft({})}>Reset</button></div>}
  </form>:<p className="design-unavailable">{section==='Typography'?'Text styles are available on nested layers.':`No ${section.toLowerCase()} properties recorded.`}</p>}
  {tools}{preview}

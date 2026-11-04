@@ -350,7 +350,7 @@ export default function Canvas({
                 className={`absolute transition-opacity duration-150 ${
                   isScreen
                     ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none'
-                    : `pointer-events-auto flex items-center ${node.textAlign==='left'?'justify-start text-left':node.textAlign==='right'?'justify-end text-right':'justify-center text-center'} overflow-hidden cursor-pointer`
+                    : `pointer-events-auto flex ${node.textVerticalAlign==='top'?'items-start':node.textVerticalAlign==='bottom'?'items-end':'items-center'} ${node.textAlign==='left'?'justify-start text-left':node.textAlign==='right'?'justify-end text-right':'justify-center text-center'} overflow-hidden cursor-pointer`
                 } ${isHovered && !isSelected ? 'ring-1 ring-[#0d99ff] ring-offset-1 ring-offset-transparent' : ''}`}
                 style={{
                   left: node.x - (frame?.x || 0),

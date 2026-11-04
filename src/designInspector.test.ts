@@ -43,3 +43,13 @@ test('contextual assistance remains reachable when an object has no appearance p
  const html=renderToStaticMarkup(React.createElement(DesignInspector,{ids:['hc1-title'],nodes:MOCK_NODES,onProperties:noop,onAlign:noop,tools:section=>section==='Appearance'?[React.createElement('button',{key:'ai'},'Ask AI about this selection')]:[],preview:()=>null,history:null}));
  assert.match(html,/>Appearance</);assert.match(html,/Ask AI about this selection/);
 });
+
+test('direct typography controls can edit a text layer with implicit font and alignment defaults',()=>{
+ const node=MOCK_NODES.find(n=>n.id==='hc2-title')!;
+ const nodes=MOCK_NODES.map(n=>n.id===node.id?{...n,fontFamily:undefined,textAlign:undefined,textVerticalAlign:undefined}:n);
+ const values={fontFamily:'Georgia',textAlign:'left',textVerticalAlign:'top'} as const;
+ const proposal=propertyProposal([node.id],nodes,'Typography',values);
+ const after=applyPatches(nodes,proposalPatches(proposal,['properties'],nodes)).find(n=>n.id===node.id)!;
+ for(const [key,value] of Object.entries(values))assert.equal(after[key as keyof typeof after],value);
+ assert.equal(after.text,node.text);
+});
