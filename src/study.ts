@@ -8,9 +8,9 @@ import {NUDGE_DISMISSALS_KEY,parseNudgeDismissals} from './referenceAttention';
 export const STUDY_KEY='sr-user-study-v1';
 export interface StudyTask {id:string;group:1|2|3|4;level?:number;title:string;prompt:string;targets:string[]}
 export const STUDY_TASKS:StudyTask[]=[
- {id:'selection-home-buttons',group:1,level:1,title:'Select four Home buttons',prompt:'Select exactly the four “Add to Bag” buttons on Home. Use normal selection or Rough Gesture—whichever you prefer. If using Rough Gesture, confirm the interpretation.',targets:['hc1-cta','hc2-cta','hc3-cta','hc4-cta']},
- {id:'selection-two-screen-filters',group:1,level:2,title:'Select eight filters',prompt:'Select exactly all eight category/filter chips across Home and Search. Use normal selection or Rough Gesture, and confirm any gesture interpretation.',targets:MOCK_NODES.filter(n=>!n.library&&n.role==='filterChip'&&(n.screen==='Home'||n.screen==='Search')).map(n=>n.id)},
- {id:'selection-all-images',group:1,level:3,title:'Select all product images',prompt:'Select all 15 product images across the shopping screens, including Favorites and Cart. Exclude the design-system sample. Use normal selection or Rough Gesture, and confirm any gesture interpretation.',targets:MOCK_NODES.filter(n=>!n.library&&n.role==='productImage'&&n.type==='image').map(n=>n.id)},
+ {id:'selection-home-buttons',group:1,level:1,title:'Select four Home buttons',prompt:'Select exactly the four “Add to Bag” buttons on Home. Use normal selection or Smart Gesture—whichever you prefer. If using Smart Gesture, confirm the interpretation.',targets:['hc1-cta','hc2-cta','hc3-cta','hc4-cta']},
+ {id:'selection-two-screen-filters',group:1,level:2,title:'Select eight filters',prompt:'Select exactly all eight category/filter chips across Home and Search. Use normal selection or Smart Gesture, and confirm any gesture interpretation.',targets:MOCK_NODES.filter(n=>!n.library&&n.role==='filterChip'&&(n.screen==='Home'||n.screen==='Search')).map(n=>n.id)},
+ {id:'selection-all-images',group:1,level:3,title:'Select all product images',prompt:'Select all 15 product images across the shopping screens, including Favorites and Cart. Exclude the design-system sample. Use normal selection or Smart Gesture, and confirm any gesture interpretation.',targets:MOCK_NODES.filter(n=>!n.library&&n.role==='productImage'&&n.type==='image').map(n=>n.id)},
  {id:'design-system',group:2,title:'Apply the design system to Home cards',prompt:'Select all four product cards on Home. In the purple Suggested actions block, choose Apply design system, review the preview, and apply the changes. Keep the product content unchanged.',targets:['hc1','hc2','hc3','hc4']},
  {id:'collaboration',group:3,title:'Share a reference with User B',prompt:'Select any part of the design and share a reference with User B. Then switch to User B, open the reference, and resolve it using Mark reviewed. Notes, mentions, invitations and replies are optional.',targets:[]},
  {id:'compare',group:4,title:'Compare cards across screens',prompt:'Compare the first product card on Home with the first product card on Search. Keep their different layouts, but make the Search card use the Home card’s corner radius. Preview and apply only that change.',targets:['hc1','sc1']},
@@ -27,7 +27,7 @@ export function evaluateStudy(a:StudyAttempt,nodes:UIElement[],references:Shared
  const preserved=a.baseline.length===nodes.length&&a.baseline.every(b=>{const n=nodes.find(n=>n.id===b.id);return n&&['text','label','role','parent'].every(k=>n[k as keyof UIElement]===b[k as keyof UIElement]);});
  if(task.group===1){
   const selectionIndex=a.events.map(e=>e.type).lastIndexOf('selection'),selection=a.events[selectionIndex];
-  // Interpretation can start from a normal click as well as a rough gesture.
+  // Interpretation can start from a normal click as well as a Smart Gesture.
   // Only a confirmation of the current selection counts; drawing a gesture is not required.
   const confirmed=!!selection&&(selection.method==='conventional'||selection.method==='smart-ref'&&a.events.slice(selectionIndex+1).some(e=>e.type==='interpretation_choice'&&(!e.ids||sameIds(e.ids,selection.ids||[]))));
   return [{label:`Exactly ${task.targets.length} intended objects selected`,done:!!selection&&sameIds(selection.ids||[],task.targets)},
