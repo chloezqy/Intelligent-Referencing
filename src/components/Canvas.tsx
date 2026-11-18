@@ -1,8 +1,9 @@
 import ReferenceActions from './ReferenceActions';
+import {appendGestureSamples} from '../gestureSamples';
 import {canvasSelectionTarget,nestedSelection,mergeLayerSelection,canvasMarqueeTargets,isSelectionDrag} from '../selectionInteraction';
 import {toolDragIntent,moveTargets,movePositions,Positions} from '../toolInteraction';
 import {useSemanticSuggestions} from '../useSemanticSuggestions';
-import {gestureTouched} from '../gestureContext';
+import {closeSmartGesture,smartGestureEvidence} from '../smartGesture';
 import {semanticSuggestionPresentation} from '../semanticSuggestionPresentation';
 import { selectionActionLayout } from '../selectionActionLayout';
 import React, { useRef, useState, useEffect, useLayoutEffect } from 'react';
@@ -67,6 +68,7 @@ export default function Canvas({
   const [adjustOpen,setAdjustOpen]=useState(false);
   const [gesturePaths,setGesturePaths]=useState<Point[][]>([]);
   const [chatInput,setChatInput]=useState('');
+  const [gestureNotice,setGestureNotice]=useState('');
   const [interpretationEngaged,setInterpretationEngaged]=useState(false);
   const [chatMessage,setChatMessage]=useState('');
   const ai=useSemanticSuggestions(draftRef?{...draftRef,selectedIds:draftRef.exemplarIds}:inferredRef,nodes);
@@ -93,7 +95,7 @@ export default function Canvas({
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
-  const pendingPointer=useRef<{id:number;start:Point;screenStart:Point;screenPoints:Point[];path:Point[];node:UIElement|null;rawNodeId:string|null;shift:boolean;deep:boolean;previous:InferredReference|null;dragging:boolean;tool:ToolMode;moveNodes:UIElement[]}|null>(null);
+  const pendingPointer=useRef<{id:number;start:Point;screenStart:Point;screenPoints:Point[];path:Point[];lastSampleTime:number;node:UIElement|null;rawNodeId:string|null;shift:boolean;deep:boolean;previous:InferredReference|null;dragging:boolean;tool:ToolMode;moveNodes:UIElement[]}|null>(null);
   const lastLayerClick=useRef<{id:string;at:number;point:Point}|null>(null);
   const [movingIds,setMovingIds]=useState<string[]>([]);
   const panPoint=useRef<Point|null>(null);
@@ -198,7 +200,7 @@ export default function Canvas({
   }, [setTransform]);
 
   // Coordinate transformation from screen to canvas space
-  const getCanvasCoords = (e: React.PointerEvent): Point => {
+  const getCanvasCoords = (e: Pick<React.PointerEvent,'clientX'|'clientY'>): Point => {
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
     return {
@@ -215,6 +217,7 @@ export default function Canvas({
     if(e.button===1||isSpacePressed||toolMode==='pan'){
       setIsPanning(true);panPoint.current={x:e.clientX,y:e.clientY};containerRef.current?.setPointerCapture(e.pointerId);return;
     }
+    setGestureNotice('');
     if(pickingSource){if(node)onPickSource(node.id);return;}
     if(node?.library&&toolMode==='pointer'){commitClick(node,false,inferredRef);return;}
     if(toolMode!=='reference'||!e.shiftKey){
@@ -227,13 +230,21 @@ export default function Canvas({
     const rawNodeId=node?.id||null;
     if(node&&toolMode==='pointer')node=canvasSelectionTarget(node.id,nodes,confirmedRef?.selectedIds||[],{deep:e.metaKey||e.ctrlKey,extend:e.shiftKey})||node;
     const start=getCanvasCoords(e),screenStart={x:e.clientX,y:e.clientY};
-    pendingPointer.current={id:e.pointerId,start,screenStart,screenPoints:[screenStart],path:[start],node,rawNodeId,shift:e.shiftKey,deep:e.metaKey||e.ctrlKey,previous:confirmedRef,dragging:false,tool:toolMode,moveNodes:[]};
+    pendingPointer.current={id:e.pointerId,start,screenStart,screenPoints:[screenStart],path:[start],lastSampleTime:e.timeStamp,node,rawNodeId,shift:e.shiftKey,deep:e.metaKey||e.ctrlKey,previous:confirmedRef,dragging:false,tool:toolMode,moveNodes:[]};
     containerRef.current?.setPointerCapture(e.pointerId);
   };
+  // Capture hardware updates without waiting for React rendering or pointermove
+  // dispatch. Fast loops can finish between two animation frames.
+  useEffect(()=>{
+    const element=containerRef.current;if(!element)return;
+    const capture=(event:PointerEvent)=>{const pending=pendingPointer.current;if(pending?.id===event.pointerId)appendGestureSamples(pending,event,getCanvasCoords);};
+    element.addEventListener('pointerrawupdate',capture);
+    return()=>element.removeEventListener('pointerrawupdate',capture);
+  },[transform.x,transform.y,transform.scale]);
   const handlePointerMove=(e:React.PointerEvent)=>{
     if(panPoint.current){const previous=panPoint.current;panPoint.current={x:e.clientX,y:e.clientY};setTransform(t=>({...t,x:t.x+e.clientX-previous.x,y:t.y+e.clientY-previous.y}));return;}
     const pending=pendingPointer.current;if(!pending||pending.id!==e.pointerId)return;
-    pending.screenPoints.push({x:e.clientX,y:e.clientY});pending.path.push(getCanvasCoords(e));
+    appendGestureSamples(pending,e.nativeEvent,getCanvasCoords);
     const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(!pending.dragging&&isSelectionDrag(pending.screenStart,pending.screenPoints)){
       onSelectionStart();lastLayerClick.current=null;pending.dragging=true;
@@ -271,7 +282,8 @@ export default function Canvas({
     if(panPoint.current){panPoint.current=null;setIsPanning(false);if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);return;}
     const pending=pendingPointer.current;if(!pending||pending.id!==e.pointerId)return;
     pendingPointer.current=null;
-    const end=getCanvasCoords(e);pending.path.push(end);pending.screenPoints.push({x:e.clientX,y:e.clientY});
+    appendGestureSamples(pending,e.nativeEvent,getCanvasCoords);
+    const end=getCanvasCoords(e);
     if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);
     setActionAnchor(end);setCurrentPath([]);setRectStart(null);
     if(!isSelectionDrag(pending.screenStart,pending.screenPoints)){
@@ -284,6 +296,7 @@ export default function Canvas({
       }
       return;
     }
+    if(!pending.dragging){onSelectionStart();lastLayerClick.current=null;}
     const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(intent==='move'){
       const snapshot=pending.moveNodes.length?pending.moveNodes:moveTargets(nodes,pending.node!.id,pending.previous?.selectedIds||[]);
@@ -299,16 +312,18 @@ export default function Canvas({
     }
     onResearchEvent('gesture_attempt');
     setInterpretationEngaged(false);
-    setGesturePaths(paths=>pending.shift?[...paths,[...pending.path]]:[[...pending.path]]);
-    const results=inferSelection(pending.path,nodes);
-    const touched=gestureTouched(pending.path,nodes);
+    const closedPath=closeSmartGesture(pending.path);
+    setGesturePaths(paths=>pending.shift?[...paths,closedPath]:[closedPath]);
+    const touched=smartGestureEvidence(closedPath,nodes,transform.scale);
+    const results=touched.length?inferSelection(closedPath,nodes):[];
     const first=results[0]||{id:'touched',label:`${touched.length} touched objects`,description:'Directly touched objects',reasoning:'Direct gesture coverage',selectedIds:touched,exemplarIds:touched,inferredIds:[],scope:'exemplars' as const,confidence:'medium' as const};
     const base=pending.shift?(activeInterpretation?.selectedIds??inferredRef?.selectedIds??[]):[];
     if(!first.selectedIds.length&&pending.shift&&base.length){
+      setGestureNotice('No objects near this gesture. Try drawing a little closer.');
       setSelectionState(draftRef?'disambiguating':'preview');return;
     }
     additiveBase.current=[...base];
-    if(first.selectedIds.length){const evidence=touched.length?touched:first.selectedIds;setDraftRef({selectedIds:mergeGestureIds(evidence),exemplarIds:evidence,label:'Gesture reference',scope:'exemplars',selectionMethod:'smart-ref'});setActiveInterpretation(null);setSelectionState('disambiguating');setAdjustOpen(true);onResearchEvent('gesture_interpreted');}else{setInferredRef(null);setSelectionState('idle');}
+    if(first.selectedIds.length){const evidence=touched.length?touched:first.selectedIds;setDraftRef({selectedIds:mergeGestureIds(evidence),exemplarIds:evidence,label:'Gesture reference',scope:'exemplars',selectionMethod:'smart-ref'});setActiveInterpretation(null);setSelectionState('disambiguating');setAdjustOpen(true);onResearchEvent('gesture_interpreted');}else{setGestureNotice('No objects near this gesture. Try drawing a little closer.');setInferredRef(null);setSelectionState('idle');}
     setCurrentPath([]);
   };
 
@@ -428,6 +443,7 @@ export default function Canvas({
       className={`relative w-full h-full overflow-clip bg-[#e8e8e8] select-none
         ${isPanning || isSpacePressed ? 'cursor-grab' : selectionState === 'drawing' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
+      {gestureNotice&&<div className="gesture-notice" role="status">{gestureNotice}<button type="button" aria-label="Dismiss gesture message" onClick={()=>setGestureNotice('')}><X size={14}/></button></div>}
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* One AI review surface; editing is available only after reference confirmation. */}
       {!sharing&&!inspectorOpen&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context absolute z-40 flex flex-col items-stretch pointer-events-auto ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:Math.min(336,viewport.width-16),maxHeight:viewport.height-actionPosition.top-8,'--adjustment-space':`${Math.max(48,viewport.height-actionPosition.top-collapsedActionSize.current.height-8)}px`} as React.CSSProperties}>
