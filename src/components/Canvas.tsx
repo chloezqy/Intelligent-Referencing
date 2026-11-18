@@ -409,7 +409,7 @@ export default function Canvas({
                   </div>
                 )}
 
-                {isScreen && node.library&&<span className="absolute top-2 right-4 text-xs text-indigo-500">Design System · Source library</span>}
+                {isScreen && node.library&&<span className="absolute top-2 right-4 text-xs text-[#0d99ff]">Design System · Source library</span>}
                 {isScreen && nodes.filter(child => child.type !== 'screen' && child.screen === node.screen).map(child => renderNode(child, node))}
 
                 {/* Text / Label */}
@@ -506,7 +506,7 @@ export default function Canvas({
               <rect x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale} fill="white"/>
               {nodes.filter(n=>activeIds.includes(n.id)).map(n=><rect key={n.id} x={n.x-2} y={n.y-2} width={n.w+4} height={n.h+4} rx={(n.radius||0)+2} fill="black"/>)}
             </mask></defs>
-            <rect x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale} fill="#171225" fillOpacity="0.55" mask="url(#selection-preview-focus)"/>
+            <rect x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale} fill="#101d27" fillOpacity="0.55" mask="url(#selection-preview-focus)"/>
           </svg>}
           {/* Individual Selection Ring Overlays */}
           <AnimatePresence>
@@ -525,8 +525,8 @@ export default function Canvas({
                     isConventional
                       ? 'border-2 border-[#0d99ff] bg-[#0d99ff]/15 shadow-sm'
                       : isExemplar
-                      ? 'border-2 border-indigo-500 bg-transparent shadow-sm'
-                      : 'border-2 border-indigo-500 bg-transparent shadow-sm'
+                      ? 'border-2 border-[#0d99ff] bg-transparent shadow-sm'
+                      : 'border-2 border-[#0d99ff] bg-transparent shadow-sm'
                   }`}
                   style={{
                     left: node.x - 2,
@@ -585,7 +585,7 @@ export default function Canvas({
               </mask></defs>
               <foreignObject x="0" y="0" width="5000" height="3000" mask="url(#gesture-area)"><div className="gesture-gradient"/></foreignObject>
             </>}
-            {!previewing&&gesturePaths.map((path,index)=><path key={`gesture-${index}`} d={`M ${path.map(p=>`${p.x},${p.y}`).join(' L ')}`} fill="none" stroke="#8b7ac4" strokeWidth={2/transform.scale} strokeLinecap="round" strokeLinejoin="round" opacity={0.65}/>)}
+            {!previewing&&gesturePaths.map((path,index)=><path key={`gesture-${index}`} d={`M ${path.map(p=>`${p.x},${p.y}`).join(' L ')}`} fill="none" stroke="#0d99ff" strokeWidth={2/transform.scale} strokeLinecap="round" strokeLinejoin="round" opacity={0.65}/>)}
             <AnimatePresence>
               {pathD && (
                 <motion.path
@@ -593,7 +593,7 @@ export default function Canvas({
                   exit={{ opacity: 0, transition: { duration: 0.3 } }}
                   d={pathD}
                   fill="none"
-                  stroke="#818cf8"
+                  stroke="#81c6f8"
                   strokeWidth="3.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -625,14 +625,14 @@ export default function Canvas({
                 initial={{ opacity: 0, y: -10, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="absolute bg-white border border-indigo-500/40 text-zinc-900 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-2 pointer-events-none z-50 ring-4 ring-indigo-500/20"
+                className="absolute bg-white border border-[#0d99ff]/40 text-zinc-900 px-3.5 py-1.5 rounded-full text-xs font-semibold shadow-lg flex items-center gap-2 pointer-events-none z-50 ring-4 ring-[#0d99ff]/20"
                 style={{
                   left: gestureBB.x + gestureBB.w / 2,
                   top: gestureBB.y - 36,
                   transform: 'translateX(-50%)'
                 }}
               >
-                <div className="w-3 h-3 border-2 border-indigo-400 border-t-white rounded-full animate-spin" />
+                <div className="w-3 h-3 border-2 border-[#0d99ff] border-t-white rounded-full animate-spin" />
                 <span>Interpreting reference...</span>
               </motion.div>
             )}

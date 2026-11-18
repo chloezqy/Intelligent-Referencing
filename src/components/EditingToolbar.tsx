@@ -38,7 +38,7 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
  const [direction,setDirection]=useState<'A'|'B'>('A');
  const comparisonWorkflow=!!context&&!selectionInspector;
  const [proposalOrigin,setProposalOrigin]=useState<'model'|'deterministic'>('deterministic');
- const [role,setRole]=useState<TextRole>('all'),[font,setFont]=useState('Inter, sans-serif'),[size,setSize]=useState(14),[weight,setWeight]=useState('600'),[line,setLine]=useState(1.4),[tracking,setTracking]=useState(0),[textColor,setTextColor]=useState('#172033'),[typeToken,setTypeToken]=useState('Body'),[customTypography,setCustomTypography]=useState(false);
+ const [role,setRole]=useState<TextRole>('all'),[font,setFont]=useState('Inter, sans-serif'),[size,setSize]=useState(14),[weight,setWeight]=useState('600'),[line,setLine]=useState(1.4),[tracking,setTracking]=useState(0),[textColor,setTextColor]=useState('#142836'),[typeToken,setTypeToken]=useState('Body'),[customTypography,setCustomTypography]=useState(false);
  const [colorRole,setColorRole]=useState('selection'),[colorProperty,setColorProperty]=useState<'bg'|'color'|'border'>('bg'),[color,setColor]=useState(COLORS.Primary),[fromColor,setFromColor]=useState('#09090b'),[colorToken,setColorToken]=useState('Primary'),[sourceQuery,setSourceQuery]=useState('');
  const [instruction,setInstruction]=useState(''),[busy,setBusy]=useState(false);
  const request=useRef<AbortController|null>(null),targetKey=selection.selectedIds.join('|'),currentKey=useRef(targetKey);currentKey.current=targetKey;

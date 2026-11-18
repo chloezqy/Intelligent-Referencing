@@ -9,7 +9,7 @@ const fixture=()=>structuredClone(MOCK_NODES);
 const baseStep:ActionStep={action:'library',role:'all',layout:null,sourceId:null,token:null,property:null,value:null};
 test('A library preview has real patches but cannot mutate targets, source, or product content',()=>{
  const nodes=fixture(),before=JSON.stringify(nodes),p=libraryProposal(cards,nodes),patches=proposalPatches(p,p.mappings.map(m=>m.id),nodes),after=applyPatches(nodes,patches);
- assert.equal(JSON.stringify(nodes),before);assert.equal(after.find(n=>n.id==='hc1-cta')!.bg,'#4f46e5');assert.equal(after.find(n=>n.id==='hc1')!.radius,12);
+ assert.equal(JSON.stringify(nodes),before);assert.equal(after.find(n=>n.id==='hc1-cta')!.bg,'#0d99ff');assert.equal(after.find(n=>n.id==='hc1')!.radius,12);
  assert.deepEqual(after.filter(n=>n.library),nodes.filter(n=>n.library));assert.deepEqual(after.filter(n=>n.screen!=='Home'),nodes.filter(n=>n.screen!=='Home'));
  for(const n of after){const original=nodes.find(o=>o.id===n.id)!;for(const key of ['text','label','parent','role','component'] as const)assert.equal(n[key],original[key]);}
  const repeat=libraryProposal(cards,after);assert.equal(changedPatches(after,proposalPatches(repeat,repeat.mappings.map(m=>m.id),after)).length,0);
@@ -20,7 +20,7 @@ test('Library mappings are individually optional and are sourced from objects in
 });
 test('Style sources and targets remain separate; matching preserves text, prices and images',()=>{
  const nodes=fixture(),before=JSON.stringify(nodes),p=matchStyles(cards,nodes,'ds-product-card'),after=applyPatches(nodes,proposalPatches(p,p.mappings.map(m=>m.id),nodes));
- assert.equal(JSON.stringify(nodes),before);assert.equal(after.find(n=>n.id==='hc2-cta')!.bg,'#4f46e5');assert.equal(after.find(n=>n.id==='hc2-title')!.text,'Minimalist Desk Lamp');assert.equal(after.find(n=>n.id==='hc2-img')!.bg,nodes.find(n=>n.id==='hc2-img')!.bg);assert.equal(p.sourceId,'ds-product-card');assert.deepEqual(p.targetIds,cards);
+ assert.equal(JSON.stringify(nodes),before);assert.equal(after.find(n=>n.id==='hc2-cta')!.bg,'#0d99ff');assert.equal(after.find(n=>n.id==='hc2-title')!.text,'Minimalist Desk Lamp');assert.equal(after.find(n=>n.id==='hc2-img')!.bg,nodes.find(n=>n.id==='hc2-img')!.bg);assert.equal(p.sourceId,'ds-product-card');assert.deepEqual(p.targetIds,cards);
  assert.throws(()=>validatePatches(nodes,cards,[{id:'sc1',changes:{bg:'#ffffff'}}]));assert.throws(()=>validatePatches(nodes,cards,[{id:'ds-product-card',changes:{radius:0}}]));assert.throws(()=>validatePatches(nodes,cards,[{id:'hc1-title',changes:{text:'Overwritten'}}]));
 });
 test('Typography and CTA colors resolve semantic descendants without touching sibling roles',()=>{

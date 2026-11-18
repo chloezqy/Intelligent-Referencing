@@ -170,7 +170,7 @@ function buildDataset(): UIElement[] {
         text: `${item.icon} ${item.name}`,
         fontSize: 10,
         fontWeight: isActive ? '700' : '500',
-        color: isActive ? '#4f46e5' : '#a1a1aa'
+        color: isActive ? '#0d99ff' : '#a1a1aa'
       });
     });
   };
@@ -639,7 +639,7 @@ function buildDataset(): UIElement[] {
     price: '$65.00',
     origPrice: '$80.00',
     rating: '4.6',
-    imageHue: '#fae8ff',
+    imageHue: '#e9f5fe',
     category: 'Decor'
   });
 
@@ -688,8 +688,8 @@ function buildDataset(): UIElement[] {
       screen: 'Search',
       component: 'FilterBar',
       role: 'filterChip',
-      bg: i === 1 ? '#e0e7ff' : '#ffffff',
-      color: i === 1 ? '#4338ca' : '#52525b',
+      bg: i === 1 ? '#e2f2fd' : '#ffffff',
+      color: i === 1 ? '#0d99ff' : '#52525b',
       border: '1px solid #e4e4e7',
       radius: 14,
       text: fil,
@@ -729,7 +729,7 @@ function buildDataset(): UIElement[] {
     title: 'Upholstered Stool',
     price: '$130.00',
     rating: '4.5 (31)',
-    imageHue: '#fae8ff',
+    imageHue: '#e9f5fe',
     subtitle: 'Wool blend fabric'
   });
 
@@ -873,7 +873,7 @@ function buildDataset(): UIElement[] {
       role: 'secondaryCTA',
       bg: c.bg,
       radius: 15,
-      border: i === 0 ? '2px solid #4f46e5' : '1px solid #cbd5e1'
+      border: i === 0 ? '2px solid #0d99ff' : '1px solid #cbd5e1'
     });
   });
 
@@ -938,7 +938,7 @@ function buildDataset(): UIElement[] {
   const favItems = [
     { id: 'fav1', title: 'Nordic Lounge Chair', price: '$289.00', rating: '4.9', hue: '#f1f5f9', stock: 'In Stock' },
     { id: 'fav2', title: 'Walnut Dining Chair', price: '$195.00', rating: '4.7', hue: '#e2e8f0', stock: 'Only 2 Left' },
-    { id: 'fav3', title: 'Ceramic Vase', price: '$65.00', rating: '4.6', hue: '#fae8ff', stock: 'In Stock' }
+    { id: 'fav3', title: 'Ceramic Vase', price: '$65.00', rating: '4.6', hue: '#e9f5fe', stock: 'In Stock' }
   ];
 
   favItems.forEach((item, i) => {
@@ -1071,7 +1071,7 @@ function buildDataset(): UIElement[] {
     label: 'Move All to Bag CTA',
     screen: 'Favorites',
     role: 'primaryCTA',
-    bg: '#4f46e5',
+    bg: '#0d99ff',
     color: '#ffffff',
     radius: 12,
     text: 'Move All 3 Items to Bag ($549.00)',
@@ -1092,7 +1092,7 @@ function buildDataset(): UIElement[] {
   const cartItems = [
     { id: 'cart1', title: 'Nordic Lounge Chair', price: '$289.00', qty: '1', hue: '#f1f5f9' },
     { id: 'cart2', title: 'Minimalist Desk Lamp', price: '$85.00', qty: '2', hue: '#fef3c7' },
-    { id: 'cart3', title: 'Ceramic Vase', price: '$65.00', qty: '1', hue: '#fae8ff' }
+    { id: 'cart3', title: 'Ceramic Vase', price: '$65.00', qty: '1', hue: '#e9f5fe' }
   ];
 
   cartItems.forEach((item, i) => {

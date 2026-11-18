@@ -1,5 +1,5 @@
 import type {UIElement} from './types.js';
-export const COLORS = {Primary:'#4f46e5',Secondary:'#0f766e',Surface:'#f8fafc','Text Primary':'#172033','Text Secondary':'#64748b',Border:'#cbd5e1','On Primary':'#ffffff'};
+export const COLORS = {Primary:'#0d99ff',Secondary:'#0f766e',Surface:'#f8fafc','Text Primary':'#142836','Text Secondary':'#64748b',Border:'#cbd5e1','On Primary':'#ffffff'};
 export const TYPOGRAPHY = {
  Heading:{fontFamily:'Inter, sans-serif',fontSize:24,fontWeight:'700',lineHeight:1.2,letterSpacing:-.4,color:COLORS['Text Primary']},
  Body:{fontFamily:'Inter, sans-serif',fontSize:13,fontWeight:'600',lineHeight:1.4,letterSpacing:0,color:COLORS['Text Primary']},
@@ -10,12 +10,12 @@ export const TYPOGRAPHY = {
 export const COMPONENT_STYLES = {
  'Primary Button':{bg:COLORS.Primary,color:COLORS['On Primary'],radius:10,border:'1px solid transparent',...TYPOGRAPHY['Button Label']},
  'Secondary Button':{bg:'#ffffff',color:COLORS.Primary,radius:10,border:`1px solid ${COLORS.Primary}`,fontWeight:'600'},
- 'Product Card':{bg:COLORS.Surface,radius:12,border:`1px solid ${COLORS.Border}`,shadow:'0 3px 10px #17203318',spacing:16},
- 'Filter Chip':{bg:'#eef2ff',color:COLORS.Primary,radius:12,border:'1px solid #c7d2fe'},
+ 'Product Card':{bg:COLORS.Surface,radius:12,border:`1px solid ${COLORS.Border}`,shadow:'0 3px 10px #14283618',spacing:16},
+ 'Filter Chip':{bg:'#eff8fe',color:COLORS.Primary,radius:12,border:'1px solid #c9e7fc'},
  'Input Field':{bg:COLORS.Surface,color:COLORS['Text Primary'],radius:10,border:`1px solid ${COLORS.Border}`},
 };
 /** These samples are also the authoritative style sources consumed by the editor. */
-export const PRODUCT_IMAGE_STYLE={bg:'#e0e7ff',radius:10};
+export const PRODUCT_IMAGE_STYLE={bg:'#e2f2fd',radius:10};
 export function buildLibrary():UIElement[]{
  const x=80,y=1120,screen='Design System' as const;
  const frame:UIElement={id:'screen-design-system',type:'screen',x,y,w:1420,h:1,label:'Design System · Library',screen,bg:'#ffffff',radius:16,library:true};
@@ -57,7 +57,7 @@ export function buildLibrary():UIElement[]{
  add({id:'ds-property-0',type:'rect',x:x+1050,y:y+328,w:330,h:60,label:'Radius / Medium · 12px',text:'Radius · 12px',bg:COLORS.Surface,radius:12,fontSize:14});
  label('ds-radius-note','Cards and filters · controls use 10px',1050,396,330);
  add({id:'ds-property-1',type:'rect',x:x+1050,y:y+456,w:330,h:64,label:'Spacing / Default · 16px',bg:COLORS.Surface,spacing:16});
- add({id:'ds-spacing-inner',parent:'ds-property-1',type:'rect',x:x+1066,y:y+472,w:298,h:32,label:'Spacing inset illustration',text:'16px inset',bg:'#e0e7ff',fontSize:12});
+ add({id:'ds-spacing-inner',parent:'ds-property-1',type:'rect',x:x+1066,y:y+472,w:298,h:32,label:'Spacing inset illustration',text:'16px inset',bg:'#e2f2fd',fontSize:12});
  label('ds-spacing-note','Card content inset · not grid/card spacing',1050,528,330);
  add({id:'ds-property-2',type:'rect',x:x+1050,y:y+588,w:330,h:60,label:'Shadow / Small',text:'Small shadow',bg:COLORS.Surface,radius:12,shadow:COMPONENT_STYLES['Product Card'].shadow,fontSize:14});
  label('ds-shadow-note',COMPONENT_STYLES['Product Card'].shadow,1050,656,330);
