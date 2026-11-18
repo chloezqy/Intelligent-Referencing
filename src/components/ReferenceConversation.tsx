@@ -28,7 +28,7 @@ export default function ReferenceConversation({active,nodes,collaboration:c,onLo
         <p className="conversation-note-label">{isSender?'Your note':`User ${active.sourceUser}’s note`}</p>
         <p className={active.message?'conversation-body':'conversation-empty'}>{active.message || 'No additional note'}</p>
       </div>
-      {active.intent.trim().toLowerCase()==='review'&&active.message.trim()&&!active.archivedAt&&<ReviewFocus reference={active} nodes={nodes} onInspect={onInspect} onCompare={onCompare}/>}
+      {isSender&&active.intent.trim().toLowerCase()==='review'&&active.message.trim()&&!active.archivedAt&&<ReviewFocus reference={active} nodes={nodes} onInspect={onInspect} onCompare={onCompare}/>}
       {active.intent!=='Compare'&&active.comparison&&<ComparisonContext context={active.comparison} nodes={nodes} user={c.session?.userId}/>}
       {active.intent!=='Compare'&&<PropertyComparison ownership={active.comparison} contextId={active.id} ids={active.elementIds} nodes={nodes} expanded={false}/>}
       <div className="responses" aria-live="polite">{active.responses.map(reply=><div key={reply.id}><strong className={`user-${reply.userId}`}>{reply.userId===c.session?.userId?'You · ':''}User {reply.userId}</strong><p>{reply.message}</p><small>{new Date(reply.createdAt).toLocaleString()}</small></div>)}</div>

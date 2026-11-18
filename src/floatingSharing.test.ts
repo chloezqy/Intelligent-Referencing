@@ -21,7 +21,7 @@ test('single and multiple selections retain all sharing controls and explicit su
  }));
  assert.match(html,/role="dialog"/);assert.match(html,/>Share reference</);
  assert.match(html,/type="text"/);assert.match(html,/maxLength="120"/);assert.doesNotMatch(html,/<select/);
- assert.match(html,/Reference note/);assert.match(html,/@B/);assert.match(html,/Invite mentioned teammates to view now/);assert.match(html,/Close sharing popup/);assert.match(html,/>Cancel</);
+ assert.match(html,/Reference note/);assert.match(html,/@B/);assert.doesNotMatch(html,/notified automatically/);assert.doesNotMatch(html,/type="checkbox"/);assert.match(html,/Close sharing popup/);assert.match(html,/>Cancel</);
  }
 });
 test('floating sharing stays within small canvas bounds even for offscreen selections',()=>{

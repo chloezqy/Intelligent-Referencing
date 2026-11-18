@@ -22,12 +22,10 @@ interface Props {comparisonKeys?:string[];onComparisonKeys?:(keys:string[])=>voi
 export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSecond,documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
   const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null),pin=useRef<HTMLButtonElement>(null);
   const [viewport,setViewport]=useState({width:800,height:600}),[height,setHeight]=useState(320),[sendId,setSendId]=useState(requestId);
-  const [inviteNow,setInviteNow]=useState(false);
-  useEffect(()=>setInviteNow(false),[draft.elementIds.join('|'),draft.comparison?.snapshotId]);
   useEffect(()=>{if(inspector&&draft.comparison&&!draft.comparison.purpose.trim())onComparisonPurpose('Compare differences');},[inspector,draft.comparison?.snapshotId]);
   const label=shareActionLabel(c.session?.userId),target=c.session?.userId==='B'?'A':'B';
   useEffect(()=>{const el=host.current;if(!el)return;const observer=new ResizeObserver(()=>setViewport({width:el.clientWidth,height:el.clientHeight}));observer.observe(el);return()=>observer.disconnect();},[inspector,inspectorHost]);
-  useEffect(()=>{setSendId(requestId());},[draft,note,intent,inviteNow]);
+  useEffect(()=>{setSendId(requestId());},[draft,note,intent]);
   useEffect(()=>{
     if(!visible)return;
     const element=popup.current;if(!element)return;
@@ -40,12 +38,12 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
   },[visible,inspector,inspectorHost]);
   const layout=sharePopoverLayout(draft.elementIds,nodes,camera,viewport,height);
   if(!layout&&!inspector)return null;
-  const sharingControls=<ReferenceSharingControls comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} inviteNow={inviteNow} setInviteNow={setInviteNow}/>;
+  const sharingControls=<ReferenceSharingControls comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} nodes={documentNodes||nodes} elementIds={draft.elementIds}/>;
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     {!inspector&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
     {visible&&<div ref={popup} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover pointer-events-auto'} style={inspector?undefined:layout?.popup}>
       {!inspector&&<header><h3>Share reference</h3><button type="button" aria-label="Close sharing popup" onClick={onCancel}>×</button></header>}
-      <form onSubmit={async e=>{e.preventDefault();const result=await c.share({...draft,...(documentNodes?{document:documentNodes}:{})},intent,note,sendId,inviteNow);if(result)onShared(result.id);}}>
+      <form onSubmit={async e=>{e.preventDefault();const result=await c.share({...draft,...(documentNodes?{document:documentNodes}:{})},intent,note,sendId,true);if(result)onShared(result.id);}}>
         <div className="share-form-body" onKeyDown={e=>{const target=e.target as HTMLElement;if(e.key==='Enter'&&target.matches('input,select')&&target.closest('.comparison-overview,.comparison-next-steps')){e.preventDefault();e.stopPropagation();}}} role={inspector?'region':undefined} aria-label={inspector?'Comparison content':undefined} tabIndex={inspector?0:undefined}>{!inspector&&<><p className="share-target-label" title={draft.label}>{draft.label}</p>
         <div className="share-target-meta"><span>{draft.elementIds.length} {draft.elementIds.length===1?'object':'objects'}</span><button type="button" onClick={onLocate}>Locate</button></div>
         {layout?.offscreen&&<p className="subtle">Targets offscreen.</p>}</>}

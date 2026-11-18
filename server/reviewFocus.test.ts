@@ -29,12 +29,12 @@ test('specific note and no-related review stay grounded without invented compari
  const html=renderToStaticMarkup(React.createElement(ReviewFocusContent,{focus,nodes:[image]}));
  assert.match(html,/Possible review focus/);assert.doesNotMatch(html,/Related element/);
 });
-test('visual suggestion uses real previews and current recorded values without editing controls',()=>{
+test('AI interpretation is text-only and retains explicit canvas inspection',()=>{
  const focus=validateReviewFocus(suggestion,[image.id],MOCK_NODES)!;
  const html=renderToStaticMarkup(React.createElement(ReviewFocusContent,{focus,nodes:MOCK_NODES,onInspect:()=>{throw Error('Requires explicit action');}}));
- assert.equal((html.match(/class="element-preview"/g)||[]).length,2);
- assert.ok(html.includes(image.radius+' px'));assert.ok(html.includes(related.radius+' px'));
- assert.doesNotMatch(html,/Values from canvas/);assert.match(html,/AI suggestion/);assert.match(html,/Inspect on canvas/);assert.doesNotMatch(html,/Apply changes|Mark reviewed/);
+ assert.doesNotMatch(html,/element-preview|review-focus-objects/);
+ assert.ok(html.includes(focus.focus));
+ assert.doesNotMatch(html,/Values from canvas/);assert.match(html,/AI interpretation/);assert.match(html,/Inspect on canvas/);assert.doesNotMatch(html,/Apply changes|Mark reviewed/);
 });
 test('two authenticated users retain review, reply and status updates with contextual AI and when AI is unavailable',async()=>{
  const {mkdtempSync,rmSync}=await import('node:fs'),{tmpdir}=await import('node:os'),{join}=await import('node:path'),{randomUUID}=await import('node:crypto');

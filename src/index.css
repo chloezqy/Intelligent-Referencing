@@ -1221,3 +1221,12 @@ button:disabled { opacity:.45; }
 @keyframes gesture-flow {from {background-position:0 0;}to {background-position:800px 400px;}}
 .selection-suggestion-pills button:hover,.selection-suggestion-pills button:focus-visible {background:#e7dcff;border-color:#8966ce;box-shadow:0 0 0 2px #a48bd430;outline:none;}
 @media(prefers-reduced-motion:reduce){.gesture-gradient {animation:none;}}
+
+.ai-context-panel {margin:8px 0;padding:0;border:0;border-radius:0;background:transparent;color:#625a70;}
+.ai-context-panel .interpret-context-button {display:inline-flex;align-items:center;gap:6px;padding:5px 8px;background:white;color:#0d99ff;border-radius:6px;border:1px solid #d2e4f0;font-size:11px;}
+.ai-context-panel .review-focus {border:0;margin:0 0 6px;padding:0;}
+.ai-context-panel .review-focus-actions {justify-content:flex-start;}
+.review-focus-actions>button.accept-interpretation {background:#0d99ff;border-color:#0d99ff;color:white;}
+.review-focus-editor {display:flex;flex-direction:column;gap:5px;font-size:11px;margin:6px 0;}
+.review-focus-editor textarea {width:100%;min-height:60px;border:1px solid #d2e4f0;border-radius:6px;padding:6px;background:white;user-select:text;}
+
