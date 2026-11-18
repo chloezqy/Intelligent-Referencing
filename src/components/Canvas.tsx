@@ -510,7 +510,7 @@ export default function Canvas({
           </svg>}
           {/* Individual Selection Ring Overlays */}
           <AnimatePresence>
-            {!showGestureAnimation && (selectionState === 'drawing' || selectionState === 'moving' || selectionState === 'preview' || selectionState === 'disambiguating') && (movingIds.length||activeIds.length) > 0 && nodes.filter(n => (movingIds.length?movingIds:activeIds).includes(n.id) && n.type !== 'screen').map(node => {
+            {!showGestureAnimation && (selectionState === 'drawing' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift) || selectionState === 'moving' || selectionState === 'preview' || selectionState === 'disambiguating') && (movingIds.length||activeIds.length) > 0 && nodes.filter(n => (movingIds.length?movingIds:activeIds).includes(n.id) && n.type !== 'screen').map(node => {
               const isExemplar = exemplarIds.includes(node.id);
               const isConventional = inferredRef?.selectionMethod === 'conventional';
 
@@ -545,7 +545,7 @@ export default function Canvas({
 
           {/* FIGMA-STYLE OVERALL BOUNDING BOX WITH CLEAN CORNER HANDLES ONLY (NO CLUTTERED FLOATING BADGES) */}
           <AnimatePresence>
-            {!draftRef && (selectionState === 'preview' || selectionState === 'disambiguating') && boundingBox && (
+            {!draftRef && (selectionState === 'preview' || selectionState === 'disambiguating' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift)) && boundingBox && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
