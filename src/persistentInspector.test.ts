@@ -16,7 +16,7 @@ test('persistent header puts presence above tabs and perspective in top bar with
  assert.match(html,/User A: online/);assert.match(html,/User B: offline/);assert.doesNotMatch(html,/Demo perspective/);
  assert.doesNotMatch(html,/hidden=|Close|onClose/);
  const top=renderToStaticMarkup(React.createElement(TopBar,{...controls,scale:1,connected:true,onZoomIn:noop,onZoomOut:noop,onZoomFit:noop,onShowHelp:noop,onOpenRoom:noop}));
- assert.doesNotMatch(top,/header-presence/);assert.match(top,/Demo perspective/);assert.ok(top.indexOf('Demo · Simulated collaboration')<top.indexOf('Demo perspective'));assert.match(top,/Shared room/);
+ assert.doesNotMatch(top,/header-presence/);assert.match(top,/Demo perspective/);assert.doesNotMatch(top,/Simulated collaboration|User study mode|Shared room/);assert.match(top,/Mobile Commerce Workspace/);assert.match(top,/disabled=""[^>]*aria-label="Present"/);
 });
 test('typography suggestions offer style matching beside the direct inspector controls',()=>{
  const html=renderToStaticMarkup(React.createElement(EditingToolbar,{selectionInspector:true,inline:true,selection:{selectedIds:['hc2-title'],exemplarIds:['hc2-title'],label:'Title',scope:'exemplars'},nodes:MOCK_NODES,onPreview:noop,onApply:noop,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,sourceId:null,onSource:noop,picking:false,onPicking:noop,onState:noop}));

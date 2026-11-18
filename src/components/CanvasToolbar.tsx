@@ -21,6 +21,6 @@ export default function CanvasToolbar({mode,onChange}:{mode:ToolMode;onChange:(m
    {open&&<div id="canvas-tool-menu" className="canvas-tool-menu" role="menu" aria-label="Selection tools">{CANVAS_TOOLS.map(tool=>{const ItemIcon=tool.icon;return <button type="button" key={tool.mode} role="menuitemradio" aria-checked={mode===tool.mode} title={tool.mode==='reference'?'Draw to select · Hold Shift to add another region':undefined} onClick={()=>choose(tool.mode)}><span className="canvas-tool-check">{mode===tool.mode&&<Check size={14}/>}</span><ItemIcon size={17}/><span>{tool.label}</span><kbd>{tool.key}</kbd></button>;})}</div>}
   </div>
   <span className="canvas-tool-divider" aria-hidden="true"/>
-  {placeholders.map(tool=>{const PlaceholderIcon=tool.icon;return <button type="button" className="canvas-tool-placeholder" aria-disabled="true" key={tool.label} aria-label={`${tool.label} — Coming soon`} title={`${tool.label} · Coming soon`}><PlaceholderIcon size={20}/></button>;})}
+  {placeholders.map(tool=>{const PlaceholderIcon=tool.icon;return <button type="button" className="canvas-tool-placeholder" disabled aria-disabled="true" key={tool.label} aria-label={`${tool.label} — Coming soon`} title={`${tool.label} · Coming soon`}><PlaceholderIcon size={20}/></button>;})}
  </div>;
 }
