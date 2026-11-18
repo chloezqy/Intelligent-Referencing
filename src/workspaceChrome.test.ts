@@ -21,5 +21,14 @@ test('Editor logo is outlined and the inspector opens at a compact width',async(
  const logo=renderToStaticMarkup(React.createElement(FigmaMark));
  assert.match(logo,/fill="none"/);assert.match(logo,/stroke="currentColor"/);
  const inspector=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'selection',contentRef:()=>{}}));
- assert.match(inspector,/width:300px/);assert.doesNotMatch(inspector,/avatar|Collaborators/);
+ assert.match(inspector,/width:240px/);assert.doesNotMatch(inspector,/avatar|Collaborators/);
+});
+
+test('Right sidebar contains moved profile and presentation controls, and Page sections match the reference',async()=>{
+ const {default:InspectorHeaderControls}=await import('./components/InspectorHeaderControls');
+ const {default:PageInspector}=await import('./components/PageInspector');
+ const header=renderToStaticMarkup(React.createElement(InspectorHeaderControls,{session:{userId:'A'} as any,mode:'demo',onPerspective:()=>{}}));
+ assert.match(header,/Demo perspective/);assert.match(header,/Present/);assert.match(header,/>Share</);assert.doesNotMatch(header,/Home|New file|Comments|Start audio/);
+ const page=renderToStaticMarkup(React.createElement(PageInspector));
+ for(const label of ['Page','Styles','Export','MCP','F5F5F5'])assert.ok(page.includes(label));
 });

@@ -1288,3 +1288,90 @@ button:disabled { opacity:.45; }
 .figma-menu-placeholder>svg:last-child {position:absolute;right:4px;top:50%;transform:translateY(-50%);}
 .gesture-notice {position:absolute;left:50%;top:16px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:12px;max-width:calc(100% - 32px);padding:9px 12px;border:1px solid #d9e8f3;border-radius:8px;background:white;color:#475569;font-size:12px;box-shadow:0 2px 8px #0000000d;}
 .gesture-notice button {display:grid;place-items:center;flex-shrink:0;}
+
+/* Screenshot reference: 56px navigation and 240px file/inspector panels. */
+.navigation-rail {width:56px;padding:0;background:#fff;border-color:#e5e5e5;}
+.rail-items {gap:0;}
+.figma-menu-placeholder {width:56px;height:50px;margin:0 0 6px;}
+.figma-menu-placeholder::after {content:'';position:absolute;bottom:0;left:20px;width:16px;border-bottom:1px solid #e5e5e5;}
+.figma-menu-placeholder .figma-mark {width:12px;height:18px;}
+.rail-button {width:56px;height:56px;min-height:56px;gap:4px;padding:4px 0 3px;border-radius:0;color:#333;}
+.rail-button .rail-icon-wrap {width:32px;height:32px;display:grid;place-items:center;border-radius:6px;}
+.rail-button .rail-label {font-size:9px;line-height:12px;}
+.navigation-rail .rail-button.active,.navigation-rail .rail-button[aria-label="Layers"].active {background:transparent;color:#333;}
+.navigation-rail .rail-button.active .rail-icon-wrap {background:#e5f4ff;color:#0d99ff;}
+.navigation-rail .rail-button:hover {background:transparent;}
+.navigation-rail .rail-button:hover:not(:disabled) .rail-icon-wrap {background:#f0f0f0;}
+.navigation-rail .rail-button.active:hover .rail-icon-wrap {background:#e5f4ff;}
+.rail-after-divider {margin-top:16px;position:relative;}
+.rail-after-divider::before {content:'';position:absolute;top:-8px;left:20px;width:16px;border-top:1px solid #e5e5e5;}
+.rail-badge {right:4px;top:2px;font-size:9px;line-height:12px;}
+.file-panel-header {height:64px;min-height:64px;padding:12px 16px 8px;gap:12px;}
+.file-panel-header>div {gap:4px;}
+.file-panel-header strong {height:20px;gap:8px;}
+.file-panel-header .file-title-text {font-size:13px;line-height:20px;}
+.file-panel-header>div>span {font-size:11px;color:#888;line-height:16px;}
+.file-panel-header>button {width:16px;height:20px;}
+.file-pages {padding:8px 8px 12px;}
+.pages-heading {display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px 8px;height:36px;}
+.pages-heading>div {display:flex;gap:8px;align-items:center;}
+.pages-heading>div button {display:grid;place-items:center;width:20px;height:24px;color:#444;}
+.file-section-title {padding:0;height:24px;font-size:11px;font-weight:600;color:#222;}
+.file-page {height:24px;min-height:24px;width:100%;padding:0 8px;margin:0;display:flex;align-items:center;font-size:11px;border-radius:6px;}
+.file-page.active {background:#f5f5f5;color:#222;font-weight:600;}
+.file-layers-header {height:44px;min-height:44px;padding:0 16px;}
+.file-layers-header>div {opacity:0;}
+.file-layers-header:hover>div,.file-layers-header:focus-within>div {opacity:1;}
+.layer-row {height:32px;min-height:32px;font-size:11px;}
+.layer-row.is-frame {font-weight:400;}
+.layer-name {gap:10px;font-size:11px;}
+.layer-type-icon,.layer-expand,.layer-expand-spacer {color:#aaa;}
+.comparison-inspector {max-width:45%;}
+.figma-inspector-actions {height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 12px;gap:8px;}
+.inspector-profile {display:flex;align-items:center;gap:4px;position:relative;}
+.profile-picture {display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#ededed;color:#555;}
+.inspector-profile>svg {background:#f5f5f5;border-radius:50%;width:24px;height:24px;padding:7px;}
+.inspector-profile select {position:absolute;inset:0;width:100%;opacity:0;cursor:pointer;}
+.inspector-profile:focus-within {outline:2px solid #0d99ff;outline-offset:2px;border-radius:16px;}
+.inspector-share-actions {display:flex;align-items:center;gap:8px;}
+.inspector-share-actions>button {display:flex;align-items:center;justify-content:center;gap:10px;height:32px;padding:0 3px;}
+.inspector-share-actions>button.figma-share-button {background:#0d99ff;color:white;font-size:11px;font-weight:500;border-radius:6px;padding:0 12px;}
+.figma-inspector-actions button:disabled,.figma-page-inspector button:disabled {opacity:1;cursor:default;}
+.comparison-inspector .inspector-fixed-header>.panel-heading {height:32px;padding:0 12px 8px 8px;gap:8px;}
+.design-inspector-tabs {gap:4px;}
+.design-inspector-tabs button {font-size:11px;padding:4px 8px;height:24px;border-radius:6px;color:#888;}
+.design-inspector-tabs button[aria-selected=true] {background:#f5f5f5;color:#222;}
+.design-inspector-tabs button:disabled {opacity:1;cursor:default;}
+.inspector-zoom {margin-left:auto;display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:11px;font-weight:400;color:#333;}
+.figma-page-inspector {font-size:11px;}
+.figma-page-inspector>section {border-bottom:1px solid #e5e5e5;padding:12px 16px;}
+.figma-page-inspector h3 {font-size:11px;font-weight:600;margin:0;}
+.page-background-section {height:84px;}
+.page-color-row {display:flex;align-items:center;gap:10px;margin-top:16px;}
+.page-color-value {display:flex;align-items:center;gap:6px;background:#f5f5f5;border-radius:5px;padding:4px 5px;flex:1;min-width:0;height:24px;}
+.page-color-swatch {width:14px;height:14px;border:1px solid #d9d9d9;border-radius:3px;background:#f5f5f5;}
+.page-opacity {display:flex;align-items:center;gap:7px;margin-left:auto;border-left:1px solid white;padding-left:8px;}
+.page-opacity>span {color:#999;}
+.page-property-section {height:40px;display:flex;align-items:center;justify-content:space-between;}
+.page-property-section h3 {display:flex;align-items:center;gap:5px;}
+.page-property-section>button {color:#777;}
+.page-export h3 {color:#888;}
+.mcp-connection-placeholder {font-weight:400;border:1px solid #e5e5e5;border-radius:4px;line-height:14px;padding:0 3px;white-space:nowrap;}
+.figma-help {position:absolute;right:24px;bottom:18px;width:32px;height:32px;display:grid;place-items:center;background:white;border:1px solid #ededed;border-radius:50%;box-shadow:0 2px 5px #0000001a;z-index:70;}
+.workspace-dock {bottom:12px;}
+.canvas-toolstrip {padding:7px;border-radius:14px;gap:5px;border-color:#e5e5e5;box-shadow:0 2px 7px #0000001a;}
+.canvas-tool-choice {background:transparent;}
+.canvas-toolstrip .canvas-tool-active {background:#0d99ff;color:white;border-radius:6px;width:32px;height:32px;}
+.canvas-toolstrip .canvas-tool-chevron {color:#333;width:18px;}
+.canvas-toolstrip .canvas-tool-placeholder {color:#333;}
+.navigation-rail .figma-menu-placeholder .figma-mark {position:static;left:auto;right:auto;top:auto;transform:none;width:12px;height:18px;}
+.layer-row.is-frame .layer-name {font-weight:400;}
+.layer-row.is-frame .layer-type-icon {color:#aaa;}
+.layer-row .layer-name {gap:10px;}
+.canvas-toolstrip {gap:3px;}
+.canvas-toolstrip .canvas-tool-placeholder {width:54px;gap:10px;}
+.canvas-toolstrip .canvas-tool-placeholder[aria-label^="Resources"] {width:32px;}
+.canvas-toolbelt {display:flex;align-items:center;gap:1px;padding:0 4px;margin-left:4px;border-left:1px solid #e5e5e5;background:#f5f5f5;border-radius:0 6px 6px 0;}
+.canvas-toolstrip .canvas-toolbelt button {width:28px;height:32px;color:#999;}
+.canvas-toolstrip .canvas-toolbelt .mode-design {background:white;box-shadow:0 1px 3px #00000015;color:#0d99ff;height:28px;}
+@media(max-width:1100px){.canvas-toolstrip .canvas-tool-placeholder {width:38px;gap:4px;}.canvas-toolbelt {display:none;}}

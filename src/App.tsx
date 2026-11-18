@@ -19,7 +19,8 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import SharePopover from './components/SharePopover';
 import { shareActionLabel } from './referencePresentation';
 import { useResearch } from './useResearch';
-import TopBar from './components/TopBar';
+import InspectorHeaderControls from './components/InspectorHeaderControls';
+import PageInspector from './components/PageInspector';
 import WorkspaceNavigation from './components/WorkspaceNavigation';
 import Canvas from './components/Canvas';
 import LayersPanel from './components/LayersPanel';
@@ -31,7 +32,7 @@ import { getBoundingBox } from './utils';
 import { fitWorkspace, fitBounds, zoomAtPoint } from './workspace';
 import { ReferenceDraft, ReferenceIntent, SharedReference, DESIGN_REFERENCE_PURPOSE } from './collaboration';
 import { useCollaboration } from './useCollaboration';
-import { PanelLeftClose } from 'lucide-react';
+import { PanelLeftClose,ChevronDown,HelpCircle } from 'lucide-react';
 export default function App() {
   const study=useStudy();
   const [generation,setGeneration]=useState(0),[resetError,setResetError]=useState('');
@@ -51,7 +52,7 @@ function Workspace({study,onReset,onToggleStudy}:{key?:number;study:ReturnType<t
   const [transform,setTransform]=useState({x:30,y:10,scale:.46});
   const [activePanelTab,setActivePanelTab]=useState<'layers'|'references'|'study'>(()=>new URL(location.href).searchParams.has('room')?'references':'layers');
   const [panelOpen,setPanelOpen]=useState(()=>study.active || window.innerWidth>1000 || new URL(location.href).searchParams.has('room'));
-  const [panelWidth,setPanelWidth]=useState(280);
+  const [panelWidth,setPanelWidth]=useState(240);
   const [isHelpOpen,setIsHelpOpen]=useState(false);
   const [draft,setDraft]=useState<ReferenceDraft|null>(null),[draftNote,setDraftNote]=useState('');
   const [draftPopoverOpen,setDraftPopoverOpen]=useState(false);
@@ -111,7 +112,7 @@ function Workspace({study,onReset,onToggleStudy}:{key?:number;study:ReturnType<t
   },[inferredRef,research.attempt,c.session?.userId,study.active]);
   const selectNode=(id:string,shift=false)=>{if(pickingSource){pickSource(id);return;}const node=nodes.find(n=>n.id===id);if(!node)return;const ids=shift?(inferredRef?.selectedIds.includes(id)?inferredRef.selectedIds.filter(n=>n!==id):[...(inferredRef?.selectedIds||[]),id]):[id];if(!ids.length){updateSelection(null);setSelectionState('idle');return;}updateSelection({selectedIds:ids,exemplarIds:ids,label:ids.length===1?node.label:`${ids.length} layers selected`,matchingRole:node.role,matchingComponent:node.component,scope:'exemplars',selectionMethod:'conventional'});setSelectionState('preview');};
   const openSection=(tab:typeof activePanelTab)=>{setPanelOpen(open=>tab===activePanelTab?!open:true);setActivePanelTab(tab);};
-  const resizePanel=(e:React.PointerEvent<HTMLDivElement>)=>{e.currentTarget.setPointerCapture(e.pointerId);const start=e.clientX,width=panelWidth;e.currentTarget.onpointermove=event=>setPanelWidth(Math.max(280,Math.min(420,width+event.clientX-start)));const finish=()=>{e.currentTarget.onpointermove=null;};e.currentTarget.onpointerup=finish;e.currentTarget.onpointercancel=finish;};
+  const resizePanel=(e:React.PointerEvent<HTMLDivElement>)=>{e.currentTarget.setPointerCapture(e.pointerId);const start=e.clientX,width=panelWidth;e.currentTarget.onpointermove=event=>setPanelWidth(Math.max(240,Math.min(420,width+event.clientX-start)));const finish=()=>{e.currentTarget.onpointermove=null;};e.currentTarget.onpointerup=finish;e.currentTarget.onpointercancel=finish;};
   const openShared=(id:string)=>{setDraftPopoverOpen(false);setReferenceOpenRevision(v=>v+1);const ref=c.room?.references.find(r=>r.id===id);if(ref&&!ref.archivedAt){void c.activity(id,'opened');for(const invitation of ref.attention||[])if(invitation.targetUser===c.session?.userId&&!invitation.viewedAt)void c.viewAttention(ref.id,invitation.id);}setActiveSharedId(id);setHighlightedId(id);setConversationOpen(true);};
   const locate=(ref:SharedReference)=>{if(ref.archivedAt)return false;const box=getBoundingBox(ref.elementIds,nodes),r=canvasHost.current?.getBoundingClientRect();if(box&&r){setTransform(fitBounds(box,r.width,r.height));void c.activity(ref.id,'located',ref.elementIds);}setHighlightedId(ref.id);return !!(box&&r);};
   const viewSharedRequest=(ref:SharedReference)=>{openShared(ref.id);requestAnimationFrame(()=>locate(ref));};
@@ -159,7 +160,7 @@ function Workspace({study,onReset,onToggleStudy}:{key?:number;study:ReturnType<t
   const mentionNotification=c.room?.references.filter(r=>needsReferenceNotification(r,c.session?.userId)&&!dismissedAttention.includes(`mention:${r.id}`)).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];
   const pending=c.room?.references.filter(r=>needsReferenceNotification(r,c.session?.userId)).length||0;
   return <div className="app-shell flex flex-col h-dvh w-full overflow-hidden text-zinc-800 bg-white font-sans">
-    <TopBar studyActive={study.active} onToggleStudy={onToggleStudy} onPerspective={switchPerspective} mode={c.mode} scale={transform.scale} onZoomIn={()=>zoomAtCenter(1.2)} onZoomOut={()=>zoomAtCenter(1/1.2)} onZoomFit={handleZoomFit} onShowHelp={()=>setIsHelpOpen(true)} session={c.session} room={c.room} connected={c.connected} onOpenRoom={()=>{setActivePanelTab('references');setPanelOpen(true);}}/>
+
     <div className="flex flex-1 min-h-0 overflow-hidden relative">
       <WorkspaceNavigation active={activePanelTab} open={panelOpen} pending={pending} onOpen={openSection}/>
       <main className="workspace flex flex-col flex-1 min-w-0 relative overflow-hidden" aria-label="Design canvas">
@@ -172,9 +173,9 @@ function Workspace({study,onReset,onToggleStudy}:{key?:number;study:ReturnType<t
         {activePanelTab!=='layers'&&<div className="panel-heading"><span>{activePanelTab==='references'?'Shared References':activePanelTab==='layers'?'Layers':activePanelTab==='study'?'User Study':'Selection'}</span><button title="Close panel" aria-label="Close panel" onClick={()=>setPanelOpen(false)}><PanelLeftClose size={16}/></button></div>}
         <div className="flex-1 min-h-0" hidden={activePanelTab!=='layers'}><LayersPanel onClose={()=>setPanelOpen(false)} onSelectNodes={ids=>{updateSelection({selectedIds:ids,exemplarIds:ids,scope:'exemplars',selectionMethod:'conventional',label:`${ids.length} layers selected`});setSelectionState('preview');}} onLocate={ids=>{const box=getBoundingBox(ids,nodes),r=canvasHost.current?.getBoundingClientRect();if(box&&r)setTransform(fitBounds(box,r.width,r.height));}} nodes={nodes} inferredRef={inferredRef} onSelectNode={selectNode}/></div>
         <div className="flex-1 min-h-0" hidden={activePanelTab!=='references'}><CollaborationPanel studyActive={study.active} onStudyReset={onReset} visible={panelOpen&&activePanelTab==='references'} nodes={nodes} collaboration={c} hasDraft={!!draft} onResumeDraft={()=>{setConversationOpen(false);setDraftPopoverOpen(true);}} activeId={activeSharedId} openRevision={referenceOpenRevision} onOpen={id=>{const ref=c.room?.references.find(r=>r.id===id);if(ref&&needsReferenceNotification(ref,c.session?.userId))viewSharedRequest(ref);else openShared(id);}} onLocate={locate} onClear={()=>{setHighlightedId(null);setConversationOpen(false);}}/></div>
-        <div role="separator" aria-label="Resize workspace panel" aria-orientation="vertical" aria-valuenow={panelWidth} aria-valuemin={280} aria-valuemax={420} tabIndex={0} className="panel-resizer" onPointerDown={resizePanel} onKeyDown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();setPanelWidth(v=>Math.max(280,Math.min(420,v+(e.key==='ArrowRight'?10:-10))));}}}/>
+        <div role="separator" aria-label="Resize workspace panel" aria-orientation="vertical" aria-valuenow={panelWidth} aria-valuemin={240} aria-valuemax={420} tabIndex={0} className="panel-resizer" onPointerDown={resizePanel} onKeyDown={e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();setPanelWidth(v=>Math.max(240,Math.min(420,v+(e.key==='ArrowRight'?10:-10))));}}}/>
       </aside>
-      <ComparisonInspector workMode={compareInspectorOpen?'compare':'edit'} onModeChange={changeInspectorMode} compareAvailable={compareModeAvailable} mode={selectionMode?'selection':'compare'} count={selectionMode?inferredRef?.selectedIds.length:draftInInspector?draft?.elementIds.length:activeConversation?.elementIds.length} contentRef={setInspectorHost}>{selectionMode&&!selectionPending&&inferredRef&&<div className="selection-inspector-body">{inspectorEditor}</div>}{selectionMode&&(selectionPending||!inferredRef)&&<p className="design-empty-state">{selectionPending?'Confirm the interpretation to inspect its properties.':'Select a layer to inspect its properties.'}</p>}{conversationOpen&&conversationInInspector&&activeConversation&&<div className="inspector-conversation collab-panel" role="region" aria-label="Comparison conversation" tabIndex={0}><ReferenceConversation key={activeConversation.id} active={activeConversation} nodes={nodes} collaboration={c} onLocate={locate} onClear={()=>{setHighlightedId(null);setConversationOpen(false);}}/>{c.error&&<p role="alert">{c.error}</p>}</div>}</ComparisonInspector>
+      <ComparisonInspector headerControls={<InspectorHeaderControls session={c.session} mode={c.mode} onPerspective={switchPerspective}/>} zoomControls={<button type="button" className="inspector-zoom" aria-label="Zoom to fit" title="Zoom to fit all screens" onClick={handleZoomFit}>{Math.round(transform.scale*100)}%<ChevronDown size={10}/></button>} workMode={compareInspectorOpen?'compare':'edit'} onModeChange={changeInspectorMode} compareAvailable={compareModeAvailable} mode={selectionMode?'selection':'compare'} count={selectionMode?inferredRef?.selectedIds.length:draftInInspector?draft?.elementIds.length:activeConversation?.elementIds.length} contentRef={setInspectorHost}>{selectionMode&&!selectionPending&&inferredRef&&<div className="selection-inspector-body">{inspectorEditor}</div>}{selectionMode&&!selectionPending&&!inferredRef&&<PageInspector/>}{selectionMode&&selectionPending&&<p className="design-empty-state">Confirm the interpretation to inspect its properties.</p>}{conversationOpen&&conversationInInspector&&activeConversation&&<div className="inspector-conversation collab-panel" role="region" aria-label="Comparison conversation" tabIndex={0}><ReferenceConversation key={activeConversation.id} active={activeConversation} nodes={nodes} collaboration={c} onLocate={locate} onClear={()=>{setHighlightedId(null);setConversationOpen(false);}}/>{c.error&&<p role="alert">{c.error}</p>}</div>}</ComparisonInspector><button type="button" className="figma-help" aria-label="Help" onClick={()=>setIsHelpOpen(true)}><HelpCircle size={22} strokeWidth={1.5}/></button>
     </div><HelpModal isOpen={isHelpOpen} onClose={()=>setIsHelpOpen(false)}/>
   </div>;
 }

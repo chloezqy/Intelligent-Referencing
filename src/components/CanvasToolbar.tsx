@@ -1,8 +1,8 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {MousePointer2,Sparkles,Hand,ChevronDown,Check,Frame,Square,PenTool,Type,MessageCircle,Shapes} from 'lucide-react';
+import {MousePointer2,Sparkles,Hand,ChevronDown,Check,Frame,Square,PenTool,Type,MessageCircle,Shapes,Braces,Brush,MousePointerSquareDashed,Layers2,CodeXml} from 'lucide-react';
 import type {ToolMode} from '../types';
 export const CANVAS_TOOLS=[{mode:'pointer',label:'Select',key:'V',icon:MousePointer2},{mode:'reference',label:'Smart Gesture',key:'G',icon:Sparkles},{mode:'pan',label:'Hand',key:'H',icon:Hand}] as const;
-const placeholders=[{label:'Frame',icon:Frame},{label:'Shape',icon:Square},{label:'Pen',icon:PenTool},{label:'Text',icon:Type},{label:'Comment',icon:MessageCircle},{label:'Resources',icon:Shapes}];
+const placeholders=[{label:'Frame',icon:Frame},{label:'Shape',icon:Square},{label:'Pen',icon:PenTool},{label:'Text',icon:Type},{label:'Code',icon:Braces},{label:'Comment',icon:MessageCircle},{label:'Resources',icon:Shapes}];
 export default function CanvasToolbar({mode,onChange}:{mode:ToolMode;onChange:(mode:ToolMode)=>void}){
  const [open,setOpen]=useState(false),root=useRef<HTMLDivElement>(null),toggle=useRef<HTMLButtonElement>(null);
  const active=CANVAS_TOOLS.find(tool=>tool.mode===mode)||CANVAS_TOOLS[0],Icon=active.icon;
@@ -20,7 +20,7 @@ export default function CanvasToolbar({mode,onChange}:{mode:ToolMode;onChange:(m
    <button ref={toggle} type="button" className="canvas-tool-chevron" aria-label="Choose selection tool" aria-haspopup="menu" aria-expanded={open} aria-controls="canvas-tool-menu" onClick={()=>setOpen(!open)} onKeyDown={event=>{if(event.key==='ArrowDown'&&!open){event.preventDefault();setOpen(true);requestAnimationFrame(()=>focusOption(0));}}}><ChevronDown size={12}/></button>
    {open&&<div id="canvas-tool-menu" className="canvas-tool-menu" role="menu" aria-label="Selection tools">{CANVAS_TOOLS.map(tool=>{const ItemIcon=tool.icon;return <button type="button" key={tool.mode} role="menuitemradio" aria-checked={mode===tool.mode} title={tool.mode==='reference'?'Draw to select · Hold Shift to add another region':undefined} onClick={()=>choose(tool.mode)}><span className="canvas-tool-check">{mode===tool.mode&&<Check size={14}/>}</span><ItemIcon size={17}/><span>{tool.label}</span><kbd>{tool.key}</kbd></button>;})}</div>}
   </div>
-  <span className="canvas-tool-divider" aria-hidden="true"/>
-  {placeholders.map(tool=>{const PlaceholderIcon=tool.icon;return <button type="button" className="canvas-tool-placeholder" disabled aria-disabled="true" key={tool.label} aria-label={`${tool.label} — Coming soon`} title={`${tool.label} · Coming soon`}><PlaceholderIcon size={20}/></button>;})}
+  {placeholders.map(tool=>{const PlaceholderIcon=tool.icon;return <button type="button" className="canvas-tool-placeholder" disabled aria-disabled="true" key={tool.label} aria-label={`${tool.label} — Coming soon`} title={`${tool.label} · Coming soon`}><PlaceholderIcon size={20} strokeWidth={1.5}/>{tool.label!=='Resources'&&<ChevronDown size={10}/>}</button>;})}
+  <div className="canvas-toolbelt" aria-label="Editor modes">{([{label:'Draw',icon:Brush},{label:'Design',icon:MousePointerSquareDashed},{label:'Motion',icon:Layers2},{label:'Dev Mode',icon:CodeXml}]).map(item=><button type="button" disabled aria-label={item.label} key={item.label} className={item.label==='Design'?'mode-design':''}><item.icon size={17} strokeWidth={1.5}/></button>)}</div>
  </div>;
 }

@@ -440,7 +440,7 @@ export default function Canvas({
 
   return (
     <div
-      className={`relative w-full h-full overflow-clip bg-[#e8e8e8] select-none
+      className={`relative w-full h-full overflow-clip bg-[#f5f5f5] select-none
         ${isPanning || isSpacePressed ? 'cursor-grab' : selectionState === 'drawing' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
       {gestureNotice&&<div className="gesture-notice" role="status">{gestureNotice}<button type="button" aria-label="Dismiss gesture message" onClick={()=>setGestureNotice('')}><X size={14}/></button></div>}
