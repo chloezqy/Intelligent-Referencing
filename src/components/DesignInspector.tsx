@@ -4,8 +4,8 @@ import type {UIElement} from '../types';
 import {roots,textTargets,layoutPatches,LayoutOperation} from '../editing';
 import {SECTION_FIELDS,FIELD_LABELS,selectedProperty,DesignSection} from '../designInspectorProperties';
 import {ElementPreview} from './ReferencePreviewCard';
-interface Props {ids:string[];nodes:UIElement[];onProperties:(section:DesignSection,values:Partial<UIElement>)=>void;onAlign:(op:LayoutOperation)=>void;tools:(section:DesignSection)=>React.ReactNode;preview:(section:DesignSection)=>React.ReactNode;history:React.ReactNode}
-export default function DesignInspector({ids,nodes,onProperties,onAlign,tools,preview,history}:Props){
+interface Props {ids:string[];nodes:UIElement[];onProperties:(section:DesignSection,values:Partial<UIElement>)=>void;onAlign:(op:LayoutOperation)=>void;tools:(section:DesignSection)=>React.ReactNode;preview:(section:DesignSection)=>React.ReactNode;history:React.ReactNode;actions?:React.ReactNode}
+export default function DesignInspector({ids,nodes,onProperties,onAlign,tools,preview,history,actions}:Props){
  const selected=roots(ids,nodes),[expanded,setExpanded]=useState(false);
  const text=textTargets(ids,nodes,'all').length>0;
  const sections=(Object.keys(SECTION_FIELDS) as DesignSection[]).map(section=>({section,tools:tools(section)})).filter(({section,tools})=>(section!=='Typography'||text)&&(section!=='Appearance'||SECTION_FIELDS.Appearance.some(key=>selectedProperty(ids,nodes,key).available)||(Array.isArray(tools)?tools.length>0:!!tools)));
@@ -20,6 +20,7 @@ export default function DesignInspector({ids,nodes,onProperties,onAlign,tools,pr
  {section==='Position'&&<div className="design-alignment" role="group" aria-label="Alignment">{([['left',AlignLeft,'Align left'],['center',AlignCenter,'Align horizontal centers'],['right',AlignRight,'Align right'],['top',AlignStartVertical,'Align top'],['middle',AlignCenterVertical,'Align vertical centers'],['bottom',AlignEndVertical,'Align bottom']] as const).map(([op,Icon,title])=>{let issue='';try{layoutPatches(ids,nodes,op);}catch(e){issue=(e as Error).message;}return <button key={op} type="button" aria-label={title} title={issue||title} disabled={!!issue} onClick={()=>onAlign(op)}><Icon size={14}/></button>;})}</div>}
  </PropertySection>)}
  <details className="design-property-section design-export"><summary>Export<ChevronDown size={12}/></summary><p className="design-unavailable">Export is not available in this prototype.</p></details>
+ {actions}
  {history}
  </div>;
 }

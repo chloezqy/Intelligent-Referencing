@@ -1,3 +1,4 @@
+import {previewSpotlightNodes} from '../previewSpotlight';
 import ReferenceActions from './ReferenceActions';
 import {appendGestureSamples} from '../gestureSamples';
 import {canvasSelectionTarget,nestedSelection,mergeLayerSelection,canvasMarqueeTargets,isSelectionDrag} from '../selectionInteraction';
@@ -17,6 +18,7 @@ import { getBoundingBox, rectIntersect,inferSelection } from '../utils';
 import { Check, Sparkles, X, Share2, GitCompareArrows } from 'lucide-react';
 
 interface CanvasProps {
+  previewSpotlightIds?:string[];
   onMoveEnd:()=>void;
   pickingSource:boolean;
   sourceId:string|null;
@@ -48,7 +50,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,inspectorOpen=false,onSelectionStart,onMove,onCompare,onInterpretationConfirmed,compareOwn=false,compareReady,compareHint,
+  previewSpotlightIds=[],onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,inspectorOpen=false,onSelectionStart,onMove,onCompare,onInterpretationConfirmed,compareOwn=false,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -349,6 +351,7 @@ export default function Canvas({
   const drawingStack = selectionState==='drawing' && !!pendingPointer.current?.shift;
   const showGestureAnimation = drawingStack || (!!draftRef && !interpretationEngaged && !activeCandidate);
   const previewing = !!activeCandidate && !drawingStack;
+  const spotlightNodes=previewing?nodes.filter(n=>activeIds.includes(n.id)):previewSpotlightNodes(previewSpotlightIds,nodes);
   const submitMeaning=(event:React.FormEvent)=>{event.preventDefault();const intent=chatInput.trim();if(!intent||ai.loading)return;setChatMessage(intent);setChatInput('');setActiveInterpretation(null);setHoveredInterpretation(null);onResearchEvent('ai_interpretation_requested');void ai.request(intent);};
   const exemplarIds = activeCandidate ? activeCandidate.exemplarIds : (inferredRef?.exemplarIds || []);
 
@@ -517,10 +520,10 @@ export default function Canvas({
           {sharedReferences.filter(ref=>ref.id===activeSharedId&&!ref.archivedAt).flatMap(ref=>nodes.filter(n=>ref.elementIds.includes(n.id)).map(node=><div key={`shared-${ref.id}-${node.id}`} className={`shared-target absolute pointer-events-none z-20 ${ref.sourceUser==='A'?'shared-a':'shared-b'}`} style={{left:node.x-2,top:node.y-2,width:node.w+4,height:node.h+4,borderRadius:(node.radius||0)+2,borderWidth:2/transform.scale}}/>))}
 
           {sourceId&&nodes.filter(n=>n.id===sourceId).map(n=><div key={`source-${n.id}`} className="source-outline absolute pointer-events-none z-30" style={{left:n.x-3,top:n.y-3,width:n.w+6,height:n.h+6}}><span>Style source</span></div>)}
-          {previewing&&<svg className="absolute inset-0 pointer-events-none overflow-visible z-20" style={{width:5000,height:3000}} aria-hidden="true">
+          {(previewing||spotlightNodes.length>0)&&<svg data-canvas-spotlight={previewing?'gesture':'comparison'} className="absolute inset-0 pointer-events-none overflow-visible z-20" style={{width:5000,height:3000}} aria-hidden="true">
             <defs><mask id="selection-preview-focus" maskUnits="userSpaceOnUse" x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale}>
               <rect x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale} fill="white"/>
-              {nodes.filter(n=>activeIds.includes(n.id)).map(n=><rect key={n.id} x={n.x-2} y={n.y-2} width={n.w+4} height={n.h+4} rx={(n.radius||0)+2} fill="black"/>)}
+              {spotlightNodes.map(n=><rect data-spotlight-node={n.id} key={n.id} x={n.x-2} y={n.y-2} width={n.w+4} height={n.h+4} rx={(n.radius||0)+2} fill="black"/>)}
             </mask></defs>
             <rect x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale} fill="#101d27" fillOpacity="0.55" mask="url(#selection-preview-focus)"/>
           </svg>}

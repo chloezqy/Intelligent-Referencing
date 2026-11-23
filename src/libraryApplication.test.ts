@@ -36,5 +36,5 @@ test('organized library samples match exported palettes, typography and componen
 });
 test('normal Design inspector exposes full library application and source navigation without AI',()=>{
  const html=renderToStaticMarkup(React.createElement(EditingToolbar,{selectionInspector:true,inline:true,selection:{selectedIds:ids,exemplarIds:ids,scope:'screen',selectionMethod:'conventional',label:'Home cards'},nodes:MOCK_NODES,onPreview:()=>{},onApply:()=>{},onUndo:()=>{},onRedo:()=>{},canUndo:false,canRedo:false,sourceId:null,onSource:()=>{},picking:false,onPicking:()=>{},onState:()=>{},onLocateLibrary:()=>{}}));
- assert.match(html,/Appearance suggested actions/);assert.match(html,/design-smart-row[^>]*[\s\S]*Apply design system/);assert.match(html,/View design system/);assert.doesNotMatch(html,/selection-library-action|Apply complete design system/);
+ assert.match(html,/AI Actions/);assert.match(html,/design-smart-row[^>]*[\s\S]*Apply design system/);assert.doesNotMatch(html,/View design system/);assert.doesNotMatch(html,/selection-library-action|Apply complete design system/);
 });

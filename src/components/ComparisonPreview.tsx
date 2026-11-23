@@ -1,6 +1,7 @@
+import {usePreviewComparison} from '../usePreviewComparison';
 import React, {useState} from 'react';
 import type {UIElement} from '../types';
-import {applyPatches,proposalPatches,roots,descendants,EditProposal} from '../editing';
+import {applyPatches,proposalPatches,roots,descendants,EditProposal,Patch} from '../editing';
 import {ElementPreview} from './ReferencePreviewCard';
 const fields:Record<string,string>={bg:'Background color',color:'Text color',border:'Border',radius:'Corner radius',w:'Width',h:'Height',fontFamily:'Font family',fontSize:'Font size',fontWeight:'Font weight',lineHeight:'Line height',letterSpacing:'Letter spacing',spacing:'Spacing',shadow:'Shadow',x:'Horizontal position',y:'Vertical position'};
 const value=(key:string,v:unknown)=>`${v===undefined?'Not recorded':String(v)}${v!==undefined&&['radius','w','h','fontSize','letterSpacing','spacing','x','y'].includes(key)?' px':''}`;
@@ -12,12 +13,14 @@ const styleCategories=[
  ['Layout',['spacing','x','y','w','h']],
 ] as const;
 const shortName=(node:UIElement|undefined)=>node?.label.replace(/^Product Card \((.*)\)$/,'$1').replace(/^Image · /,'')||'Selected object';
-export default function ComparisonPreview({beforeActions,applyDisabled=false,beforeChanges,emptyMessage='Already matches this style',compact=false,selectable=true,variant='comparison',proposal,enabled,nodes,onToggle,onApply,onCancel}:{beforeActions?:React.ReactNode;applyDisabled?:boolean;beforeChanges?:React.ReactNode;emptyMessage?:string;compact?:boolean;selectable?:boolean;variant?:'comparison'|'design-system'|'typography';proposal:EditProposal;enabled:string[];nodes:UIElement[];onToggle:(id:string)=>void;onApply:()=>void;onCancel:()=>void}){
+export default function ComparisonPreview({beforeActions,applyDisabled=false,beforeChanges,emptyMessage='Already matches this style',compact=false,selectable=true,variant='comparison',proposal,enabled,nodes,onPreview,onToggle,onApply,onCancel}:{beforeActions?:React.ReactNode;applyDisabled?:boolean;beforeChanges?:React.ReactNode;emptyMessage?:string;compact?:boolean;selectable?:boolean;variant?:'comparison'|'design-system'|'typography';proposal:EditProposal;enabled:string[];nodes:UIElement[];onPreview?:(patches:Patch[])=>void;onToggle:(id:string)=>void;onApply:()=>void;onCancel:()=>void}){
  const [expandedChanges,setExpandedChanges]=useState<Record<string,boolean>>({});
  const typography=variant==='typography';
  const visibleEntries=(p:EditProposal['mappings'][number]['patches'][number])=>Object.entries(p.changes).filter(([key,next])=>!typography||key!=='token'&&nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]!==next);
  const hasChanges=proposal.mappings.filter(m=>enabled.includes(m.id)).some(m=>m.patches.some(p=>visibleEntries(p).length));
  const patches=proposalPatches(proposal,enabled,nodes),after=applyPatches(nodes,patches),first=nodes.find(n=>n.id===proposal.targetIds[0]),proposed=after.find(n=>n.id===first?.id);
+ const comparison=usePreviewComparison(patches,onPreview);
+ const apply=()=>{comparison.close();onApply();},cancel=()=>{comparison.close();onCancel();};
  const description=(mapping:EditProposal['mappings'][number])=>{const keys=[...new Set(mapping.patches.flatMap(p=>Object.keys(p.changes)))];const property=keys.length===2&&keys.includes('w')&&keys.includes('h')?'Size':mapping.id==='match-spacing'?'Spacing':keys.map(key=>fields[key]||key).join(', ');return `${property} · ${shortName(nodes.find(n=>n.id===mapping.patches[0]?.id))}`;};
  if(variant==='design-system'){
   const targets=roots(proposal.targetIds,nodes).filter(root=>{const ids=new Set(descendants([root.id],nodes).map(n=>n.id));return patches.some(p=>ids.has(p.id));});
@@ -25,7 +28,7 @@ export default function ComparisonPreview({beforeActions,applyDisabled=false,bef
   return <section className="comparison-confirmation library-confirmation" aria-label="Preview design system changes"><header><h4>Preview design system changes</h4></header>
    {targets.map(root=>{const proposed=after.find(n=>n.id===root.id)!,ids=new Set(descendants([root.id],nodes).map(n=>n.id)),changes=patches.filter(p=>ids.has(p.id));return <div key={root.id} className="library-object-preview">
     {targets.length>1&&<strong className="library-object-title">{shortName(root)}</strong>}
-    <div className="comparison-before-after"><div><small>Current</small><ElementPreview element={root} nodes={nodes}/></div><div><small>With library styles</small><ElementPreview element={proposed} nodes={after}/></div></div>
+    <div className="comparison-before-after"><div {...comparison.card('before','Current',[root.id])}><small>Current</small><ElementPreview element={root} nodes={nodes}/></div><div {...comparison.card('after','With library styles',[root.id])}><small>With library styles</small><ElementPreview element={proposed} nodes={after}/></div></div>
     {(() => {
      const entries=changes.flatMap(p=>Object.entries(p.changes)
       .filter(([key])=>key!=='token')
@@ -52,14 +55,14 @@ export default function ComparisonPreview({beforeActions,applyDisabled=false,bef
    </div>;})}
    {!targets.length&&<p className="confirmation-note">No applicable property changes.</p>}
    {typography&&!hasChanges&&<p role="status">{emptyMessage}</p>}
-  {!typography&&<p className="confirmation-note">No changes applied yet.</p>}{beforeActions}<div className="confirmation-actions"><button type="button" className="primary-action" disabled={applyDisabled||!patches.length} onClick={onApply}>Apply changes</button><button type="button" onClick={onCancel}>Cancel</button></div>
+  {!typography&&<p className="confirmation-note">No changes applied yet.</p>}{beforeActions}<div className="confirmation-actions"><button type="button" className="primary-action" disabled={applyDisabled||!patches.length} onClick={apply}>Apply changes</button><button type="button" onClick={cancel}>Cancel</button></div>
   </section>;
  }
  return <section className={`comparison-confirmation ${compact?'compact-style-confirmation':''}`} aria-label="Preview changes">
   {!compact&&<header><h4>Preview changes</h4><small>{enabled.length} {enabled.length===1?'change':'changes'}</small></header>}
   {typography&&!compact&&<p className="confirmation-change-title">{proposal.title}</p>}
   {!typography&&proposal.mappings.length===1&&<p className="confirmation-change-title">{description(proposal.mappings[0])}</p>}
-  {first&&proposed&&<div className="comparison-before-after"><div><small>Before</small><ElementPreview element={first} nodes={nodes}/></div><div><small>After</small><ElementPreview element={proposed} nodes={after}/></div></div>}
+  {first&&proposed&&<div className="comparison-before-after"><div {...comparison.card('before','Before',[first.id])}><small>Before</small><ElementPreview element={first} nodes={nodes}/></div><div {...comparison.card('after','After',[first.id])}><small>After</small><ElementPreview element={proposed} nodes={after}/></div></div>}
   {beforeChanges}
   <ul className="confirmation-changes">{proposal.mappings.map(mapping=>{
    const keys=[...new Set(mapping.patches.flatMap(p=>Object.keys(p.changes)))],name=shortName(nodes.find(n=>n.id===mapping.patches[0]?.id));
@@ -70,6 +73,6 @@ export default function ComparisonPreview({beforeActions,applyDisabled=false,bef
   })}</ul>
   {typography&&!hasChanges&&<p role="status">{emptyMessage}</p>}
   {!typography&&<p className="confirmation-note">No changes applied yet.</p>}
-  {beforeActions}<div className="confirmation-actions"><button type="button" className="primary-action" disabled={applyDisabled||!enabled.length||typography&&!hasChanges} onClick={onApply}>Apply changes</button><button type="button" onClick={onCancel}>Cancel</button></div>
+  {beforeActions}<div className="confirmation-actions"><button type="button" className="primary-action" disabled={applyDisabled||!enabled.length||typography&&!hasChanges} onClick={apply}>Apply changes</button><button type="button" onClick={cancel}>Cancel</button></div>
  </section>;
 }

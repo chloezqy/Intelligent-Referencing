@@ -1160,6 +1160,7 @@ button:disabled { opacity:.45; }
 }
 
 .library-change-category {
+  margin-inline-start:16px;
   border-top:1px solid #e4ebf0;
 }
 .library-change-category > summary {
@@ -1375,3 +1376,38 @@ button:disabled { opacity:.45; }
 .canvas-toolstrip .canvas-toolbelt button {width:28px;height:32px;color:#999;}
 .canvas-toolstrip .canvas-toolbelt .mode-design {background:white;box-shadow:0 1px 3px #00000015;color:#0d99ff;height:28px;}
 @media(max-width:1100px){.canvas-toolstrip .canvas-tool-placeholder {width:38px;gap:4px;}.canvas-toolbelt {display:none;}}
+
+/* Unified AI assistance, separate from the native property controls. */
+.design-ai-actions {margin:12px 10px;border:1px solid #9bd4ff;border-radius:10px;background:#f2f9ff;box-shadow:0 2px 8px #0d99ff14;min-width:0;}
+.design-ai-actions.is-collapsed {position:sticky;bottom:0;z-index:1;}
+.design-ai-actions .ai-actions-heading {display:flex;align-items:center;gap:7px;width:100%;padding:12px 10px;border:0;border-radius:10px;background:#e3f2ff;text-align:left;color:#175a8a;}
+.design-ai-actions .ai-actions-heading strong {font-size:12px;font-weight:600;white-space:nowrap;}
+.design-ai-actions .ai-actions-heading small {font-size:9px;line-height:1.4;color:#526b7d;}
+.design-ai-actions .ai-actions-heading>svg:last-child {margin-left:auto;flex-shrink:0;}
+.design-ai-actions.is-expanded .ai-actions-heading>svg:last-child {transform:rotate(180deg);}
+.design-ai-actions .ai-actions-body {padding:0 10px 10px;}
+.native-design-editor .design-ai-actions .design-smart-row {padding:10px 0;color:#253744;gap:8px;}
+.design-ai-actions .design-smart-row>span {min-width:0;}
+.design-ai-actions .design-smart-row strong {display:block;font-size:11px;font-weight:600;line-height:1.4;}
+.design-ai-actions .design-smart-row small {display:block;margin-top:2px;font-size:10px;line-height:1.4;font-weight:400;color:#526b7d;}
+.design-ai-actions .design-smart-row>svg:first-child {color:#0d99ff;flex-shrink:0;}
+.design-ai-actions .design-suggestion-rows>.design-smart-tool+.design-smart-tool {border-color:#d6eaf8;}
+.design-ai-actions .ai-command {display:flex;align-items:center;gap:6px;margin-top:10px;padding:5px;border:1px solid #c0e1f8;border-radius:7px;background:#fff;color:#6f96b0;}
+.design-ai-actions .ai-command input {width:100%;min-width:0;border:0;background:transparent;padding:4px 0;font-size:10px;}
+.design-ai-actions .ai-command button {display:grid;place-items:center;border:0;border-radius:5px;padding:5px;background:#0d99ff;color:#fff;opacity:.45;}
+.design-ai-actions .ai-actions-empty {font-size:11px;line-height:1.5;color:#526b7d;margin:0 0 10px;}
+.design-ai-actions button:focus-visible {outline:2px solid #0d99ff;outline-offset:2px;}
+.design-ai-actions .ai-actions-body[hidden] {display:none;}
+
+.design-ai-actions .ai-actions-heading>svg,
+.design-ai-actions .design-smart-row>svg:last-child {color:#0d99ff;}
+.design-ai-actions .ai-actions-heading:hover {background:#d6ecff;}
+.native-design-editor .design-ai-actions .design-smart-row:hover:not(:disabled) {background:#e7f4ff;}
+.design-ai-actions .ai-command input:disabled {color:#6f8799;opacity:1;cursor:not-allowed;}
+.design-ai-actions .ai-command input::placeholder {color:#6f8799;opacity:1;}
+.design-ai-actions .ai-command button:disabled {cursor:not-allowed;}
+
+/* Hover/focus changes only the temporary canvas appearance. */
+[data-preview-appearance] {outline:2px solid transparent;outline-offset:-2px;}
+[data-preview-appearance][data-preview-active="true"] {outline-color:#b8dfff;}
+[data-preview-appearance]:focus-visible {outline-color:#0d99ff;}

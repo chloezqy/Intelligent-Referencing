@@ -1,3 +1,4 @@
+import {usePreviewComparison} from '../usePreviewComparison';
 import {Layers,MousePointer2} from 'lucide-react';
 import React,{useEffect,useRef,useState} from 'react';
 import {requestAI} from '../aiClient';
@@ -19,10 +20,11 @@ export default function LayerStyleReference({properties,ids,nodes,sourceId,onSou
  useEffect(()=>{if(issue&&sourceId)onPicking(true);},[sourceId,issue]);
  const patches=proposal?proposalPatches(proposal,proposal.mappings.map(m=>m.id),nodes):[],patchKey=JSON.stringify(patches);
  useEffect(()=>{onPreview(patches);},[patchKey]);
+ const comparison=usePreviewComparison(patches,onPreview);
  const after=applyPatches(nodes,patches),source=nodes.find(n=>n.id===sourceId),targets=nodes.filter(n=>ids.includes(n.id));
  return <section className="layer-style-reference" aria-label="Match another layer">
  <div className="layer-reference-cards">
-  <div className="layer-reference-card">
+  <div className="layer-reference-card" {...comparison.card('before','Current selection',targets.map(n=>n.id))}>
    <span className="layer-reference-label">Current selection</span>
    <div className="layer-reference-thumbnails">
     {targets.map(n=><div key={n.id}><ElementPreview element={n} nodes={nodes}/></div>)}
@@ -42,7 +44,7 @@ export default function LayerStyleReference({properties,ids,nodes,sourceId,onSou
  </div>
  <div className="layer-reference-pick"><button type="button" aria-pressed={picking} onClick={()=>{manual.current=true;onPicking(!picking);}}><MousePointer2 size={14} aria-hidden="true"/>Pick another layer</button></div>
  {picking&&<p role="status">Choose a compatible layer on the canvas or in Layers. Escape to cancel.</p>}{issue&&<p role="status">{issue}</p>}
- {proposal&&<><h4>Proposed changes</h4>{!patches.length?<p>Styles already match</p>:<>{targets.map(n=><div className="layer-reference-result" key={n.id}><small>After{targets.length>1?` · ${n.label}`:''}</small><ElementPreview element={after.find(a=>a.id===n.id)!} nodes={after}/></div>)}<dl className="library-change-summary">{patches.flatMap(p=>Object.entries(p.changes).map(([key,next])=><div key={`${p.id}-${key}`}><dt>{labels[key]||key}{targets.length>1?` · ${nodes.find(n=>n.id===p.id)?.label}`:''}</dt><dd>{String(nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]??'Not recorded')} → {String(next)}</dd></div>))}</dl></>}</>}
- <div className="confirmation-actions"><button type="button" className="primary-action" disabled={!proposal||!patches.length||picking} onClick={()=>{if(proposal){onApply(proposal,patches);onPreview([]);onCancel();}}}>Apply changes</button><button type="button" onClick={()=>{onPreview([]);onPicking(false);onCancel();}}>Cancel</button></div>
+ {proposal&&<><h4>Proposed changes</h4>{!patches.length?<p>Styles already match</p>:<>{targets.map(n=><div className="layer-reference-result" key={n.id} {...comparison.card('after','After',[n.id])}><small>After{targets.length>1?` · ${n.label}`:''}</small><ElementPreview element={after.find(a=>a.id===n.id)!} nodes={after}/></div>)}<dl className="library-change-summary">{patches.flatMap(p=>Object.entries(p.changes).map(([key,next])=><div key={`${p.id}-${key}`}><dt>{labels[key]||key}{targets.length>1?` · ${nodes.find(n=>n.id===p.id)?.label}`:''}</dt><dd>{String(nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]??'Not recorded')} → {String(next)}</dd></div>))}</dl></>}</>}
+ <div className="confirmation-actions"><button type="button" className="primary-action" disabled={!proposal||!patches.length||picking} onClick={()=>{if(proposal){comparison.close();onApply(proposal,patches);onPreview([]);onCancel();}}}>Apply changes</button><button type="button" onClick={()=>{comparison.close();onPreview([]);onPicking(false);onCancel();}}>Cancel</button></div>
  </section>;
 }
