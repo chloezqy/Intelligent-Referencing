@@ -6,11 +6,11 @@ Current implementation: November 24, 2026. Start with the [README](../README.md)
 
 `src/data.ts` builds six commerce screens with stable IDs, semantic roles, components, parent relationships, and world-coordinate bounds. `src/designSystem.ts` builds the separate Studio Blue library, including the actual source styles consumed by matching. Library samples are read-only.
 
-The commerce baseline uses warm surfaces, brown actions, serif product titles, and compact spacing. The library uses blue actions, Inter typography, 16px card insets, and a different surface/radius/shadow system. These are intentional matching opportunities. Grid/list layouts and product content remain different after matching.
+The commerce baseline uses warm surfaces, brown actions, serif product titles, and compact spacing. The library uses cobalt pill actions, Inter typography, 20px card corners, 16px card insets, and a different surface/radius/shadow system. These are intentional matching opportunities. Grid/list layouts and product content remain different after matching.
 
 `ProductIllustration.tsx` renders simple scalable furniture artwork inside existing product-image layers. The same artwork is used by the canvas and SVG review previews. Illustrations add no selectable layers or external image requests. `mockPresentation.ts` handles multiline text in authored text blocks.
 
-`Canvas.tsx` renders the document and selection overlays; `workspace.ts` handles camera transforms. Fit shows the commerce screens, with the library below them. Nested selection uses hierarchy-aware click, deep-select, box, and keyboard operations in `selectionInteraction.ts` and `toolInteraction.ts`.
+`Canvas.tsx` renders the document and selection overlays; `workspace.ts` handles camera transforms. Fit shows the commerce screens, with the library below them. CanvasFrameLabels renders fixed-size editor labels for all frames, independent of artwork zoom. Clicking a label or empty frame background selects the frame and shows bounds/fill/contents in FrameInspector; Enter enters its child layers. Frame inspection remains local, with frame IDs excluded from the collaboration presence contract. Frames keep their authored bounds rather than offering unsupported resize handles. Nested selection uses hierarchy-aware click, deep-select, box, and keyboard operations in `selectionInteraction.ts` and `toolInteraction.ts`.
 
 ## Selection and AI Actions
 

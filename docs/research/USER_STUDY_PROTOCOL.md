@@ -100,7 +100,7 @@ Study mode is a single-browser role-play: one participant switches between User 
 
 **OBSERVE**  Selecting card roots; comparison discovery; selective resolution and direction; understanding AI recommendations versus recorded differences; preservation of differing layouts.
 
-**MODERATOR**  Completion requires a comparison preview and an applied change to only the Search card’s corner radius, matching the current Home card. After successful Task 2, Home normally uses the library’s 12px radius. Verify source/target direction rather than assuming selection order. Completing or skipping this task opens the final study screen.
+**MODERATOR**  Completion requires a comparison preview and an applied change to only the Search card’s corner radius, matching the current Home card. After successful Task 2, Home normally uses the library’s 20px radius. Verify source/target direction rather than assuming selection order. Completing or skipping this task opens the final study screen.
 
 **ASK**
 

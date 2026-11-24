@@ -120,7 +120,7 @@ test('Task 4 completes the real comparison resolution after Task 2 changes Home 
  const library=libraryProposal(STUDY_TASKS[3].targets,MOCK_NODES),baseline=applyPatches(MOCK_NODES,proposalPatches(library,library.mappings.map(m=>m.id),MOCK_NODES));
  const a=attempt(5);a.baseline=baseline;
  const context=localComparison('A',['hc1','sc1'],'study-compare',baseline),proposal=resolveComparison(context,baseline,['radius'],'A'),patches=proposalPatches(proposal,proposal.mappings.map(m=>m.id),baseline);
- assert.equal(patches[0].changes.radius,12);
+ assert.equal(patches[0].changes.radius,20);
  a.events=[event('edit_preview_toggled'),event('edit_committed',{ids:proposal.targetIds,patches})];
  const completed=completeStudyAttempt(a,applyPatches(baseline,patches),[],at),session=newStudySession('P0');session.attempts=[completed];
  assert.equal(completed.outcome,'complete');assert.equal(nextStudyTask(session),null);

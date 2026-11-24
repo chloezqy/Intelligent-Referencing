@@ -30,7 +30,7 @@ The matching step is deterministic and reads the actual library nodes. AI helps 
 
 After restoring the baseline, select a Home card, choose Pick source, and pick a Search card. Choose Corners only, then Copy. Explain that a grid card and a list card can share a style property without becoming the same layout or copying product content.
 
-Alternatively compare `hc1` and `sc1`, resolve only Corner radius in the intended direction, preview, and apply. Home starts at 16px and Search at 14px; Studio Blue cards use 12px.
+Alternatively compare `hc1` and `sc1`, resolve only Corner radius in the intended direction, preview, and apply. Home starts at 16px and Search at 14px; Studio Blue cards use 20px.
 
 ## 4. Ask AI to act
 

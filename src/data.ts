@@ -186,7 +186,6 @@ function buildDataset(): UIElement[] {
     data: {
       title: string;
       price: string;
-      origPrice?: string;
       rating: string;
       tag?: string;
       imageHue: string;
@@ -323,9 +322,9 @@ function buildDataset(): UIElement[] {
       type: 'text',
       parent: id,
       x: x + 10,
-      y: y + imgH + 70,
+      y: y + imgH + 66,
       w: 68,
-      h: 18,
+      h: 24,
       label: `Price · ${data.price}`,
       screen,
       component: 'ProductCard',
@@ -335,25 +334,6 @@ function buildDataset(): UIElement[] {
       fontWeight: '700',
       color: '#09090b'
     });
-
-    if (data.origPrice) {
-      nodes.push({
-        id: `${id}-origprice`,
-        type: 'text',
-        parent: id,
-        x: x + 82,
-        y: y + imgH + 72,
-        w: 60,
-        h: 16,
-        label: `Original Price · ${data.origPrice}`,
-        screen,
-        component: 'ProductCard',
-        role: 'originalPrice',
-        text: data.origPrice,
-        fontSize: 11,
-        color: '#a1a1aa'
-      });
-    }
 
     // Add to Bag CTA
     nodes.push({
@@ -388,7 +368,6 @@ function buildDataset(): UIElement[] {
     data: {
       title: string;
       price: string;
-      origPrice?: string;
       rating: string;
       imageHue: string;
       subtitle: string;
@@ -493,25 +472,6 @@ function buildDataset(): UIElement[] {
       color: '#09090b'
     });
 
-    if (data.origPrice) {
-      nodes.push({
-        id: `${id}-origprice`,
-        type: 'text',
-        parent: id,
-        x: cx + 80,
-        y: y + 60,
-        w: 50,
-        h: 16,
-        label: `Original Price · ${data.origPrice}`,
-        screen,
-        component: 'ProductCard',
-        role: 'originalPrice',
-        text: data.origPrice,
-        fontSize: 11,
-        color: '#a1a1aa'
-      });
-    }
-
     // Favorite heart
     nodes.push({
       id: `${id}-fav`,
@@ -610,7 +570,6 @@ function buildDataset(): UIElement[] {
   addGridProductCard(sHome.name, 'hc1', sHome.x + 16, START_Y + 264, 165, 220, {
     title: 'Nordic Lounge Chair',
     price: '$289.00',
-    origPrice: '$340.00',
     rating: '4.9',
     tag: 'Popular',
     imageHue: '#f1f5f9',
@@ -620,7 +579,6 @@ function buildDataset(): UIElement[] {
   addGridProductCard(sHome.name, 'hc2', sHome.x + 194, START_Y + 264, 165, 220, {
     title: 'Minimalist Desk Lamp',
     price: '$85.00',
-    origPrice: '$110.00',
     rating: '4.7',
     tag: 'Sale',
     imageHue: '#fef3c7',
@@ -638,7 +596,6 @@ function buildDataset(): UIElement[] {
   addGridProductCard(sHome.name, 'hc4', sHome.x + 194, START_Y + 496, 165, 220, {
     title: 'Ceramic Vase',
     price: '$65.00',
-    origPrice: '$80.00',
     rating: '4.6',
     imageHue: '#e9f5fe',
     category: 'Decor'
@@ -703,7 +660,6 @@ function buildDataset(): UIElement[] {
   addListProductCard(sSearch.name, 'sc1', sSearch.x + 16, START_Y + 194, 343, 110, {
     title: 'Eames Style Rocker',
     price: '$320.00',
-    origPrice: '$390.00',
     rating: '4.9 (128)',
     imageHue: '#f1f5f9',
     subtitle: 'Molded fiberglass shell'
@@ -720,7 +676,6 @@ function buildDataset(): UIElement[] {
   addListProductCard(sSearch.name, 'sc3', sSearch.x + 16, START_Y + 434, 343, 110, {
     title: 'Walnut Dining Chair',
     price: '$195.00',
-    origPrice: '$240.00',
     rating: '4.7 (65)',
     imageHue: '#e2e8f0',
     subtitle: 'Solid American walnut'
