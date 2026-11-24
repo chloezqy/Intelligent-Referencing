@@ -63,6 +63,7 @@ export function compareReferenceElements(ids: string[], nodes:UIElement[]):Prope
     {key:'color',label:'Text color',value:n=>n.color?.toLowerCase()},
     {key:'radius',label:'Corner radius',value:n=>n.radius===undefined?undefined:`${n.radius} px`},
     {key:'border',label:'Border',value:n=>n.border},
+    {key:'shadow',label:'Shadow',value:n=>n.shadow},
     {key:'spacing',label:'Spacing',value:n=>n.spacing===undefined?undefined:`${n.spacing} px`},
     {key:'fontFamily',label:'Font family',value:n=>n.fontFamily},
     {key:'lineHeight',label:'Line height',value:n=>n.lineHeight},

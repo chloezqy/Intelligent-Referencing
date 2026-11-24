@@ -1,3 +1,4 @@
+import {referenceSharingContext,type ReferenceShareDetails} from '../unifiedReference';
 import ReferenceSharingControls from './ReferenceSharingControls';
 import {createPortal} from 'react-dom';
 import type {CollaborationClient} from '../collaborationClient';
@@ -10,7 +11,7 @@ import { CanvasTransform } from '../workspace';
 import { requestId } from '../useCollaboration';
 import { sharePopoverLayout, shareActionLabel } from '../referencePresentation';
 import PropertyComparison from './PropertyComparison';
-interface Props {comparisonKeys?:string[];onComparisonKeys?:(keys:string[])=>void;onPickSecond?:()=>void;documentNodes?:UIElement[];editingContent?:React.ReactNode;
+interface Props {renderReferenceWorkflow?:(sharing:(details:ReferenceShareDetails)=>React.ReactNode)=>React.ReactNode;comparisonKeys?:string[];onComparisonKeys?:(keys:string[])=>void;onPickSecond?:()=>void;documentNodes?:UIElement[];editingContent?:React.ReactNode;
  inspectorHost?:HTMLElement|null; inspector?:boolean;
   onDesignReference:(value:DesignReference)=>void;onComparisonPurpose:(value:string)=>void;onRefreshComparison:()=>void;comparisonChanged:boolean;
   draft:ReferenceDraft; nodes:UIElement[]; camera:CanvasTransform;
@@ -19,7 +20,7 @@ interface Props {comparisonKeys?:string[];onComparisonKeys?:(keys:string[])=>voi
   onCancel:()=>void; onShared:(id:string)=>void;
   onRoom:()=>void; onLocate:()=>void;
 }
-export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSecond,documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
+export default function SharePopover({renderReferenceWorkflow,comparisonKeys,onComparisonKeys,onPickSecond,documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
   const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null),pin=useRef<HTMLButtonElement>(null);
   const [viewport,setViewport]=useState({width:800,height:600}),[height,setHeight]=useState(320),[sendId,setSendId]=useState(requestId);
   useEffect(()=>{if(inspector&&draft.comparison&&!draft.comparison.purpose.trim())onComparisonPurpose('Compare differences');},[inspector,draft.comparison?.snapshotId]);
@@ -40,6 +41,7 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
   if(!layout&&!inspector)return null;
   const sharingControls=<ReferenceSharingControls comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} nodes={documentNodes||nodes} elementIds={draft.elementIds}/>;
   const submitButton=<button className="primary-action" disabled={!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':'Share reference'}</button>;
+  if(inspector&&renderReferenceWorkflow)return visible&&inspectorHost?createPortal(renderReferenceWorkflow(details=>{const comparison=referenceSharingContext(draft.comparison!,details);return <form className="unified-reference-share-form" onSubmit={async event=>{event.preventDefault();const result=await c.share({...draft,comparison,...(documentNodes?{document:documentNodes}:{})},intent,[note,details.summary].filter(Boolean).join('\n\n'),sendId,true);if(result)onShared(result.id);}}>{sharingControls}{!c.connected&&<p className="subtle">Connect to share this reference.</p>}{c.error&&<p role="alert">{c.error}</p>}<div className="comparison-share-submit">{React.cloneElement(submitButton,{disabled:!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2})}</div></form>;}),inspectorHost):null;
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     {!inspector&&!visible&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
     {visible&&<div ref={popup} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover pointer-events-auto'} style={inspector?undefined:layout?.popup}>

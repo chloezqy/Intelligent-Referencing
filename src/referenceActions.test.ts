@@ -34,7 +34,7 @@ test('Contextual actions contain only Compare when available, Share reference an
  const one=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareReady:false}));
  assert.match(one,/Share reference/);assert.match(one,/Adjust interpretation/);assert.doesNotMatch(one,/>Edit<|Compare with/);
  const many=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareOwn:true}));
- assert.doesNotMatch(many,/>Edit</);assert.ok(many.indexOf('>Compare</span>')<many.indexOf('>Share reference</span>'));assert.ok(many.indexOf('>Share reference</span>')<many.indexOf('>Adjust interpretation<'));
+ assert.doesNotMatch(many,/>Edit</);assert.ok(many.indexOf('>Use as design reference</span>')<many.indexOf('>Share reference</span>'));assert.ok(many.indexOf('>Share reference</span>')<many.indexOf('>Adjust interpretation<'));
 });
 test('contextual actions omit redundant Edit with the persistent inspector',()=>{
  const html=renderToStaticMarkup(React.createElement(ReferenceActions,{...props,compareReady:false}));

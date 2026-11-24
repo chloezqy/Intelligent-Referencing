@@ -4,7 +4,7 @@ import {comparisonSides} from './comparisonSides';
 import {matchDimensions,internalSpacing,descendants,changedPatches,validatePatches,EditProposal} from './editing';
 import {compareReferenceElements} from './referencePresentation';
 import {referenceTransfer} from './inspectorEditing';
-export const EDITABLE_DIFFERENCES:Record<string,keyof UIElement>={background:'bg',color:'color',radius:'radius',fontSize:'fontSize',fontWeight:'fontWeight',fontFamily:'fontFamily',lineHeight:'lineHeight',letterSpacing:'letterSpacing',border:'border',spacing:'spacing'};
+export const EDITABLE_DIFFERENCES:Record<string,keyof UIElement>={background:'bg',color:'color',radius:'radius',fontSize:'fontSize',fontWeight:'fontWeight',fontFamily:'fontFamily',lineHeight:'lineHeight',letterSpacing:'letterSpacing',border:'border',shadow:'shadow',spacing:'spacing'};
 export function resolveComparison(context:ComparisonContext,nodes:UIElement[],keys:string[],direction:'A'|'B'):EditProposal{
  const sides=comparisonSides(context),source=sides[direction],target=sides[direction==='A'?'B':'A'];
  if(source.elementIds.length!==1||!target.elementIds.length)throw new Error('Choose one source object and at least one target. Grouped selections can still be compared or shared.');
