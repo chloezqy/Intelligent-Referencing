@@ -1,5 +1,6 @@
 import React,{useEffect,useMemo,useRef,useState} from 'react';
-import {ArrowLeftRight,Sparkles,Layers} from 'lucide-react';
+import {ArrowLeftRight,Layers} from 'lucide-react';
+import Sparkles from './AIIcon';
 import type {ComparisonContext} from '../collaboration';
 import type {UIElement} from '../types';
 import {comparisonSides} from '../comparisonSides';

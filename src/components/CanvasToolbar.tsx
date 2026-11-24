@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {MousePointer2,Sparkles,Hand,ChevronDown,Check,Frame,Square,PenTool,Type,MessageCircle,Shapes,Braces,Brush,MousePointerSquareDashed,Layers2,CodeXml} from 'lucide-react';
+import {MousePointer2,Hand,ChevronDown,Check,Frame,Square,PenTool,Type,MessageCircle,Shapes,Braces,Brush,MousePointerSquareDashed,Layers2,CodeXml} from 'lucide-react';
+import Sparkles from './AIIcon';
 import type {ToolMode} from '../types';
 export const CANVAS_TOOLS=[{mode:'pointer',label:'Select',key:'V',icon:MousePointer2},{mode:'reference',label:'Smart Gesture',key:'G',icon:Sparkles},{mode:'pan',label:'Hand',key:'H',icon:Hand}] as const;
 const placeholders=[{label:'Frame',icon:Frame},{label:'Shape',icon:Square},{label:'Pen',icon:PenTool},{label:'Text',icon:Type},{label:'Code',icon:Braces},{label:'Comment',icon:MessageCircle},{label:'Resources',icon:Shapes}];

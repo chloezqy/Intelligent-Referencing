@@ -4,7 +4,7 @@
 
 # Smart Reference
 
-**Point to the design. Explain why it matters. Bring someone else into the conversation.**
+**HCI research prototype exploring AI smart referencing.**
 
 Smart Reference is a research prototype for discussing designs together. Instead of describing a button’s location in a message, you can select the button—or gesture across several related items—and send someone a reference that highlights exactly what you mean.
 

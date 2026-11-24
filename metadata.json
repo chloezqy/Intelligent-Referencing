@@ -1,6 +1,6 @@
 {
   "name": "Smart Reference Prototype",
-  "description": "Two-user collaborative referencing using rough gestures and deterministic semantic metadata.",
+  "description": "HCI research prototype exploring AI smart referencing.",
   "requestFramePermissions": [],
   "majorCapabilities": []
 }

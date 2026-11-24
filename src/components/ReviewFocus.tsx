@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import {Sparkles} from 'lucide-react';
+import Sparkles from './AIIcon';
 import type {UIElement} from '../types';
 import type {SharedReference} from '../collaboration';
 import {ReviewFocus as Focus} from '../reviewFocus';

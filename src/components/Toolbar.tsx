@@ -1,5 +1,5 @@
 import React from 'react';
-import { MousePointer2, Sparkles, Hand, Zap, Layers, Sliders } from 'lucide-react';
+import {MousePointer2,Hand,Zap,Layers,Sliders} from 'lucide-react';
 import { ToolMode } from '../types';
 
 interface ToolbarProps {

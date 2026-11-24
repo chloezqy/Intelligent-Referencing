@@ -1,6 +1,6 @@
 import type {UIElement} from '../types';
 import React from 'react';
-import {Sparkles} from 'lucide-react';
+import Sparkles from './AIIcon';
 import type {ComparisonContext,DesignReference,SharedReference} from '../collaboration';
 import type {CollaborationClient} from '../collaborationClient';
 import type {ProposedDesignChange} from '../designChanges';

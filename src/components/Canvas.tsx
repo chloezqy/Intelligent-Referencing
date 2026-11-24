@@ -15,7 +15,8 @@ import { ReferenceIntent, SharedReference } from '../collaboration';
 import { zoomAtPoint } from '../workspace';
 import { SCREEN_CONFIGS, SCREEN_W, SCREEN_H, START_Y } from '../data';
 import { getBoundingBox, rectIntersect,inferSelection } from '../utils';
-import { Check, Sparkles, X, Share2, GitCompareArrows } from 'lucide-react';
+import {Check,X,Share2,GitCompareArrows} from 'lucide-react';
+import Sparkles from './AIIcon';
 
 interface CanvasProps {
   previewSpotlightIds?:string[];
