@@ -4,12 +4,15 @@ import {needsReferenceNotification} from '../mentions';
 import {RotateCcw} from 'lucide-react';
 import React, { useState, useEffect } from 'react';
 import { SharedReference, referenceLists } from '../collaboration';
-import { UIElement } from '../types';
-interface Props {studyActive?:boolean;onStudyReset?:()=>void; visible?:boolean;nodes:UIElement[]; collaboration: CollaborationClient; hasDraft:boolean; onResumeDraft:()=>void; activeId: string | null; openRevision:number; onOpen: (id: string) => void; onLocate: (ref: SharedReference) => void; onClear: () => void }
-export default function CollaborationPanel({ studyActive=false,onStudyReset,visible=true,nodes, collaboration: c, hasDraft, onResumeDraft, activeId, openRevision, onOpen, onLocate, onClear }: Props) {
+import { UIElement,InferredReference } from '../types';
+interface Props {selection?:InferredReference|null;onLocateSelection?:()=>void;studyActive?:boolean;onStudyReset?:()=>void; visible?:boolean;nodes:UIElement[]; collaboration: CollaborationClient; hasDraft:boolean; onResumeDraft:()=>void; activeId: string | null; openRevision:number; onOpen: (id: string) => void; onLocate: (ref: SharedReference) => void; onClear: () => void }
+export default function CollaborationPanel({ selection,onLocateSelection,studyActive=false,onStudyReset,visible=true,nodes, collaboration: c, hasDraft, onResumeDraft, activeId, openRevision, onOpen, onLocate, onClear }: Props) {
   const [code, setCode] = useState(c.initialCode);
   const [copied, setCopied] = useState(false);
   const [showArchived,setShowArchived]=useState(false);
+  const selectedNodes=[...new Set(selection?.selectedIds||[])].flatMap(id=>{const node=nodes.find(n=>n.id===id&&n.type!=='screen');return node?[node]:[];});
+  const selectionKey=selectedNodes.map(n=>n.id).join('|');
+  useEffect(()=>{if(selectionKey)setShowArchived(false);},[selectionKey]);
   const received = c.room?.references.filter(r=>needsReferenceNotification(r,c.session?.userId)).length || 0;
   useEffect(()=>{if(visible&&received>0)setShowArchived(false);},[visible]);
   const {active:activeReferences,archived:archivedReferences}=referenceLists(c.room?.references||[],ref=>needsReferenceNotification(ref,c.session?.userId));
@@ -24,9 +27,15 @@ export default function CollaborationPanel({ studyActive=false,onStudyReset,visi
       <p className="subtle">Room code: {c.session.code}</p>
       {location.hostname === 'localhost' && <p className="subtle">For another computer, open this workspace using the server’s LAN address first, then copy its invitation link.</p>}
     </section>}
+    {c.mode==='demo'&&!c.room&&<p className="references-loading" role="status">Loading references…</p>}
     {c.error && <p className="connection-error" role="alert">{c.error}</p>}
     {hasDraft&&<section><p className="subtle">You have an unsent share request.</p><button onClick={onResumeDraft}>Resume share popup</button></section>}
-    {c.room && <section><div className="references-section-header"><h3>References {received > 0 && <span className="inbox-count">{received} unread</span>}</h3>{c.mode==='demo'&&<button type="button" className="reset-demo-action" onClick={()=>{if(onStudyReset){onStudyReset();return;}c.resetDemo?.();try{const dismissals=parseNudgeDismissals(localStorage.getItem(NUDGE_DISMISSALS_KEY));localStorage.setItem(NUDGE_DISMISSALS_KEY,JSON.stringify(Object.fromEntries(Object.entries(dismissals).filter(([key])=>!key.startsWith('demo:')))));for(const key of Object.keys(localStorage))if(key.startsWith('sr-research-demo-')||['sr-demo-views','sr-demo-dismissed','sr-demo-perspective'].includes(key))localStorage.removeItem(key);}catch{}location.reload();}}><RotateCcw size={13}/>Reset demo</button>}</div><div className="reference-filter" role="group" aria-label="Reference list filter"><button aria-pressed={!showArchived} onClick={()=>setShowArchived(false)}>Active ({activeReferences.length})</button><button aria-pressed={showArchived} onClick={()=>setShowArchived(true)}>Archived ({archivedReferences.length})</button></div>{!listed.length&&<p>{showArchived?'No archived references.':'No active references. Select objects and share a reference.'}</p>}<div className="reference-list">{listed.map(ref=>{
+    {(c.room||selectedNodes.length>0) && <section><div className="references-section-header"><h3>References {received > 0 && <span className="inbox-count">{received} unread</span>}</h3>{c.mode==='demo'&&<button type="button" className="reset-demo-action" onClick={()=>{if(onStudyReset){onStudyReset();return;}c.resetDemo?.();try{const dismissals=parseNudgeDismissals(localStorage.getItem(NUDGE_DISMISSALS_KEY));localStorage.setItem(NUDGE_DISMISSALS_KEY,JSON.stringify(Object.fromEntries(Object.entries(dismissals).filter(([key])=>!key.startsWith('demo:')))));for(const key of Object.keys(localStorage))if(key.startsWith('sr-research-demo-')||['sr-demo-views','sr-demo-dismissed','sr-demo-perspective'].includes(key))localStorage.removeItem(key);}catch{}location.reload();}}><RotateCcw size={13}/>Reset demo</button>}</div><div className="reference-filter" role="group" aria-label="Reference list filter"><button aria-pressed={!showArchived} onClick={()=>setShowArchived(false)}>Active ({activeReferences.length+(selectedNodes.length?1:0)})</button><button aria-pressed={showArchived} onClick={()=>setShowArchived(true)}>Archived ({archivedReferences.length})</button></div>{!listed.length&&(showArchived||!selectedNodes.length)&&<p>{showArchived?'No archived references.':'No active references. Select layers to see them here.'}</p>}<div className="reference-list">{!showArchived&&selectedNodes.length>0&&<button type="button" className="selected reference-current-selection" aria-label="Current selection" onClick={onLocateSelection}>
+  <span className="reference-selection-status">Current selection</span>
+  <strong>{selection?.label||selectedNodes.map(node=>node.label).join(', ')}</strong>
+  <span>{selectedNodes.slice(0,3).map(node=>node.label).join(' · ')}{selectedNodes.length>3?` · +${selectedNodes.length-3} more`:''}</span>
+  <small>{[...new Set(selectedNodes.flatMap(node=>node.screen?[node.screen]:[]))].join(', ')} · {selectedNodes.length} {selectedNodes.length===1?'layer':'layers'}</small>
+ </button>}{listed.map(ref=>{
  const unread=needsReferenceNotification(ref,c.session?.userId),sender=referenceRequestSender(ref,c.session?.userId);
  const screens=[...new Set(nodes.filter(node=>ref.elementIds.includes(node.id)).flatMap(node=>node.screen?[node.screen]:[]))];
  const viewed=ref.activity?.some(event=>event.userId===c.session?.userId&&event.kind==='opened');

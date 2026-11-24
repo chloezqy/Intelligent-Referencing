@@ -1572,3 +1572,7 @@ body:has(.unified-reference-workflow) .figma-help {bottom:76px;}
 .design-ai-actions.is-empty .ai-actions-empty {padding-left:34px;font-size:11px;line-height:17px;color:#66839a;}
 .prototype-description {margin:0 0 16px;color:#66839a;font-size:12px;line-height:1.5;}
 .canvas-toolstrip .canvas-tool-active .prototype-ai-icon,.primary-action .prototype-ai-icon {color:inherit;}
+
+.references-loading {padding:16px;color:#777;font-size:11px;}
+
+.reference-current-selection .reference-selection-status {color:#007be5;font-size:10px;font-weight:500;}

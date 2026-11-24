@@ -33,3 +33,18 @@ test('Right sidebar contains moved profile and presentation controls, and Page s
  const page=renderToStaticMarkup(React.createElement(PageInspector));
  for(const label of ['Page','Styles','Export','MCP','F5F5F5'])assert.ok(page.includes(label));
 });
+
+test('Active references shows the current selection without adding sharing controls or archived records',()=>{
+ const noop=()=>{},nodes=[{id:'lamp',type:'card',label:'Desk Lamp',screen:'Home',x:0,y:0,w:100,h:100},{id:'vase',type:'card',label:'Ceramic Vase',screen:'Home',x:120,y:0,w:100,h:100}] as any;
+ const base={nodes,collaboration:{mode:'demo',connected:true,busy:false,session:{userId:'A'},room:{members:[],references:[]}} as any,hasDraft:false,activeId:null,openRevision:0,onResumeDraft:noop,onOpen:noop,onLocate:noop,onClear:noop,onLocateSelection:noop};
+ const empty=renderToStaticMarkup(React.createElement(CollaborationPanel,base));
+ assert.match(empty,/Active \(0\)/);assert.doesNotMatch(empty,/aria-label="Current selection"/);
+ const selection={selectedIds:['lamp','vase'],exemplarIds:['lamp','vase'],label:'Selected product cards',scope:'exemplars' as const};
+ const selected=renderToStaticMarkup(React.createElement(CollaborationPanel,{...base,selection}));
+ assert.match(selected,/Active \(1\)/);assert.match(selected,/Archived \(0\)/);
+ assert.match(selected,/aria-label="Current selection"/);assert.match(selected,/Desk Lamp · Ceramic Vase/);assert.match(selected,/2 layers/);
+ assert.doesNotMatch(selected,/Share selected layers|Select layers to reference|data-reference-id=/);
+ const unavailable=renderToStaticMarkup(React.createElement(CollaborationPanel,{...base,selection:{...selection,selectedIds:['missing']}}));
+ assert.match(unavailable,/Active \(0\)/);
+ assert.equal(base.collaboration.room.references.length,0);
+});
