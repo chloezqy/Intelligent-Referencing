@@ -1491,7 +1491,6 @@ body:has(.unified-reference-workflow) .figma-help {bottom:76px;}
 .design-ai-actions button:disabled {cursor:not-allowed;opacity:.45;}
 .design-ai-actions .ai-flow-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
 .design-ai-actions .ai-flow-actions button {display:flex;flex:1;align-items:center;justify-content:center;gap:8px;min-width:0;padding:8px 6px;border:1px solid #dce8f2;border-radius:7px;background:#ffffffd9;color:#385971;white-space:normal;line-height:15px;box-shadow:0 1px 2px #254d7205;}
-.design-ai-actions .ai-flow-actions button:first-child {color:#007be5;background:#e5f3ff;border-color:#c9e5fc;}
 .design-ai-actions .ai-flow-actions button[aria-pressed=true] {background:#d9edff;color:#007be5;border-color:#88c7f5;}
 .design-ai-actions .ai-flow-actions button:hover:not(:disabled) {border-color:#8fc9f5;background:#e5f3ff;}
 .design-ai-actions .ai-flow-suggestion {display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #dceaf7;border-radius:8px;background:#ffffffb8;min-width:0;}
