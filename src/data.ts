@@ -33,7 +33,7 @@ function buildDataset(): UIElement[] {
       h: SCREEN_H,
       label: `${cfg.name} Screen`,
       screen: cfg.name,
-      bg: '#ffffff',
+      bg: '#fcfaf7',
       radius: 40,
       border: '1px solid #27272a'
     });
@@ -214,7 +214,7 @@ function buildDataset(): UIElement[] {
     });
 
     // Image container
-    const imgH = Math.min(130, h - 112);
+    const imgH = Math.min(112, h - 130);
     nodes.push({
       id: `${id}-img`,
       type: 'image',
@@ -287,7 +287,7 @@ function buildDataset(): UIElement[] {
       x: x + 10,
       y: y + imgH + 8,
       w: w - 20,
-      h: 18,
+      h: 38,
       label: `Title · ${data.title}`,
       screen,
       component: 'ProductCard',
@@ -304,7 +304,7 @@ function buildDataset(): UIElement[] {
       type: 'text',
       parent: id,
       x: x + 10,
-      y: y + imgH + 28,
+      y: y + imgH + 50,
       w: 80,
       h: 16,
       label: `Rating · ${data.rating}`,
@@ -323,7 +323,7 @@ function buildDataset(): UIElement[] {
       type: 'text',
       parent: id,
       x: x + 10,
-      y: y + imgH + 48,
+      y: y + imgH + 70,
       w: 68,
       h: 18,
       label: `Price · ${data.price}`,
@@ -342,7 +342,7 @@ function buildDataset(): UIElement[] {
         type: 'text',
         parent: id,
         x: x + 82,
-        y: y + imgH + 50,
+        y: y + imgH + 72,
         w: 60,
         h: 16,
         label: `Original Price · ${data.origPrice}`,
@@ -462,7 +462,7 @@ function buildDataset(): UIElement[] {
       parent: id,
       x: cx,
       y: y + 32,
-      w: 70,
+      w: 132,
       h: 16,
       label: `Rating · ${data.rating}`,
       screen,
@@ -480,9 +480,9 @@ function buildDataset(): UIElement[] {
       type: 'text',
       parent: id,
       x: cx,
-      y: y + 54,
-      w: 60,
-      h: 18,
+      y: y + 58,
+      w: 76,
+      h: 20,
       label: `Price · ${data.price}`,
       screen,
       component: 'ProductCard',
@@ -498,8 +498,8 @@ function buildDataset(): UIElement[] {
         id: `${id}-origprice`,
         type: 'text',
         parent: id,
-        x: cx + 62,
-        y: y + 56,
+        x: cx + 80,
+        y: y + 60,
         w: 50,
         h: 16,
         label: `Original Price · ${data.origPrice}`,
@@ -538,9 +538,9 @@ function buildDataset(): UIElement[] {
       type: 'button',
       parent: id,
       x: x + w - 90,
-      y: y + h - 38,
+      y: y + h - 34,
       w: 80,
-      h: 28,
+      h: 24,
       label: `Add to Bag CTA · ${data.title}`,
       screen,
       component: 'ProductCard',
@@ -570,14 +570,15 @@ function buildDataset(): UIElement[] {
     x: sHome.x + 16,
     y: START_Y + 104,
     w: 343,
-    h: 140,
+    h: 108,
     label: 'Hero Promo Banner',
     screen: 'Home',
     bg: '#18181b',
     color: '#ffffff',
     radius: 18,
-    text: 'Summer Architectural Collection · 30% Off',
-    fontSize: 14,
+    text: 'Made for slow living.\nThe new collection',
+    textAlign: 'left',
+    fontSize: 19,
     fontWeight: '700'
   });
 
@@ -589,7 +590,7 @@ function buildDataset(): UIElement[] {
       type: 'chip',
       parent: `screen-home`,
       x: sHome.x + 16 + i * 86,
-      y: START_Y + 256,
+      y: START_Y + 224,
       w: 80,
       h: 30,
       label: `Category Filter · ${cat}`,
@@ -606,7 +607,7 @@ function buildDataset(): UIElement[] {
   });
 
   // 4 Grid Product Cards on Home
-  addGridProductCard(sHome.name, 'hc1', sHome.x + 16, START_Y + 298, 165, 230, {
+  addGridProductCard(sHome.name, 'hc1', sHome.x + 16, START_Y + 264, 165, 220, {
     title: 'Nordic Lounge Chair',
     price: '$289.00',
     origPrice: '$340.00',
@@ -616,7 +617,7 @@ function buildDataset(): UIElement[] {
     category: 'Seating'
   });
 
-  addGridProductCard(sHome.name, 'hc2', sHome.x + 194, START_Y + 298, 165, 230, {
+  addGridProductCard(sHome.name, 'hc2', sHome.x + 194, START_Y + 264, 165, 220, {
     title: 'Minimalist Desk Lamp',
     price: '$85.00',
     origPrice: '$110.00',
@@ -626,7 +627,7 @@ function buildDataset(): UIElement[] {
     category: 'Lighting'
   });
 
-  addGridProductCard(sHome.name, 'hc3', sHome.x + 16, START_Y + 540, 165, 180, {
+  addGridProductCard(sHome.name, 'hc3', sHome.x + 16, START_Y + 496, 165, 220, {
     title: 'Oak Wood Stool',
     price: '$140.00',
     rating: '4.8',
@@ -634,7 +635,7 @@ function buildDataset(): UIElement[] {
     category: 'Woodwork'
   });
 
-  addGridProductCard(sHome.name, 'hc4', sHome.x + 194, START_Y + 540, 165, 180, {
+  addGridProductCard(sHome.name, 'hc4', sHome.x + 194, START_Y + 496, 165, 220, {
     title: 'Ceramic Vase',
     price: '$65.00',
     origPrice: '$80.00',
@@ -790,8 +791,8 @@ function buildDataset(): UIElement[] {
     parent: `screen-detail`,
     x: sDetail.x + 20,
     y: START_Y + 390,
-    w: 260,
-    h: 24,
+    w: 335,
+    h: 28,
     label: 'Product Title (Detail)',
     screen: 'Detail',
     role: 'productTitle',
@@ -808,7 +809,7 @@ function buildDataset(): UIElement[] {
     parent: `screen-detail`,
     x: sDetail.x + 20,
     y: START_Y + 418,
-    w: 160,
+    w: 280,
     h: 18,
     label: 'Rating (Detail)',
     screen: 'Detail',
@@ -826,8 +827,8 @@ function buildDataset(): UIElement[] {
     parent: `screen-detail`,
     x: sDetail.x + 20,
     y: START_Y + 444,
-    w: 90,
-    h: 26,
+    w: 110,
+    h: 28,
     label: 'Price (Detail)',
     screen: 'Detail',
     role: 'price',
@@ -841,7 +842,7 @@ function buildDataset(): UIElement[] {
     id: 'detail-origprice',
     type: 'text',
     parent: `screen-detail`,
-    x: sDetail.x + 115,
+    x: sDetail.x + 144,
     y: START_Y + 448,
     w: 80,
     h: 20,
@@ -1394,6 +1395,29 @@ function buildDataset(): UIElement[] {
     fontWeight: '700'
   });
 
+  for(const node of nodes){
+    if(node.text)node.fontFamily='Arial, sans-serif';
+    if(node.type==='text'){
+      node.textAlign='left';node.lineHeight=1.25;
+      if(node.role==='productTitle')node.fontFamily='Georgia, serif';
+    }
+    if(node.type==='card'&&node.role==='card'){
+      node.bg='#fffdf9';node.border='1px solid #e8dfd3';node.spacing=10;
+    }
+    if(node.type==='button'&&node.role==='primaryCTA'){
+      node.bg='#8c5b43';node.radius=node.screen==='Search'?4:6;node.fontWeight='500';node.letterSpacing=0;
+    }
+    if(node.role==='productImage')node.bg=/lamp/i.test(node.label)?'#fef3c7':/vase/i.test(node.label)?'#efe1d8':/stool/i.test(node.label)?'#e9e0d2':'#eee7dc';
+    if(node.role==='price')node.color='#42352b';
+    if(node.role==='rating')node.color='#9a702d';
+    if(node.role==='filterChip'){
+      const active=node.id==='home-chip-0'||node.id==='search-filter-1';
+      node.bg=active?'#ede1d2':'#f5f0e9';node.color=active?'#704b34':'#756958';node.border='1px solid #e6dacc';
+    }
+    if(node.role==='tabIcon')node.color=node.fontWeight==='700'?'#8c5b43':'#9b9186';
+    if(node.id==='home-hero'){node.bg='#e8dfd0';node.color='#4c3b2c';node.fontFamily='Georgia, serif';node.lineHeight=1.3;}
+    if(['detail-desc-box','chk-address-card','chk-payment-card','chk-warning-banner'].includes(node.id))node.textAlign='left';
+  }
   return nodes;
 }
 

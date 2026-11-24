@@ -1,3 +1,6 @@
+import ProductIllustration from './ProductIllustration';
+import MockSymbol,{isMockSymbol} from './MockSymbol';
+import {wrapsMockText,mockContentPadding} from '../mockPresentation';
 import {previewSpotlightNodes} from '../previewSpotlight';
 import ReferenceActions from './ReferenceActions';
 import {appendGestureSamples} from '../gestureSamples';
@@ -386,6 +389,8 @@ export default function Canvas({
               <div
                 key={node.id}
                 data-canvas-node={node.id}
+                role={node.role==='productImage'||isMockSymbol(node)?'img':undefined}
+                aria-label={node.role==='productImage'||isMockSymbol(node)?node.label:undefined}
                 onPointerDown={(e) => !isScreen && handleNodePointerDown(e, node)}
                 onMouseEnter={() => !isScreen && setHoveredNodeId(toolMode==='pointer'?canvasSelectionTarget(node.id,nodes,confirmedRef?.selectedIds||[])?.id||node.id:node.id)}
                 onMouseLeave={() => !isScreen && setHoveredNodeId(null)}
@@ -405,7 +410,7 @@ export default function Canvas({
                   border: isScreen ? 'none' : node.border || 'none',
                   fontSize: node.fontSize,
                   fontWeight: node.fontWeight as any,
-                  textAlign:node.textAlign,fontFamily:node.fontFamily,paddingInline:node.library&&node.type==='text'&&node.bg?8:undefined,lineHeight:node.lineHeight,letterSpacing:node.letterSpacing,boxShadow:node.shadow,
+                  textAlign:node.textAlign,fontFamily:node.fontFamily,paddingInline:mockContentPadding(node),lineHeight:node.lineHeight||1.2,letterSpacing:node.letterSpacing,boxShadow:node.shadow,
                   opacity: 1
                 }}
               >
@@ -428,8 +433,11 @@ export default function Canvas({
                 {isScreen && nodes.filter(child => child.type !== 'screen' && child.screen === node.screen).map(child => renderNode(child, node))}
 
                 {/* Text / Label */}
-                {!isScreen && (
-                  <span title={node.text} className={`truncate pointer-events-none select-none ${node.role === 'price' || node.role === 'originalPrice' ? 'tabular-nums' : node.library&&node.textAlign==='left'?'':'px-1'}`}>
+                {!isScreen&&isMockSymbol(node)&&<MockSymbol node={node}/>}
+                {!isScreen&&node.role==='productImage'&&<ProductIllustration label={node.label}/>}
+                {node.id==='home-hero'&&<div className="absolute right-1 bottom-0 w-28 h-24 pointer-events-none"><ProductIllustration label="Lounge chair"/></div>}
+                {!isScreen&&!isMockSymbol(node)&&node.role!=='productImage' && (
+                  <span title={node.text} style={{maxWidth:node.id==='home-hero'?'68%':undefined,lineHeight:wrapsMockText(node)?(node.lineHeight||1.35):undefined}} className={`${wrapsMockText(node)?'whitespace-pre-line':'truncate'} pointer-events-none select-none ${node.role === 'price' || node.role === 'originalPrice' ? 'tabular-nums' : ''}`}>
                     {node.text || ''}
                   </span>
                 )}

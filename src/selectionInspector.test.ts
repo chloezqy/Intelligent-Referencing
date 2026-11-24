@@ -23,7 +23,7 @@ test('Selection summary reuses actual previews, caps groups, and only calls equa
  const html=renderToStaticMarkup(React.createElement(SelectionDetails,{ids,nodes:MOCK_NODES}));
  assert.equal((html.match(/class="element-preview"/g)||[]).length,3);assert.match(html,/\+5 more/);assert.match(html,/View all properties/);
  const summary=html.slice(0,html.indexOf('View all properties'));assert.doesNotMatch(summary,/<dt>Corner radius<\/dt>|<dt>Dimensions<\/dt>/);
- const single=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1'],nodes:MOCK_NODES}));assert.equal((single.match(/class="element-preview"/g)||[]).length,1);assert.match(single,/165 × 230 px/);
+ const single=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1'],nodes:MOCK_NODES}));assert.equal((single.match(/class="element-preview"/g)||[]).length,1);assert.match(single,/165 × 220 px/);
  const unavailable=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1','missing'],nodes:MOCK_NODES}));assert.doesNotMatch(unavailable,/selection-shared-properties/);assert.match(unavailable,/1 unavailable objects/);
 });
 test('Working inspector keeps Selection title and sticky mode switch above its content',()=>{

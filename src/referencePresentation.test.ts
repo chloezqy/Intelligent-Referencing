@@ -40,9 +40,9 @@ test('Every pair of rendered cluster markers has at least 8px separation',()=>{
 test('CTA comparison exposes real wording, size and radius differences, and authored matching properties',()=>{
  const result=compareReferenceElements(['hc1-cta','sc1-cta'],MOCK_NODES),row=(key:string)=>result.rows.find(r=>r.key===key)!;
  assert.deepEqual(row('text').values,['Add to Bag','Add']);assert.equal(row('text').state,'different');
- assert.deepEqual(row('dimensions').values,['145 × 30 px','80 × 28 px']);assert.deepEqual(row('radius').values,['8 px','6 px']);
+ assert.deepEqual(row('dimensions').values,['145 × 30 px','80 × 24 px']);assert.deepEqual(row('radius').values,['6 px','4 px']);
  for(const key of ['type','role','component','background','color','fontSize','fontWeight'])assert.equal(row(key).state,'matching');
- assert.deepEqual(row('location').values,['x 26, y 490 px','x 269, y 266 px']);
+ assert.deepEqual(row('location').values,['x 26, y 446 px','x 269, y 270 px']);
 });
 test('Missing properties are not invented, mixed types are compared honestly and all targets are included',()=>{
  const base=MOCK_NODES.find(n=>n.id==='hc1-cta')!;

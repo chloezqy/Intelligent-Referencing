@@ -1,3 +1,6 @@
+import MockSymbol,{isMockSymbol} from './MockSymbol';
+import ProductIllustration from './ProductIllustration';
+import {mockTextLines} from '../mockPresentation';
 import React from 'react';
 import {Layers} from 'lucide-react';
 import type {UIElement} from '../types';
@@ -9,7 +12,9 @@ export function ElementPreview({element,nodes}:{element:UIElement;nodes:UIElemen
  return <svg className="element-preview" viewBox={`0 0 ${Math.max(1,element.w)} ${Math.max(1,element.h)}`} preserveAspectRatio="xMidYMid meet" role="img" aria-label={`Preview of ${element.label}`}>
   {previewElements(element,nodes).map(node=><svg key={node.id} x={node.x-element.x} y={node.y-element.y} width={Math.max(1,node.w)} height={Math.max(1,node.h)} overflow="hidden">
    <rect width="100%" height="100%" rx={node.radius||0} fill={node.bg||'transparent'} stroke={node.border?.match(/#[0-9a-f]{3,8}|rgba?\([^)]+\)/i)?.[0]||'none'}/>
-   {node.text&&<text x={node.textAlign==='left'?0:node.textAlign==='right'?node.w:'50%'} y={node.textVerticalAlign==='top'?0:node.textVerticalAlign==='bottom'?node.h:'50%'} dominantBaseline={node.textVerticalAlign==='top'?'text-before-edge':node.textVerticalAlign==='bottom'?'text-after-edge':'central'} textAnchor={node.textAlign==='left'?'start':node.textAlign==='right'?'end':'middle'} fill={node.color||'#18181b'} fontSize={node.fontSize||12} fontWeight={node.fontWeight||400} fontFamily={node.fontFamily} letterSpacing={node.letterSpacing}>{node.text}</text>}
+   {isMockSymbol(node)&&<MockSymbol node={node}/>}
+   {node.role==='productImage'&&<ProductIllustration label={node.label}/>}
+   {!isMockSymbol(node)&&node.role!=='productImage'&&node.text&&<text x={node.textAlign==='left'?0:node.textAlign==='right'?node.w:'50%'} y={node.textVerticalAlign==='top'?0:node.textVerticalAlign==='bottom'?node.h:'50%'} dominantBaseline={node.textVerticalAlign==='top'?'text-before-edge':node.textVerticalAlign==='bottom'?'text-after-edge':'central'} textAnchor={node.textAlign==='left'?'start':node.textAlign==='right'?'end':'middle'} fill={node.color||'#18181b'} fontSize={node.fontSize||12} fontWeight={node.fontWeight||400} fontFamily={node.fontFamily} letterSpacing={node.letterSpacing}>{mockTextLines(node).map((line,index,lines)=><tspan key={index} x={node.textAlign==='left'?0:node.textAlign==='right'?node.w:'50%'} dy={index?(node.fontSize||12)*(node.lineHeight||1.35):-(lines.length-1)*(node.fontSize||12)*(node.lineHeight||1.35)/2}>{line}</tspan>)}</text>}
   </svg>)}
  </svg>;
 }

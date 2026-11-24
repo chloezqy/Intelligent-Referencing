@@ -36,7 +36,8 @@ test('position edits move component descendants together and mixed properties re
  const root=MOCK_NODES.find(n=>n.id==='hc1')!,child=MOCK_NODES.find(n=>n.parent===root.id)!;
  const proposal=propertyProposal([root.id],MOCK_NODES,'Position',{x:root.x+5}),after=applyPatches(MOCK_NODES,proposalPatches(proposal,['properties'],MOCK_NODES));
  assert.equal(after.find(n=>n.id===child.id)!.x,child.x+5);
- const state=selectedProperty(['hc1','hc4'],MOCK_NODES,'h');assert.equal(state.mixed,true);assert.equal(state.editable,true);
+ const mixedNodes=MOCK_NODES.map(n=>n.id==='hc4'?{...n,h:n.h+1}:n);
+ const state=selectedProperty(['hc1','hc4'],mixedNodes,'h');assert.equal(state.mixed,true);assert.equal(state.editable,true);
  const missing=selectedProperty(['hc1',child.id],MOCK_NODES,'fontSize');assert.equal(missing.editable,false);
 });
 test('contextual assistance remains reachable when an object has no appearance properties',()=>{
