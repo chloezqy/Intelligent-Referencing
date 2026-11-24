@@ -1,3 +1,4 @@
+import CanvasFrameLabels from './CanvasFrameLabels';
 import ProductIllustration from './ProductIllustration';
 import MockSymbol,{isMockSymbol} from './MockSymbol';
 import {wrapsMockText,mockContentPadding} from '../mockPresentation';
@@ -16,7 +17,6 @@ import { Point, UIElement, ToolMode, SelectionState, InferredReference, Interpre
 import ReferencePins from './ReferencePins';
 import { ReferenceIntent, SharedReference } from '../collaboration';
 import { zoomAtPoint } from '../workspace';
-import { SCREEN_CONFIGS, SCREEN_W, SCREEN_H, START_Y } from '../data';
 import { getBoundingBox, rectIntersect,inferSelection } from '../utils';
 import {Check,X,Share2,GitCompareArrows} from 'lucide-react';
 import Sparkles from './AIIcon';
@@ -214,7 +214,7 @@ export default function Canvas({
   };
 
   // One Select interaction: decide click versus drag only after movement/release.
-  const handleNodePointerDown=(e:React.PointerEvent,node:UIElement)=>{e.stopPropagation();handlePointerDown(e,node);};
+  const handleNodePointerDown=(e:React.PointerEvent,node:UIElement|null)=>{e.stopPropagation();handlePointerDown(e,node);};
   const handlePointerDown=(e:React.PointerEvent,node:UIElement|null=null)=>{
     if(e.button!==0&&e.button!==1)return;
     if(pendingPointer.current||panPoint.current)return;
@@ -391,12 +391,12 @@ export default function Canvas({
                 data-canvas-node={node.id}
                 role={node.role==='productImage'||isMockSymbol(node)?'img':undefined}
                 aria-label={node.role==='productImage'||isMockSymbol(node)?node.label:undefined}
-                onPointerDown={(e) => !isScreen && handleNodePointerDown(e, node)}
+                onPointerDown={event=>{if(isScreen&&toolMode==='pointer'&&!isSpacePressed&&event.button===0&&!pickingSource){event.stopPropagation();commitClick(node,event.shiftKey,confirmedRef);}else handleNodePointerDown(event,isScreen&&toolMode==='reference'?null:node);}}
                 onMouseEnter={() => !isScreen && setHoveredNodeId(toolMode==='pointer'?canvasSelectionTarget(node.id,nodes,confirmedRef?.selectedIds||[])?.id||node.id:node.id)}
                 onMouseLeave={() => !isScreen && setHoveredNodeId(null)}
                 className={`absolute transition-opacity duration-150 ${
                   isScreen
-                    ? 'shadow-lg shadow-black/10 rounded-[40px] overflow-hidden pointer-events-none'
+                    ? 'overflow-hidden pointer-events-auto'
                     : `pointer-events-auto flex ${node.textVerticalAlign==='top'?'items-start':node.textVerticalAlign==='bottom'?'items-end':'items-center'} ${node.textAlign==='left'?'justify-start text-left':node.textAlign==='right'?'justify-end text-right':'justify-center text-center'} overflow-hidden cursor-pointer`
                 } ${isHovered && !isSelected ? 'ring-1 ring-[#0d99ff] ring-offset-1 ring-offset-transparent' : ''}`}
                 style={{
@@ -410,7 +410,7 @@ export default function Canvas({
                   border: isScreen ? 'none' : node.border || 'none',
                   fontSize: node.fontSize,
                   fontWeight: node.fontWeight as any,
-                  textAlign:node.textAlign,fontFamily:node.fontFamily,paddingInline:mockContentPadding(node),lineHeight:node.lineHeight||1.2,letterSpacing:node.letterSpacing,boxShadow:node.shadow,
+                  textAlign:node.textAlign,fontFamily:node.fontFamily,paddingInline:mockContentPadding(node),lineHeight:node.lineHeight||1.2,letterSpacing:node.letterSpacing,boxShadow:isScreen?'0 1px 4px #00000008':node.shadow,
                   opacity: 1
                 }}
               >
@@ -429,7 +429,7 @@ export default function Canvas({
                   </div>
                 )}
 
-                {isScreen && node.library&&<span className="absolute top-2 right-4 text-xs text-[#0d99ff]">Design System · Source library</span>}
+
                 {isScreen && nodes.filter(child => child.type !== 'screen' && child.screen === node.screen).map(child => renderNode(child, node))}
 
                 {/* Text / Label */}
@@ -451,10 +451,11 @@ export default function Canvas({
       className={`relative w-full h-full overflow-clip bg-[#f5f5f5] select-none
         ${isPanning || isSpacePressed ? 'cursor-grab' : selectionState === 'drawing' ? 'cursor-crosshair' : toolMode === 'pan' ? 'cursor-grab' : 'cursor-default'}`}
     >
+      <CanvasFrameLabels frames={nodes.filter(node=>node.type==='screen')} camera={transform} selectedIds={activeIds} disabled={pickingSource} onSelect={(frame,shift)=>commitClick(frame,shift,confirmedRef)} onPointerDown={(event,frame)=>{event.stopPropagation();if(toolMode==='pointer'&&!isSpacePressed&&event.button===0){event.preventDefault();commitClick(frame,event.shiftKey,confirmedRef);}else handlePointerDown(event,null);}}/>
       {gestureNotice&&<div className="gesture-notice" role="status">{gestureNotice}<button type="button" aria-label="Dismiss gesture message" onClick={()=>setGestureNotice('')}><X size={14}/></button></div>}
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* One AI review surface; editing is available only after reference confirmation. */}
-      {!sharing&&!inspectorOpen&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context horizontal-reference-context absolute z-40 flex flex-col items-stretch pointer-events-none ${adjustOpen?'is-expanded':''} ${viewport.width<380?'is-compact':''} ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:adjustOpen?Math.min(336,viewport.width-16):'max-content',maxWidth:Math.max(0,viewport.width-16),maxHeight:Math.max(0,viewport.height-16),'--adjustment-space':`${Math.max(0,viewport.height-16-44)}px`} as React.CSSProperties}>
+      {!sharing&&!inspectorOpen&&inferredRef?.selectedIds.every(id=>nodes.find(node=>node.id===id)?.type!=='screen')&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context horizontal-reference-context absolute z-40 flex flex-col items-stretch pointer-events-none ${adjustOpen?'is-expanded':''} ${viewport.width<380?'is-compact':''} ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:adjustOpen?Math.min(336,viewport.width-16):'max-content',maxWidth:Math.max(0,viewport.width-16),maxHeight:Math.max(0,viewport.height-16),'--adjustment-space':`${Math.max(0,viewport.height-16-44)}px`} as React.CSSProperties}>
         <ReferenceActions selectionPending={!!draftRef} compareOwn={compareOwn} compareReady={compareReady&&inferredRef.selectedIds.length>=2} compareHint={compareHint} shareLabel={shareLabel} onCompare={onCompare} onAction={intent=>{setAdjustOpen(false);onAcceptReference(intent);}} expanded={adjustOpen} onMore={()=>{const opening=!adjustOpen;setAdjustOpen(opening);setHoveredInterpretation(null);if(opening&&!ai.done&&!ai.loading){onResearchEvent('ai_interpretation_requested');void ai.request();}}} interpretationContent={<div id="interpretation-adjustments" className="interpretation-adjustments">
           <div className="interpretation-chat" role="log" aria-label="Selection conversation" aria-live="polite">
             <p className="assistant-message"><Sparkles size={14}/>What would you like to select?</p>
@@ -502,23 +503,6 @@ export default function Canvas({
             }}
           />
 
-          {/* Frame Headers */}
-          <div className="absolute pointer-events-none z-0">
-            {SCREEN_CONFIGS.map(cfg => (
-              <div
-                key={cfg.name}
-                className="absolute"
-                style={{ left: cfg.x, top: START_Y - 24, width: SCREEN_W }}
-              >
-                <div className="flex items-center justify-between text-zinc-600 font-mono text-xs">
-                  <span className="font-semibold text-zinc-800">{cfg.label}</span>
-                </div>
-
-
-              </div>
-            ))}
-          </div>
-
           {/* Render All UI Nodes with Real Conventional Selection Handlers */}
           {nodes.filter(node => node.type === 'screen' || !node.screen).map(node => renderNode(node))}
 
@@ -532,6 +516,7 @@ export default function Canvas({
             </mask></defs>
             <rect x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale} fill="#101d27" fillOpacity="0.55" mask="url(#selection-preview-focus)"/>
           </svg>}
+          {nodes.filter(node=>node.type==='screen'&&activeIds.includes(node.id)).map(frame=><div key={`frame-outline-${frame.id}`} className="canvas-frame-outline" style={{left:frame.x,top:frame.y,width:frame.w,height:frame.h,borderWidth:1/transform.scale}}/>)}
           {/* Individual Selection Ring Overlays */}
           <AnimatePresence>
             {!showGestureAnimation && (selectionState === 'drawing' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift) || selectionState === 'moving' || selectionState === 'preview' || selectionState === 'disambiguating') && (movingIds.length||activeIds.length) > 0 && nodes.filter(n => (movingIds.length?movingIds:activeIds).includes(n.id) && n.type !== 'screen').map(node => {
@@ -569,7 +554,7 @@ export default function Canvas({
 
           {/* FIGMA-STYLE OVERALL BOUNDING BOX WITH CLEAN CORNER HANDLES ONLY (NO CLUTTERED FLOATING BADGES) */}
           <AnimatePresence>
-            {!draftRef && (selectionState === 'preview' || selectionState === 'disambiguating' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift)) && boundingBox && (
+            {!draftRef && (selectionState === 'preview' || selectionState === 'disambiguating' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift)) && boundingBox && !activeIds.every(id=>nodes.find(node=>node.id===id)?.type==='screen') && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

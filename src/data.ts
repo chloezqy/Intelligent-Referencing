@@ -34,8 +34,8 @@ function buildDataset(): UIElement[] {
       label: `${cfg.name} Screen`,
       screen: cfg.name,
       bg: '#fcfaf7',
-      radius: 40,
-      border: '1px solid #27272a'
+      radius: 0,
+      border: '1px solid #e4e4e7'
     });
   };
 

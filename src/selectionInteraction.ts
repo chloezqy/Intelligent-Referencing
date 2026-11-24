@@ -11,6 +11,7 @@ export function layerPath(id:string,nodes:UIElement[]):UIElement[]{
  return path;
 }
 export function canvasSelectionTarget(id:string,nodes:UIElement[],selected:string[],options:{deep?:boolean;drill?:boolean;extend?:boolean}={}):UIElement|undefined {
+ const frame=nodes.find(node=>node.id===id&&node.type==='screen');if(frame)return frame;
  const path=layerPath(id,nodes),hit=path.at(-1);if(!hit)return;
  if(options.deep)return hit;
  if(options.drill){let index=-1;path.forEach((n,i)=>{if(selected.includes(n.id))index=i;});return path[Math.min(path.length-1,index<0?1:index+1)];}
@@ -27,6 +28,9 @@ export function nestedSelection(ids:string[],nodes:UIElement[],direction:'childr
 }
 export function mergeLayerSelection(previous:string[],id:string,nodes:UIElement[],toggle=false):string[]{
  if(!toggle)return [id];if(previous.includes(id))return previous.filter(value=>value!==id);
+ const contains=(ancestor:string,child:string)=>{let parent=nodes.find(n=>n.id===child)?.parent;const seen=new Set<string>();while(parent&&!seen.has(parent)){if(parent===ancestor)return true;seen.add(parent);parent=nodes.find(n=>n.id===parent)?.parent;}return false;};
+ if(nodes.find(n=>n.id===id)?.type==='screen')return [...previous.filter(value=>!contains(id,value)),id];
+ previous=previous.filter(value=>!contains(value,id));
  return [...previous.filter(value=>!layerPath(id,nodes).some(n=>n.id===value)&&!layerPath(value,nodes).some(n=>n.id===id)),id];
 }
 export function canvasMarqueeTargets(hitIds:string[],nodes:UIElement[],selected:string[],deep=false):string[]{

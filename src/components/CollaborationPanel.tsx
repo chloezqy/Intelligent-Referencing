@@ -10,7 +10,7 @@ export default function CollaborationPanel({ selection,onLocateSelection,studyAc
   const [code, setCode] = useState(c.initialCode);
   const [copied, setCopied] = useState(false);
   const [showArchived,setShowArchived]=useState(false);
-  const selectedNodes=[...new Set(selection?.selectedIds||[])].flatMap(id=>{const node=nodes.find(n=>n.id===id&&n.type!=='screen');return node?[node]:[];});
+  const selectedNodes=[...new Set(selection?.selectedIds||[])].flatMap(id=>{const node=nodes.find(n=>n.id===id);return node?[node]:[];});
   const selectionKey=selectedNodes.map(n=>n.id).join('|');
   useEffect(()=>{if(selectionKey)setShowArchived(false);},[selectionKey]);
   const received = c.room?.references.filter(r=>needsReferenceNotification(r,c.session?.userId)).length || 0;
