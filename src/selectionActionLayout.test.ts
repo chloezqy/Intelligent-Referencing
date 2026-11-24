@@ -1,33 +1,30 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {selectionActionLayout} from './selectionActionLayout';
-test('Action surface sits beside the selection top and stays against the right edge when space runs out',()=>{
- const camera={x:0,y:0,scale:1},viewport={width:1000,height:700},size={width:292,height:196};
- assert.deepEqual(selectionActionLayout({x:100,y:100,w:100,h:100},camera,viewport,size),{left:212,top:100});
- const clamped=selectionActionLayout({x:850,y:580,w:100,h:100},camera,viewport,size);
- assert.deepEqual(clamped,{left:700,top:496});
+test('floating row is centered above selection with a 10px screen-space gap',()=>{
+ const result=selectionActionLayout({x:300,y:300,w:200,h:100},{x:0,y:0,scale:1},{width:1000,height:700},{width:360,height:38});
+ assert.deepEqual(result,{left:220,top:252});
 });
-test('Measured action and detail sizes stay within laptop and narrow viewports under zoom',()=>{
- for(const viewport of [{width:723,height:635},{width:360,height:500},{width:240,height:300}])for(const scale of [.1,.5,1.5])for(const size of [{width:292,height:196},{width:292,height:460}]){
+test('viewport edges clamp the menu horizontally and to the canvas top, never below the selection',()=>{
+ const camera={x:0,y:0,scale:1},viewport={width:1000,height:700},size={width:292,height:196};
+ assert.deepEqual(selectionActionLayout({x:100,y:100,w:100,h:100},camera,viewport,size),{left:8,top:8});
+ assert.deepEqual(selectionActionLayout({x:850,y:580,w:100,h:100},camera,viewport,size),{left:700,top:374});
+});
+test('measured surfaces fit narrow viewports and remain screen-sized at every zoom',()=>{
+ for(const viewport of [{width:723,height:635},{width:360,height:500},{width:240,height:300}])for(const scale of [.1,.5,1.5])for(const size of [{width:460,height:38},{width:336,height:460}]){
   const point=selectionActionLayout({x:2000,y:800,w:375,h:812},{x:-100,y:-20,scale},viewport,size);
   assert.ok(point.left>=8&&point.top>=8);
   assert.ok(point.left+Math.min(size.width,viewport.width-16)<=viewport.width-8);
   assert.ok(point.top+Math.min(size.height,viewport.height-16)<=viewport.height-8);
  }
-});
-
-test('Pointer anchor places the stack close to the selection click at every zoom',()=>{
- const box={x:0,y:0,w:600,h:800},anchor={x:80,y:90};
  for(const scale of [.5,1,1.5]){
-  const result=selectionActionLayout(box,{x:20,y:30,scale},{width:1200,height:1000},{width:336,height:184},anchor);
-  assert.equal(result.left,anchor.x*scale+20+12);
-  assert.equal(result.top,anchor.y*scale+30-6);
+  const result=selectionActionLayout({x:400,y:600,w:200,h:100},{x:20,y:30,scale},{width:1600,height:1200},{width:336,height:38});
+  assert.equal(result.left,500*scale+20-168);assert.equal(result.top,600*scale+30-10-38);
  }
 });
-
-test('Rough interpretation follows selection bounds rather than the gesture release point',()=>{
- const result=selectionActionLayout({x:100,y:80,w:140,h:300},{x:0,y:0,scale:1},{width:1000,height:700},{width:305,height:120});
- assert.deepEqual(result,{left:252,top:80});
- // The stack offset places the overlapping icon at 252 and panel edge at 265.
- assert.equal(result.left-31+44,265);
+test('expanded content grows upward around the same selection center',()=>{
+ const box={x:200,y:600,w:300,h:100},camera={x:0,y:0,scale:1},viewport={width:1000,height:800};
+ const row=selectionActionLayout(box,camera,viewport,{width:360,height:38});
+ const panel=selectionActionLayout(box,camera,viewport,{width:336,height:400});
+ assert.equal(row.left+180,panel.left+168);assert.equal(row.top+38,panel.top+400);
 });

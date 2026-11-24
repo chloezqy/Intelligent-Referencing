@@ -81,9 +81,7 @@ export default function Canvas({
   useEffect(()=>{if(inferredRef){setHoveredInterpretation(null);}},[inferredRef]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ width: 800, height: 600 });
-  const [actionAnchor,setActionAnchor]=useState<Point|null>(null);
   const [actionSurface,setActionSurface]=useState<HTMLDivElement|null>(null);
-  const collapsedActionSize=useRef({width:320,height:196});
   const [actionPosition,setActionPosition]=useState({left:8,top:8});
   const [pinChooserOpen, setPinChooserOpen] = useState(false);
   useEffect(() => {
@@ -287,7 +285,7 @@ export default function Canvas({
     appendGestureSamples(pending,e.nativeEvent,getCanvasCoords);
     const end=getCanvasCoords(e);
     if(containerRef.current?.hasPointerCapture(e.pointerId))containerRef.current.releasePointerCapture(e.pointerId);
-    setActionAnchor(end);setCurrentPath([]);setRectStart(null);
+    setCurrentPath([]);setRectStart(null);
     if(!isSelectionDrag(pending.screenStart,pending.screenPoints)){
       if(pending.tool==='pointer'){const last=lastLayerClick.current;const double=last&&pending.rawNodeId===last.id&&e.timeStamp-last.at<500&&Math.hypot(e.clientX-last.point.x,e.clientY-last.point.y)<6;const target=double&&pending.rawNodeId?canvasSelectionTarget(pending.rawNodeId,nodes,pending.previous?.selectedIds||[],{drill:true,deep:pending.deep}):pending.node;commitClick(target||null,pending.shift,pending.previous);lastLayerClick.current=!double&&pending.rawNodeId?{id:pending.rawNodeId,at:e.timeStamp,point:{x:e.clientX,y:e.clientY}}:null;}
       else if(pending.tool==='reference'&&!pending.shift){
@@ -356,21 +354,19 @@ export default function Canvas({
   const exemplarIds = activeCandidate ? activeCandidate.exemplarIds : (inferredRef?.exemplarIds || []);
 
   const boundingBox = activeIds.length > 0 ? getBoundingBox(activeIds, nodes) : null;
-  // Re-anchor only on appearance or actual canvas navigation, never accordion changes.
+  // Candidate hover affects canvas highlighting, never the popup's selection anchor.
+  const actionBounds=getBoundingBox(draftRef?draftRef.exemplarIds:confirmedRef?.selectedIds||[],nodes);
+  const actionBoundsKey=JSON.stringify(actionBounds);
   useLayoutEffect(()=>{
     if(!actionSurface)return;
-    const header=actionSurface.querySelector<HTMLElement>('.refine-selection');
-    if(header)collapsedActionSize.current={width:actionSurface.offsetWidth,height:header.getBoundingClientRect().bottom-actionSurface.getBoundingClientRect().top+8};
-    const width=Math.min(336,Math.max(0,viewport.width-16));
-    // Reserve a small scrollable adjustment area when first choosing an edge-safe anchor.
-    const height=Math.min(Math.max(0,viewport.height-16),collapsedActionSize.current.height+72);
-    // Pending gestures show only the interpretation step. Account for its 44px
-    // staircase inset and 13px overlapping icon when placing its visible footprint.
-    const inset=draftRef?31:0;
-    const box=draftRef?getBoundingBox(draftRef.exemplarIds,nodes):boundingBox;
-    const placed=selectionActionLayout(box,transform,viewport,{width:width-inset,height},draftRef?null:actionAnchor);
-    setActionPosition({left:placed.left-inset,top:placed.top});
-  },[actionSurface,transform.x,transform.y,transform.scale,viewport.width,viewport.height,actionAnchor,!!draftRef,draftRef?.exemplarIds.join('|')]);
+    const place=()=>{
+      const placed=selectionActionLayout(actionBounds,transform,viewport,{width:actionSurface.offsetWidth,height:actionSurface.offsetHeight});
+      setActionPosition(previous=>previous.left===placed.left&&previous.top===placed.top?previous:placed);
+    };
+    place();const observer=new ResizeObserver(place);observer.observe(actionSurface);
+    return()=>observer.disconnect();
+  },[actionSurface,actionBoundsKey,transform.x,transform.y,transform.scale,viewport.width,viewport.height,adjustOpen]);
+  useEffect(()=>{setAdjustOpen(false);setHoveredInterpretation(null);},[confirmedRef?.selectedIds.join('|'),sharing]);
   const gestureBB = currentPath.length > 0 ? {
     x: Math.min(...currentPath.map(p => p.x)),
     y: Math.min(...currentPath.map(p => p.y)),
@@ -449,8 +445,8 @@ export default function Canvas({
       {gestureNotice&&<div className="gesture-notice" role="status">{gestureNotice}<button type="button" aria-label="Dismiss gesture message" onClick={()=>setGestureNotice('')}><X size={14}/></button></div>}
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* One AI review surface; editing is available only after reference confirmation. */}
-      {!sharing&&!inspectorOpen&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context absolute z-40 flex flex-col items-stretch pointer-events-auto ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:Math.min(336,viewport.width-16),maxHeight:viewport.height-actionPosition.top-8,'--adjustment-space':`${Math.max(48,viewport.height-actionPosition.top-collapsedActionSize.current.height-8)}px`} as React.CSSProperties}>
-        <ReferenceActions selectionPending={!!draftRef} compareOwn={compareOwn} compareReady={compareReady&&inferredRef.selectedIds.length>=2} compareHint={compareHint} shareLabel={shareLabel} onCompare={onCompare} onAction={onAcceptReference} expanded={adjustOpen} onMore={()=>{const opening=!adjustOpen;setAdjustOpen(opening);setHoveredInterpretation(null);if(opening&&!ai.done&&!ai.loading){onResearchEvent('ai_interpretation_requested');void ai.request();}}} interpretationContent={<div id="interpretation-adjustments" className="interpretation-adjustments">
+      {!sharing&&!inspectorOpen&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context horizontal-reference-context absolute z-40 flex flex-col items-stretch pointer-events-none ${adjustOpen?'is-expanded':''} ${viewport.width<380?'is-compact':''} ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:adjustOpen?Math.min(336,viewport.width-16):'max-content',maxWidth:Math.max(0,viewport.width-16),maxHeight:Math.max(0,viewport.height-16),'--adjustment-space':`${Math.max(0,viewport.height-16-44)}px`} as React.CSSProperties}>
+        <ReferenceActions selectionPending={!!draftRef} compareOwn={compareOwn} compareReady={compareReady&&inferredRef.selectedIds.length>=2} compareHint={compareHint} shareLabel={shareLabel} onCompare={onCompare} onAction={intent=>{setAdjustOpen(false);onAcceptReference(intent);}} expanded={adjustOpen} onMore={()=>{const opening=!adjustOpen;setAdjustOpen(opening);setHoveredInterpretation(null);if(opening&&!ai.done&&!ai.loading){onResearchEvent('ai_interpretation_requested');void ai.request();}}} interpretationContent={<div id="interpretation-adjustments" className="interpretation-adjustments">
           <div className="interpretation-chat" role="log" aria-label="Selection conversation" aria-live="polite">
             <p className="assistant-message"><Sparkles size={14}/>What would you like to select?</p>
             {chatMessage&&<p className="user-message">{chatMessage}</p>}

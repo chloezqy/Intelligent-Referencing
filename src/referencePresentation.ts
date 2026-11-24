@@ -1,3 +1,4 @@
+import {selectionActionLayout} from './selectionActionLayout.js';
 import { SharedReference } from './collaboration.js';
 import { UIElement } from './types.js';
 import { CanvasTransform } from './workspace.js';
@@ -98,7 +99,7 @@ export function pinChooserBounds(anchor:{x:number;y:number},viewport:{width:numb
 export function shareActionLabel(user?: 'A'|'B'|null) {
   return user ? `Share to User ${user==='A'?'B':'A'}` : 'Share to user?';
 }
-/** Anchor an unsent request to its first visible object; keep the form inside the canvas. */
+/** Center the floating composer above all referenced objects; keep it inside the canvas. */
 export function sharePopoverLayout(ids:string[],nodes:UIElement[],camera:CanvasTransform,viewport:{width:number;height:number},measuredHeight=320){
   const targets=ids.flatMap(id=>{const node=nodes.find(n=>n.id===id);return node?[{x:(node.x+node.w)*camera.scale+camera.x,y:node.y*camera.scale+camera.y}]:[];});
   if(!targets.length)return null;
@@ -106,6 +107,8 @@ export function sharePopoverLayout(ids:string[],nodes:UIElement[],camera:CanvasT
   const anchor=targets.find(inView)||targets[0],offscreen=!targets.some(inView);
   const pin={x:Math.max(12,Math.min(viewport.width-12,anchor.x)),y:Math.max(12,Math.min(viewport.height-12,anchor.y))};
   const width=Math.min(312,Math.max(0,viewport.width-16)),maxHeight=Math.min(360,Math.max(0,viewport.height-16)),height=Math.min(measuredHeight,maxHeight);
-  const below=pin.y+20,top=below+height<=viewport.height-8?below:Math.max(8,pin.y-20-height);
-  return {pin,offscreen,popup:{left:Math.max(8,Math.min(viewport.width-width-8,pin.x-12)),top:Math.min(Math.max(8,viewport.height-height-8),top),width,maxHeight}};
+  const selected=nodes.filter(n=>ids.includes(n.id)),x=Math.min(...selected.map(n=>n.x)),y=Math.min(...selected.map(n=>n.y));
+  const box={x,y,w:Math.max(...selected.map(n=>n.x+n.w))-x,h:Math.max(...selected.map(n=>n.y+n.h))-y};
+  const position=selectionActionLayout(box,camera,viewport,{width,height});
+  return {pin,offscreen,popup:{...position,width,maxHeight}};
 }

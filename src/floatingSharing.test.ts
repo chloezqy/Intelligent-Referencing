@@ -19,7 +19,7 @@ test('single and multiple selections retain all sharing controls and explicit su
  nodes:MOCK_NODES,camera:{x:0,y:0,scale:.5},collaboration:{session:{userId:'A'},room:{members:[{userId:'A',online:true},{userId:'B',online:true}]},connected:true,busy:false,share:()=>{throw Error('Must require submit');}} as any,
  visible:true,onVisible:noop,note:'Please review @B',intent:'Review',onNote:noop,onIntent:noop,onCancel:noop,onShared:noop,onRoom:noop,onLocate:noop,onDesignReference:noop,onComparisonPurpose:noop,onRefreshComparison:noop,comparisonChanged:false,
  }));
- assert.match(html,/role="dialog"/);assert.match(html,/>Share reference</);
+ assert.match(html,/role="dialog"/);assert.doesNotMatch(html,/share-draft-pin/);assert.match(html,/>Share reference</);
  assert.match(html,/type="text"/);assert.match(html,/maxLength="120"/);assert.doesNotMatch(html,/<select/);
  assert.match(html,/Reference note/);assert.match(html,/@B/);assert.doesNotMatch(html,/notified automatically/);assert.doesNotMatch(html,/type="checkbox"/);assert.match(html,/Close sharing popup/);assert.match(html,/>Cancel</);
  }

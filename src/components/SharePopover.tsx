@@ -3,7 +3,7 @@ import {createPortal} from 'react-dom';
 import type {CollaborationClient} from '../collaborationClient';
 import ComparisonOverview from './ComparisonOverview';
 import ComparisonContext, {ComparisonPurpose} from './ComparisonContext';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ReferenceDraft, ReferenceIntent, DesignReference, DESIGN_REFERENCE_PURPOSE } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
@@ -26,11 +26,11 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
   const label=shareActionLabel(c.session?.userId),target=c.session?.userId==='B'?'A':'B';
   useEffect(()=>{const el=host.current;if(!el)return;const observer=new ResizeObserver(()=>setViewport({width:el.clientWidth,height:el.clientHeight}));observer.observe(el);return()=>observer.disconnect();},[inspector,inspectorHost]);
   useEffect(()=>{setSendId(requestId());},[draft,note,intent]);
-  useEffect(()=>{
+  useLayoutEffect(()=>{
     if(!visible)return;
     const element=popup.current;if(!element)return;
     element.querySelector<HTMLInputElement>('input[type=text]')?.focus({preventScroll:true});
-    const observer=new ResizeObserver(()=>setHeight(element.getBoundingClientRect().height));observer.observe(element);
+    const measure=()=>setHeight(element.getBoundingClientRect().height);measure();const observer=new ResizeObserver(measure);observer.observe(element);
     const outside=(e:PointerEvent)=>{if(!inspector&&!host.current?.contains(e.target as Node))onVisible(false);};
     const escape=(e:KeyboardEvent)=>{if(e.key==='Escape'){if(element.querySelector('[data-mention-options]'))return;e.preventDefault();e.stopPropagation();onVisible(false);pin.current?.focus({preventScroll:true});}};
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape,true);
@@ -40,7 +40,7 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
   if(!layout&&!inspector)return null;
   const sharingControls=<ReferenceSharingControls comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} nodes={documentNodes||nodes} elementIds={draft.elementIds}/>;
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
-    {!inspector&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
+    {!inspector&&!visible&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
     {visible&&<div ref={popup} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover pointer-events-auto'} style={inspector?undefined:layout?.popup}>
       {!inspector&&<header><h3>Share reference</h3><button type="button" aria-label="Close sharing popup" onClick={onCancel}>×</button></header>}
       <form onSubmit={async e=>{e.preventDefault();const result=await c.share({...draft,...(documentNodes?{document:documentNodes}:{})},intent,note,sendId,true);if(result)onShared(result.id);}}>

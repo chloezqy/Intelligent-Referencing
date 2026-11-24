@@ -76,7 +76,7 @@ test('Compact chooser labels never include full notes and its bounds stay inside
 test('Sharing labels identify the actual recipient',()=>{
  assert.equal(shareActionLabel('A'),'Share to User B');assert.equal(shareActionLabel('B'),'Share to User A');assert.equal(shareActionLabel(null),'Share to user?');
 });
-test('The share popup follows a frozen target and stays within the viewport, flipping above when needed',()=>{
+test('The share popup is centered above frozen targets and clamps to the top rather than moving below',()=>{
  const node=MOCK_NODES.find(n=>n.id==='hc1-cta')!;
  for(const width of [220,800,1300])for(const height of [240,600])for(const scale of [.08,.5,2.5]){
   const layout=sharePopoverLayout([node.id],MOCK_NODES,{x:0,y:0,scale},{width,height},320)!;
@@ -84,10 +84,14 @@ test('The share popup follows a frozen target and stays within the viewport, fli
  }
  const simple=[{...node,id:'anchor',x:50,y:50,w:50}];
  const low=sharePopoverLayout(['anchor'],simple,camera,{width:800,height:600},250)!;
- assert.deepEqual(low.pin,{x:100,y:50});assert.equal(low.popup.top,70);
+ assert.deepEqual(low.pin,{x:100,y:50});assert.equal(low.popup.top,8);
  const moved=sharePopoverLayout(['anchor'],simple,{x:10,y:15,scale:2},{width:800,height:600},250)!;
  assert.deepEqual(moved.pin,{x:210,y:115});
  const bottom=sharePopoverLayout(['anchor'],[{...simple[0],y:500}],camera,{width:800,height:600},250)!;assert.ok(bottom.popup.top<bottom.pin.y);
+ const pair=[{...node,id:'a',x:200,y:500,w:100},{...node,id:'b',x:600,y:550,w:100}];
+ const combined=sharePopoverLayout(['a','b'],pair,camera,{width:1000,height:800},200)!;
+ assert.equal(combined.popup.left+combined.popup.width/2,450);assert.equal(combined.popup.top,290);
+ assert.deepEqual(sharePopoverLayout(['b','a'],pair,camera,{width:1000,height:800},200)!.popup,combined.popup);
  assert.equal(sharePopoverLayout(['missing'],MOCK_NODES,camera,viewport),null);
 });
 
