@@ -50,3 +50,14 @@ test('Purpose-specific next steps render separately, including empty comparison 
  const design=renderToStaticMarkup(React.createElement(EditingToolbar,{...props,context:c}));assert.match(design,/Preview changes/);assert.match(design,/Properties to match/);assert.match(design,/unavailable/);assert.doesNotMatch(design,/Resolve selected differences|Request collaborator review/);
  const single=localComparison('A',['hc1'],'single',MOCK_NODES),html=renderToStaticMarkup(React.createElement(EditingToolbar,{...props,context:single}));assert.match(html,/No compatible editable differences/);assert.doesNotMatch(html,/Request collaborator review/);
 });
+
+test('Difference controls are icon-only and actual Fill colors remain visible as swatches',()=>{
+ const nodes=MOCK_NODES.map(node=>node.id==='hc1'?{...node,bg:'#123456'}:node.id==='sc2'?{...node,bg:'#abcdef'}:node);
+ const ownership=localComparison('A',['hc1','sc2'],'swatches',nodes);
+ const html=renderToStaticMarkup(React.createElement(PropertyComparison,{ownership,contextId:'swatches',ids:['hc1','sc2'],nodes,expanded:true,visual:true,selectedKeys:['background'],onSelectedKeys:()=>{}}));
+ assert.match(html,/title="Select difference to resolve\."/);assert.match(html,/aria-label="Resolve Background"/);
+ assert.doesNotMatch(html,/>Resolve<|\/>Resolve<\/label>/);
+ assert.match(html,/class="comparison-swatch" style="background-color:#123456"/);
+ assert.match(html,/class="comparison-swatch" style="background-color:#abcdef"/);
+ assert.match(html,/#123456/);assert.match(html,/#abcdef/);assert.match(html,/>Info</);
+});

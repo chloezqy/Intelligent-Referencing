@@ -39,6 +39,7 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
   const layout=sharePopoverLayout(draft.elementIds,nodes,camera,viewport,height);
   if(!layout&&!inspector)return null;
   const sharingControls=<ReferenceSharingControls comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} nodes={documentNodes||nodes} elementIds={draft.elementIds}/>;
+  const submitButton=<button className="primary-action" disabled={!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':'Share reference'}</button>;
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     {!inspector&&!visible&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
     {visible&&<div ref={popup} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover pointer-events-auto'} style={inspector?undefined:layout?.popup}>
@@ -55,11 +56,12 @@ export default function SharePopover({comparisonKeys,onComparisonKeys,onPickSeco
         {inspector?<section className="comparison-sharing-options" aria-label="Sharing options"><h4>Sharing options</h4>
 
           {sharingControls}
+          <div className="comparison-share-submit">{submitButton}</div>
         </section>:sharingControls}
         {!draft.comparison&&intent!=='Compare'&&<PropertyComparison compact={inspector} contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded={false}/>}
         {!c.session||!c.room?<p className="subtle">Create or join a room first. <button type="button" onClick={onRoom}>Open shared workspace</button></p>:!c.room.members.some(m=>m.userId===target)?<p className="subtle">Invite User {target} before sending. <button type="button" onClick={onRoom}>Open room</button></p>:!c.room.members.some(m=>m.userId===target&&m.online)?<p className="subtle">User {target} is offline. They can open this request when they return.</p>:null}
         {c.error&&<p className="connection-error" role="alert">{c.error}</p>}
-        </div><div className="action-row share-form-footer"><button className="primary-action" disabled={!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':'Share reference'}</button><button type="button" onClick={onCancel}>Cancel</button></div>
+        </div><div className="action-row share-form-footer">{!inspector&&submitButton}<button type="button" onClick={onCancel}>Cancel</button></div>
       </form>
     </div>}
   </div>;

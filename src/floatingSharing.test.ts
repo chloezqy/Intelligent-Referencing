@@ -32,3 +32,9 @@ test('floating sharing stays within small canvas bounds even for offscreen selec
  assert.ok(layout.popup.top+layout.popup.maxHeight<=240);
  }
 });
+
+test('comparison submission lives in Sharing options while the fixed footer only cancels',()=>{
+ const source=readFileSync(new URL('./components/SharePopover.tsx',import.meta.url),'utf8');
+ assert.match(source,/<div className="comparison-share-submit">\{submitButton\}<\/div>/);
+ assert.match(source,/share-form-footer">\{!inspector&&submitButton\}<button type="button" onClick=\{onCancel\}>Cancel/);
+});

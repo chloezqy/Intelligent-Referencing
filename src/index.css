@@ -977,7 +977,7 @@ button:disabled { opacity:.45; }
 /* Compact comparison sharing; the form body scrolls above its separate footer. */
 .inspector-composer .comparison-sharing-options {
   margin:16px -16px 0;
-  padding:20px 24px;
+  padding:20px 16px;
   border-top:1px solid #dee9f0;
 }
 .inspector-composer .comparison-sharing-options>h4 {margin:0 0 16px;}
@@ -1432,3 +1432,16 @@ button:disabled { opacity:.45; }
 .horizontal-reference-context .interpretation-panel-header {display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:38px;flex-shrink:0;margin:0;padding:10px 12px;border:0;border-bottom:1px solid #dee9f0;border-radius:10px 10px 0 0;background:#f9fbfd;color:#57535f;font-size:12px;font-weight:500;text-align:left;}
 .horizontal-reference-context .interpretation-panel-header:focus-visible {outline:2px solid #0d99ff;outline-offset:-2px;}
 .horizontal-reference-context.is-compact .horizontal-actions .action-pill {gap:5px;padding:6px 8px;}
+
+.inspector-composer .comparison-share-submit {margin-top:16px;}
+
+/* Resolve is an actionable confirmation, separate from comparison results. */
+.actionable-difference>.difference-select input:checked {background:#0d99ff;border-color:#0d99ff;}
+.difference-inline-values .comparison-swatch {display:inline-block;width:12px;height:12px;margin:0 4px 0 2px;vertical-align:-1px;border:1px solid #d3dfe7;border-radius:3px;}
+.comparison-next-steps>.resolution-action {background:#eff7ff;border:1px solid #a9d5f7;border-radius:10px;overflow:hidden;}
+.resolution-action>.inspector-action-card>svg {color:#0d99ff;}
+.resolution-count {display:inline-block;margin-left:8px;font-size:10px;font-weight:500;color:#39769f;white-space:nowrap;}
+.resolution-action .comparison-before-after>div {background:#fff;}
+.resolution-action .comparison-before-after>[data-preview-appearance="after"] {border-color:#86c6f6;}
+.comparison-next-steps .resolution-action button.primary-action {background:#0d99ff;color:#fff;border-color:#0d99ff;}
+.comparison-next-steps .resolution-action button.primary-action:hover:not(:disabled) {background:#0788e5;}

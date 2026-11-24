@@ -1,3 +1,4 @@
+import {resolutionSelectionTransition,resolutionScrollDelta} from '../resolutionReveal';
 import CanvasComparisonCards from './CanvasComparisonCards';
 import AIActionsPanel from './AIActionsPanel';
 import AdjustColor from './AdjustColor';
@@ -44,7 +45,7 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
  const [instruction,setInstruction]=useState(''),[busy,setBusy]=useState(false);
  const request=useRef<AbortController|null>(null),targetKey=selection.selectedIds.join('|'),currentKey=useRef(targetKey);currentKey.current=targetKey;
  useLayoutEffect(()=>{
-  if(!inline||!panel)return;
+  if(!inline||!panel||comparisonWorkflow&&!design&&panel==='Match Styles')return;
   const root=editorRoot.current,header=root?.querySelector<HTMLElement>('.selection-action-accordion.is-open [data-action-header]'),scroll=(root?.closest('.share-form-body')||root?.closest('.comparison-inspector-content')) as HTMLElement|null;
   if(!header||!scroll)return;
   const h=header.getBoundingClientRect(),v=scroll.getBoundingClientRect();
@@ -73,6 +74,27 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
  function previewReference(){try{const p=proposedReferenceEdits(context!,nodes),ids=p.mappings.map(m=>m.id);setProposal(p);setProposalOrigin('model');setEnabled(ids);setPreviewing(true);setPanel('Match Styles');onPreview(proposalPatches(p,ids,nodes));onEvent?.('edit_preview_toggled');onState('Previewing Changes');setMessage('');}catch(error){setMessage((error as Error).message);}}
  const resolving=panel==='Match Styles'&&comparisonWorkflow&&!design;
  const resolutionKeys=comparisonKeys.join('|');
+ const validResolutionKeys=context&&!design?comparisonKeys.filter(key=>editableDifferences(context,nodes).includes(key)):[];
+ const resolutionIdentity=JSON.stringify([context?.snapshotId,targetKey,context?.purpose]);
+ const previousResolution=useRef({identity:resolutionIdentity,count:validResolutionKeys.length});
+ const revealResolution=useRef(false);
+ useEffect(()=>{
+  const previous=previousResolution.current,count=validResolutionKeys.length;
+  previousResolution.current={identity:resolutionIdentity,count};
+  if(!comparisonWorkflow||design||previous.identity!==resolutionIdentity)return;
+  if(resolutionSelectionTransition(previous,resolutionIdentity,count)==='reveal'){revealResolution.current=true;setPanel('Match Styles');}
+  else if(resolutionSelectionTransition(previous,resolutionIdentity,count)==='clear'){revealResolution.current=false;if(resolving){clearProposal();setPanel(null);}}
+ },[resolutionIdentity,resolutionKeys,comparisonWorkflow,design]);
+ useLayoutEffect(()=>{
+  if(!resolving||!proposal||!revealResolution.current)return;
+  revealResolution.current=false;
+  const root=editorRoot.current,header=root?.querySelector<HTMLElement>('.resolution-action [data-action-header]');
+  const scroll=(root?.closest('.share-form-body')||root?.closest('.comparison-inspector-content')) as HTMLElement|null;
+  if(!header||!scroll)return;
+  const delta=resolutionScrollDelta(header.getBoundingClientRect(),scroll.getBoundingClientRect(),header.parentElement!.getBoundingClientRect().bottom,root?.querySelector('.resolution-action .comparison-before-after')?.getBoundingClientRect().top);
+  if(delta)scroll.scrollBy({top:delta,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+ },[resolving,proposal]);
+
  useEffect(()=>{
   if(!resolving||!context)return;
   try{
@@ -117,7 +139,7 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
     <div className={`selection-action-accordion ${panel==='Ask AI'?'is-open':''}`}><button type="button" className="inspector-action-card" aria-expanded={panel==='Ask AI'} onClick={()=>switchPanel('Ask AI')}><Sparkles size={17}/><span><strong>AI suggestions</strong><small>Optional recommendations based on available properties.</small></span><ChevronRight size={15}/></button>{panel==='Ask AI'&&<div><DraftDesignChanges requestOnOpen nodes={nodes} context={context!} onChange={onDesignReference}/>{context!.designReference.proposedChanges?.length>0&&<button type="button" onClick={previewReference}>Preview selected AI suggestions</button>}</div>}</div>
     {availability.actions.includes('Design System')&&actionCard('Design System')}
    </>:<><h4>Next steps</h4>
-    <div className={`selection-action-accordion ${panel==='Match Styles'?'is-open':''}`}><button type="button" className="inspector-action-card" data-action-header="Match Styles" aria-expanded={panel==='Match Styles'} disabled={!allowed.length||!selectedKeys.length} onClick={()=>switchPanel('Match Styles')}><Copy size={17}/><span><strong>Resolve selected differences</strong><small>Review the preview and apply when ready.</small></span><ChevronRight size={15}/></button>{!selectedKeys.length&&<p className="subtle">{allowed.length?'Select editable differences above.':'No compatible editable differences. Use Sharing options below to request review.'}</p>}{panel==='Match Styles'&&<><label className="comparison-match-direction">Match direction<select aria-label="Match direction" value={direction} onChange={event=>setDirection(event.target.value as 'A'|'B')}><option value="A">Object A → Object B</option><option value="B">Object B → Object A</option></select></label>{editingPanel}</>}</div>
+    <div className={`selection-action-accordion resolution-action ${panel==='Match Styles'?'is-open':''}`}><button type="button" className="inspector-action-card" data-action-header="Match Styles" aria-expanded={panel==='Match Styles'} disabled={!allowed.length||!selectedKeys.length} onClick={()=>switchPanel('Match Styles')}><Copy size={17}/><span><strong>Resolve selected differences{selectedKeys.length>0&&<span className="resolution-count">{selectedKeys.length} selected</span>}</strong><small>Review the preview and apply when ready.</small></span><ChevronRight size={15}/></button>{!selectedKeys.length&&<p className="subtle">{allowed.length?'Select editable differences above.':'No compatible editable differences. Use Sharing options below to request review.'}</p>}{panel==='Match Styles'&&<><label className="comparison-match-direction">Match direction<select aria-label="Match direction" value={direction} onChange={event=>setDirection(event.target.value as 'A'|'B')}><option value="A">Object A → Object B</option><option value="B">Object B → Object A</option></select></label>{editingPanel}</>}</div>
     <details className="optional-comparison-assistance"><summary>Optional design system assistance</summary>{availability.actions.includes('Design System')&&actionCard('Design System')}</details>
    </>}
    <footer className="inspector-edit-controls" aria-label="Editing history"><button type="button" disabled={!canUndo} onClick={()=>{clearProposal();onUndo();setMessage('Changes undone');}}>Undo</button><button type="button" disabled={!canRedo} onClick={()=>{clearProposal();onRedo();setMessage('Changes restored');}}>Redo</button></footer>
