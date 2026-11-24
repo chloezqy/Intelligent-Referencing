@@ -1,3 +1,5 @@
+> Historical implementation notes, retained for design rationale. UI labels and AI triggers below describe an earlier iteration. Use [the current technical guide](../TECHNICAL.md) and [demo guide](../DEMO.md) for the working flow.
+
 # Optional design-reference proposals
 
 Select two objects and click **Compare**, or select one side and click **Compare with User A/B** when the collaborator has a selection. Both paths open the same inspector. Choose **Use as a design reference**, choose the reference side (use **Swap** to reverse it), select the properties to reference, then click **Suggest changes**. The button is the only AI trigger. New suggestions are unchecked. Check only the proposals to include and share through the existing request form. Closing and resuming preserves included proposals in the draft. Changes to the frozen objects, reference direction or selected property categories discard proposals; refresh the comparison and request suggestions again.

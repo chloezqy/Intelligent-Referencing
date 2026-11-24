@@ -95,7 +95,7 @@ After deployment, with two independent computers/browser profiles:
 4. Share a reference/Compare; B receives it without refreshing, opens/locates targets, and replies. A receives the reply.
 5. Refresh both clients; identities, reference, and reply recover. Archive/restore synchronizes.
 6. Restart/redeploy the hosted service; reconnect, then verify saved references/replies recover from the disk. Recreate any unsent comparison draft.
-7. Check the five task levels, especially Level 4/5's recipient open/locate/response evidence.
+7. Check selection, AI Actions, and reference handoff. Guided research tasks need a study-enabled UI; their launcher is not exposed in the current simplified shell.
 
 If creation fails with a text/HTML 404, you are using a static/frontend-only host. If writes return an origin error, open the exact `PUBLIC_ORIGIN` domain and check its HTTPS value. If all users hit rate limits together, check the proxy-hop setting. If rooms vanish after redeploy, verify the disk and `ROOM_DATA_DIR` mount path.
 

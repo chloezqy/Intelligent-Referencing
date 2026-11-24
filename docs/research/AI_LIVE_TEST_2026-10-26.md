@@ -1,3 +1,5 @@
+> Historical evidence from October 26, 2026. This report records one earlier implementation and is not a validation of the current UI, dataset, or model quality. See [the technical guide](../TECHNICAL.md) for current behavior.
+
 # First live semantic interpretation test — 2026-10-26
 
 Model: `gpt-4.1-mini`, real OpenAI Responses API through the local Node endpoint. No mock fetcher was installed in the live server. The private key was read server-side and never printed or sent to the browser.

@@ -1,3 +1,5 @@
+> Retained facilitator protocol. The current simplified workspace does not expose the guided-study launcher or render StudyPanel. Reconnect and pilot that UI before running this protocol. The demo dataset was visually refreshed on November 24, 2026; record that baseline change when comparing sessions. For a current product walkthrough, use [the demo guide](../DEMO.md).
+
 **Intelligent Referencing**
 
 **USER STUDY PROTOCOL**
@@ -36,7 +38,7 @@ Study mode is a single-browser role-play: one participant switches between User 
 
 **MODERATOR**  Show six shopping screens, Layers, tool dropdown, zoom/Fit, Study panel, design-system board below the screens, and A/B perspective switcher. Explain pan and both selection methods. Normal selection follows the layer hierarchy: click selects an enclosing object, double-click drills into it, Cmd/Ctrl-click selects a deep layer, and Shift-click extends selection. Layers can also be expanded to select nested objects. Rough Gesture offers interpretations and scopes that the participant reviews and confirms. Permit brief practice on an unrelated object such as the navigation title.
 
-**MODERATOR**  Switch User study mode Off → On in the top bar. The original document and a fresh User A demo are restored, and Study opens. Enter the assigned participant code, such as P1–P20, and select Start study. Use P0 for a pilot. Codes are entered manually; the system does not assign participants automatically.
+**MODERATOR**  In a study-enabled build, switch User study mode Off → On. The original document and a fresh User A demo are restored, and Study opens. Enter the assigned participant code, such as P1–P20, and select Start study. Use P0 for a pilot. Codes are entered manually; the system does not assign participants automatically.
 
 **MODERATOR**  Explain that each completed level or task automatically opens the next prompt and starts its timer. Prompt reading is included in recorded time. Skip this level or Skip task advances without marking success. Keep verbal answers and assistance notes separately. Ask the task-specific questions below after the full task sequence so interviews do not inflate the next task’s timer.
 
@@ -62,9 +64,9 @@ Study mode is a single-browser role-play: one participant switches between User 
 
 # 6. Task 2 — Apply the design system
 
-**SAY**  “Select all four product cards on Home. Apply the design system, inspect the preview, and apply the changes to all four cards. Keep the product content unchanged.”
+**SAY**  “Select all four product cards on Home. Choose Match library, select all available property categories, inspect the preview, and apply the changes to all four cards. Keep the product content unchanged.”
 
-**OBSERVE**  Selecting complete cards rather than only their images; finding Apply design system in the existing purple Suggested actions block; understanding the library source and affected objects; current/proposed values; Preview versus Apply; optional use of AI recommendations.
+**OBSERVE**  Selecting complete cards rather than only their images; finding Match library in the blue AI Actions card and choosing the available property categories; understanding the library source and affected objects; current/proposed values; Preview versus Apply; optional use of AI recommendations.
 
 **MODERATOR**  The design-system board below the screens contains the actual style sources. Full application updates applicable card, image-radius, typography, button, and internal-spacing styles while preserving product content and card layouts. Completion requires applied changes covering all four Home cards and final styles matching the library. Preview alone or a partial application does not complete the task.
 

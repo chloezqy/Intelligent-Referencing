@@ -25,7 +25,7 @@ In **Settings → Environment Variables**, configure:
 | Variable | Value | Environment |
 | --- | --- | --- |
 | `OPENAI_API_KEY` | Your private OpenAI project key | Production; Preview only if you want paid AI on previews |
-| `AI_ENABLED` | `true` to allow the existing explicit AI suggestions button; `false` to disable | Production; Preview separately |
+| `AI_ENABLED` | `true` to enable AI interpretation, commands, and comparison assistance; `false` to disable | Production; Preview separately |
 | `OPENAI_MODEL` | `gpt-4.1-mini` (existing default; optional) | Same as the key |
 | `PUBLIC_ORIGIN` | `https://YOUR-PUBLIC-DOMAIN`, no path or trailing slash | Optional for a custom domain; configure per environment if different |
 
@@ -56,11 +56,11 @@ No live model call or Vercel deployment was performed during implementation. All
    console.log(r.status, await r.json());
    ```
    Expect **400** for invalid selection when configured/enabled, or **503** if disabled/missing key. Both prove the deployed function answered JSON. HTML/404 means function routing/build configuration is wrong. A protection redirect means sign in first. **403** means check the allowed origin/system variables.
-3. After approving one paid test, select the **Nordic Lounge Chair** title and open **Adjust interpretation → AI suggestions** once. This is the only AI trigger. Normal clicking, gestures, sharing and comparison do not automatically call a model.
+3. For a deliberate live test, select the **Nordic Lounge Chair** title and open **Adjust interpretation** once. This requests AI candidates. Completed Smart Gestures and changed scopes also request interpretation; comparison recommendations can analyze automatically. Match library in the selection sidebar is deterministic. See [the trigger table](TECHNICAL.md#ai-endpoint-and-triggers).
 4. Verify the Network request URL is `https://YOUR-DOMAIN/api/semantic/interpret`, not localhost. A 200 JSON response should contain `model`, a real `responseId` beginning `resp_`, `cached:false` and validated candidates. Cross-check the request in OpenAI project usage/logs and the function invocation in Vercel Observability. Browser requests must contain no OpenAI authorization key.
 5. AI options appear in the existing interpretation controls with **semantic · AI** labels. They do not replace the selection until chosen. A valid response can contain no suggestions.
 6. Replay that exact successful request in Network once: a warm instance should return `cached:true` and the same response ID. A different/cold instance can make a new paid call; serverless caching does not guarantee a free repeat. Do not replay if another paid call is not approved. The UI also suppresses repeats for the current loaded selection.
-7. Set `AI_ENABLED=false`, redeploy, and verify the AI action returns a graceful disabled message while deterministic alternatives and demo handoff still work.
+7. Set `AI_ENABLED=false`, redeploy, and verify the AI action returns a graceful disabled message while manual selection, deterministic matching, and demo handoff still work.
 
 ## Local development and realtime
 
