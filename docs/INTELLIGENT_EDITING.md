@@ -1,3 +1,5 @@
+> Selection sidebar update (November 24, 2026): AI Actions now sits above layer properties. **Match library** and **Pick source** expose property categories with actual change counts, before/after values, and an optional canvas preview. Apply/Copy commits only the chosen categories. Library matching copies recorded values; it does not create live library bindings. Alignment and More layout options apply directly with Undo; uneven sibling gaps produce an inline suggestion. **Ask AI to change…** submits an explicit command through the validated editing API and applies the result with Undo. Requests are cancelled when selection or document changes. Corner radius commands, including pill-shaped buttons, are supported. Comparison and sharing retain their existing review flows.
+
 # Smart Reference: confirmed references and intelligent editing
 
 This iteration extends the existing React canvas, authored commerce dataset, gesture geometry, semantic endpoint, and research/collaboration systems. The six original screens, IDs, coordinate system, camera interactions, selection shortcuts, and shared-reference workflows remain intact.

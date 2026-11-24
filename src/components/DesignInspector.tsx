@@ -16,11 +16,11 @@ export default function DesignInspector({ids,nodes,onProperties,onAlign,tools,pr
  {selected.slice(0,expanded?selected.length:3).map(n=><figure key={n.id}><ElementPreview element={n} nodes={nodes}/><figcaption><strong title={n.label}>{n.label}</strong><small>{n.type} · {n.screen}</small></figcaption></figure>)}
  {selected.length>3&&!expanded&&<small>+{selected.length-3} more layers</small>}
  </div>
+ {actions}
  {sections.map(({section,tools:sectionTools})=><PropertySection key={section+ids.join('|')+JSON.stringify(selected)} section={section} ids={ids} nodes={nodes} onProperties={onProperties} tools={sectionTools} preview={preview(section)}>
  {section==='Position'&&<div className="design-alignment" role="group" aria-label="Alignment">{([['left',AlignLeft,'Align left'],['center',AlignCenter,'Align horizontal centers'],['right',AlignRight,'Align right'],['top',AlignStartVertical,'Align top'],['middle',AlignCenterVertical,'Align vertical centers'],['bottom',AlignEndVertical,'Align bottom']] as const).map(([op,Icon,title])=>{let issue='';try{layoutPatches(ids,nodes,op);}catch(e){issue=(e as Error).message;}return <button key={op} type="button" aria-label={title} title={issue||title} disabled={!!issue} onClick={()=>onAlign(op)}><Icon size={14}/></button>;})}</div>}
  </PropertySection>)}
  <details className="design-property-section design-export"><summary>Export<ChevronDown size={12}/></summary><p className="design-unavailable">Export is not available in this prototype.</p></details>
- {actions}
  {history}
  </div>;
 }

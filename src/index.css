@@ -1377,36 +1377,6 @@ button:disabled { opacity:.45; }
 .canvas-toolstrip .canvas-toolbelt .mode-design {background:white;box-shadow:0 1px 3px #00000015;color:#0d99ff;height:28px;}
 @media(max-width:1100px){.canvas-toolstrip .canvas-tool-placeholder {width:38px;gap:4px;}.canvas-toolbelt {display:none;}}
 
-/* Unified AI assistance, separate from the native property controls. */
-.design-ai-actions {margin:12px 10px;border:1px solid #9bd4ff;border-radius:10px;background:#f2f9ff;box-shadow:0 2px 8px #0d99ff14;min-width:0;}
-.design-ai-actions.is-collapsed {position:sticky;bottom:0;z-index:1;}
-.design-ai-actions .ai-actions-heading {display:flex;align-items:center;gap:7px;width:100%;padding:12px 10px;border:0;border-radius:10px;background:#e3f2ff;text-align:left;color:#175a8a;}
-.design-ai-actions .ai-actions-heading strong {font-size:12px;font-weight:600;white-space:nowrap;}
-.design-ai-actions .ai-actions-heading small {font-size:9px;line-height:1.4;color:#526b7d;}
-.design-ai-actions .ai-actions-heading>svg:last-child {margin-left:auto;flex-shrink:0;}
-.design-ai-actions.is-expanded .ai-actions-heading>svg:last-child {transform:rotate(180deg);}
-.design-ai-actions .ai-actions-body {padding:0 10px 10px;}
-.native-design-editor .design-ai-actions .design-smart-row {padding:10px 0;color:#253744;gap:8px;}
-.design-ai-actions .design-smart-row>span {min-width:0;}
-.design-ai-actions .design-smart-row strong {display:block;font-size:11px;font-weight:600;line-height:1.4;}
-.design-ai-actions .design-smart-row small {display:block;margin-top:2px;font-size:10px;line-height:1.4;font-weight:400;color:#526b7d;}
-.design-ai-actions .design-smart-row>svg:first-child {color:#0d99ff;flex-shrink:0;}
-.design-ai-actions .design-suggestion-rows>.design-smart-tool+.design-smart-tool {border-color:#d6eaf8;}
-.design-ai-actions .ai-command {display:flex;align-items:center;gap:6px;margin-top:10px;padding:5px;border:1px solid #c0e1f8;border-radius:7px;background:#fff;color:#6f96b0;}
-.design-ai-actions .ai-command input {width:100%;min-width:0;border:0;background:transparent;padding:4px 0;font-size:10px;}
-.design-ai-actions .ai-command button {display:grid;place-items:center;border:0;border-radius:5px;padding:5px;background:#0d99ff;color:#fff;opacity:.45;}
-.design-ai-actions .ai-actions-empty {font-size:11px;line-height:1.5;color:#526b7d;margin:0 0 10px;}
-.design-ai-actions button:focus-visible {outline:2px solid #0d99ff;outline-offset:2px;}
-.design-ai-actions .ai-actions-body[hidden] {display:none;}
-
-.design-ai-actions .ai-actions-heading>svg,
-.design-ai-actions .design-smart-row>svg:last-child {color:#0d99ff;}
-.design-ai-actions .ai-actions-heading:hover {background:#d6ecff;}
-.native-design-editor .design-ai-actions .design-smart-row:hover:not(:disabled) {background:#e7f4ff;}
-.design-ai-actions .ai-command input:disabled {color:#6f8799;opacity:1;cursor:not-allowed;}
-.design-ai-actions .ai-command input::placeholder {color:#6f8799;opacity:1;}
-.design-ai-actions .ai-command button:disabled {cursor:not-allowed;}
-
 /* Hover/focus changes only the temporary canvas appearance. */
 [data-preview-appearance] {outline:2px solid transparent;outline-offset:-2px;}
 [data-preview-appearance][data-preview-active="true"] {outline-color:#b8dfff;}
@@ -1508,3 +1478,97 @@ button:disabled { opacity:.45; }
 body:has(.unified-reference-workflow) .figma-help {bottom:76px;}
 .reference-role-thumbnail {display:flex;min-width:0;flex:1;height:100%;align-items:center;justify-content:center;}
 .unified-reference-workflow {container-type:inline-size;}
+
+/* Selection AI flow: compact actions, category review, direct application and undo. */
+.native-design-editor .design-ai-actions,.figma-page-inspector .design-ai-actions {margin:4px 12px 16px;border:1px solid #cce5fa;border-radius:12px;background:linear-gradient(145deg,#f0f8ff 0%,#fafdff 46%,#f3f7ff 100%);box-shadow:0 2px 4px #1677be06,0 6px 20px #1677be09,inset 0 1px 0 #fff;padding:12px;container-type:inline-size;min-width:0;color:#1e1e1e;font-size:11px;line-height:16px;}
+.design-ai-actions .ai-actions-heading {padding:0;margin:0 0 12px;border:0;border-radius:0;background:transparent;color:#165d94;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.design-ai-actions .ai-actions-heading strong {font-size:11px;font-weight:600;flex:1;}
+.design-ai-actions .ai-actions-heading small {font-size:10px;line-height:18px;color:#5681a2;background:#e5f1fc;border:1px solid #d7e9f8;border-radius:20px;padding:0 6px;white-space:nowrap;}
+.design-ai-actions .ai-actions-body {padding:0;display:flex;flex-direction:column;gap:10px;}
+.design-ai-actions .ai-flow-icon {display:block;flex-shrink:0;width:14px;height:14px;object-fit:contain;}
+.design-ai-actions .ai-flow-icon-send {width:24px;height:24px;}
+.design-ai-actions button {font:inherit;cursor:pointer;}
+.design-ai-actions button:disabled {cursor:not-allowed;opacity:.45;}
+.design-ai-actions .ai-flow-actions {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;}
+.design-ai-actions .ai-flow-actions button {display:flex;flex:1;align-items:center;justify-content:center;gap:8px;min-width:0;padding:8px 6px;border:1px solid #dce8f2;border-radius:7px;background:#ffffffd9;color:#385971;white-space:normal;line-height:15px;box-shadow:0 1px 2px #254d7205;}
+.design-ai-actions .ai-flow-actions button:first-child {color:#007be5;background:#e5f3ff;border-color:#c9e5fc;}
+.design-ai-actions .ai-flow-actions button[aria-pressed=true] {background:#d9edff;color:#007be5;border-color:#88c7f5;}
+.design-ai-actions .ai-flow-actions button:hover:not(:disabled) {border-color:#8fc9f5;background:#e5f3ff;}
+.design-ai-actions .ai-flow-suggestion {display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #dceaf7;border-radius:8px;background:#ffffffb8;min-width:0;}
+.design-ai-actions .ai-flow-message {display:flex;align-items:flex-start;gap:8px;}
+.design-ai-actions .ai-flow-message p {font-size:11px;line-height:16px;margin:0;min-width:0;overflow-wrap:anywhere;}
+.design-ai-actions .ai-flow-categories {display:flex;flex-wrap:wrap;gap:4px;}
+.design-ai-actions .ai-flow-categories button {display:flex;gap:5px;padding:3px 7px;border:1px solid #cce3f6;border-radius:6px;background:#fff;color:#007be5;}
+.design-ai-actions .ai-flow-categories button span {color:#5ab4f5;}
+.design-ai-actions .ai-flow-categories button[aria-pressed=true] {background:#0d99ff;color:white;}
+.design-ai-actions .ai-flow-categories button[aria-pressed=true] span {color:#cdebff;}
+.design-ai-actions .ai-flow-footer {display:flex;flex-wrap:wrap;align-items:center;gap:6px;}
+.design-ai-actions .ai-flow-footer button,.design-ai-actions .ai-flow-suggestion>button {padding:4px 8px;border:0;border-radius:5px;background:transparent;color:#757575;}
+.design-ai-actions .ai-flow-footer .ai-flow-primary {padding:4px 12px;background:#0d99ff;color:#fff;}
+.design-ai-actions .ai-flow-footer button:first-child:not(.ai-flow-primary) {color:#007be5;}
+.design-ai-actions .ai-flow-details-heading {display:flex;align-items:center;justify-content:space-between;padding:0 2px;}
+.design-ai-actions .ai-flow-details-heading button {display:grid;place-items:center;padding:3px;border:0;background:transparent;border-radius:3px;}
+.design-ai-actions .ai-flow-details-heading button[aria-pressed=true] {background:#cdebff;}
+.design-ai-actions .ai-flow-details {margin-top:8px;display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto;}
+.design-ai-actions .ai-flow-change {background:white;padding:5px 8px;border-radius:5px;min-width:0;}
+.design-ai-actions .ai-flow-change small {display:block;color:#757575;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:normal;overflow-wrap:anywhere;}
+.design-ai-actions .ai-flow-change>div {display:flex;gap:7px;align-items:center;min-height:20px;}
+.design-ai-actions .ai-flow-change span {min-width:0;flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.design-ai-actions .ai-flow-change b {color:#757575;font-weight:400;}
+.design-ai-actions .ai-flow-change i {display:block;width:14px;height:14px;flex-shrink:0;border:1px solid #00000029;border-radius:3px;}
+.design-ai-actions .ai-flow-layout {position:relative;}
+.design-ai-actions .ai-flow-layout>div:first-child {display:flex;align-items:center;justify-content:space-between;gap:2px;background:#e8f0f780;border:1px solid #dfeaf3;border-radius:7px;padding:2px;flex-wrap:wrap;}
+.design-ai-actions .ai-flow-layout>div:first-child button {display:grid;place-items:center;width:auto;min-width:24px;flex:1;height:28px;padding:0;border:0;border-radius:5px;background:transparent;}
+.design-ai-actions .ai-flow-layout>div:first-child .ai-flow-icon {width:16px;height:16px;}
+.design-ai-actions .ai-flow-layout>div:first-child>span {height:16px;width:1px;background:#d9d9d9;}
+.design-ai-actions .ai-flow-more {position:absolute;z-index:10;right:0;top:calc(100% + 4px);display:flex;flex-direction:column;padding:8px 0;background:#fff;border:1px solid #e5e5e5;box-shadow:0 3px 12px #0002;border-radius:6px;width:min(208px,100%);min-width:0;max-width:100%;}
+.design-ai-actions .ai-flow-more button {text-align:left;border:0;padding:5px 12px;background:transparent;}
+.design-ai-actions .ai-flow-more button:hover:not(:disabled),.design-ai-actions .ai-flow-layout button:hover:not(:disabled) {background:#e5f4ff;}
+.design-ai-actions .ai-command {display:flex;align-items:center;gap:8px;margin:0;padding:6px 6px 6px 10px;border:1px solid #cfe2f3;border-radius:8px;background:#fff;box-shadow:0 1px 3px #1677be05;}
+.design-ai-actions .ai-command input {min-width:0;width:100%;padding:3px 0;border:0;background:transparent;font:inherit;outline:none;color:#1e1e1e;}
+.design-ai-actions .ai-command input::placeholder {color:#757575;}
+.design-ai-actions .ai-command:focus-within {outline:1px solid #0d99ff;}
+.design-ai-actions .ai-command button {display:grid;place-items:center;opacity:1;padding:0;border:0;border-radius:5px;background:#0d99ff;}
+.design-ai-actions .ai-command button:disabled {background:transparent;opacity:.5;}
+.design-ai-actions .ai-flow-user {align-self:flex-start;margin:0;padding:4px 8px;background:#f5f5f5;border-radius:6px;overflow-wrap:anywhere;max-width:100%;}
+.design-ai-actions .ai-flow-source {display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.design-ai-actions .ai-flow-source label {flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;font-size:10px;color:#757575;}
+.design-ai-actions .ai-flow-source select {width:100%;min-width:0;border:1px solid #ddd;border-radius:5px;background:#fff;padding:6px;font-size:11px;color:#1e1e1e;}
+.design-ai-actions .ai-flow-source button {background:#f5f5f5;border:0;border-radius:5px;padding:5px 8px;align-self:flex-end;}
+.design-ai-actions .ai-flow-source p {width:100%;margin:0;font-size:10px;color:#757575;}
+.design-ai-actions .ai-actions-empty {margin:0;color:#757575;}
+
+.design-ai-actions button:focus-visible {outline:2px solid #0d99ff;outline-offset:2px;}
+
+.design-ai-actions .ai-actions-emblem {display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#d2ebff,#e5edff);box-shadow:inset 0 0 0 1px #b9daf555;flex-shrink:0;}
+.design-ai-actions .ai-flow-review {min-width:0;}
+.design-ai-actions .ai-flow-review summary {font-size:10px;color:#66859e;cursor:pointer;line-height:18px;}
+.design-ai-actions .ai-flow-review summary:hover {color:#007be5;}
+.design-ai-actions .ai-flow-details-heading {gap:8px;}
+.design-ai-actions .ai-flow-details-heading strong {font-size:10px;font-weight:500;color:#56728a;}
+.design-ai-actions .ai-flow-source {gap:8px;}
+.design-ai-actions .ai-flow-source label {flex-basis:140px;}
+.design-ai-actions .ai-flow-source button {color:#007be5;background:#e5f3ff;border-radius:6px;}
+.design-ai-actions .ai-flow-footer button {min-width:0;overflow-wrap:anywhere;}
+.design-ai-actions .ai-flow-footer .ai-flow-primary {border-radius:6px;box-shadow:0 1px 2px #007be51a;}
+.design-ai-actions .ai-flow-more button {white-space:normal;overflow-wrap:anywhere;}
+@container (max-width: 205px) {
+ .design-ai-actions .ai-flow-actions {grid-template-columns:minmax(0,1fr);}
+ .design-ai-actions .ai-flow-actions button {justify-content:flex-start;padding:7px 10px;}
+ .design-ai-actions .ai-flow-source button {width:100%;}
+ .design-ai-actions .ai-flow-change>div {flex-wrap:wrap;gap:4px;}
+ .design-ai-actions .ai-flow-change span {flex-basis:calc(50% - 24px);}
+ .design-ai-actions .ai-flow-layout>div:first-child button {min-width:28px;}
+}
+@container (min-width: 340px) {
+ .design-ai-actions .ai-flow-details {max-height:240px;}
+ .design-ai-actions .ai-flow-change {padding:6px 10px;}
+}
+
+/* Shared AI identity and a useful page-level empty state. */
+.prototype-ai-icon {flex-shrink:0;color:#0d99ff;}
+.figma-page-inspector .design-ai-actions.is-empty {margin:12px;padding:12px;border-bottom:1px solid #cce5fa;}
+.design-ai-actions.is-empty .ai-actions-heading {margin-bottom:6px;}
+.design-ai-actions.is-empty .ai-actions-empty {padding-left:34px;font-size:11px;line-height:17px;color:#66839a;}
+.prototype-description {margin:0 0 16px;color:#66839a;font-size:12px;line-height:1.5;}
+.canvas-toolstrip .canvas-tool-active .prototype-ai-icon,.primary-action .prototype-ai-icon {color:inherit;}

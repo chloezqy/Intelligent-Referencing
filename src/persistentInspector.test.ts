@@ -19,8 +19,8 @@ test('Inspector puts profile and presentation above Design tabs and zoom beside 
 test('typography suggestions offer style matching beside the direct inspector controls',()=>{
  const html=renderToStaticMarkup(React.createElement(EditingToolbar,{selectionInspector:true,inline:true,selection:{selectedIds:['hc2-title'],exemplarIds:['hc2-title'],label:'Title',scope:'exemplars'},nodes:MOCK_NODES,onPreview:noop,onApply:noop,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,sourceId:null,onSource:noop,picking:false,onPicking:noop,onState:noop}));
  const start=html.indexOf('aria-label="AI Actions"'),group=html.slice(start);
- assert.ok(start>=0);assert.equal((html.match(/aria-label="AI Actions"/g)||[]).length,1);assert.doesNotMatch(html,/Suggested actions/);assert.ok(start>html.indexOf('<summary>Export'));
- assert.match(group,/>Match text styles</);
+ assert.ok(start>=0);assert.equal((html.match(/aria-label="AI Actions"/g)||[]).length,1);assert.doesNotMatch(html,/Suggested actions/);assert.ok(start<html.indexOf('<summary>Position'));
+ assert.match(group,/>Match library</);assert.match(group,/>Pick source</);
  assert.doesNotMatch(group,/>Adjust typography</);
  assert.doesNotMatch(html,/inspector-action-card|>Ask AI<|>Find matching text styles</);
 });

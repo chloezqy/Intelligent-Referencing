@@ -7,6 +7,7 @@ import CollaborationPanel from './components/CollaborationPanel';
 test('Navigation adds References alongside Figma sections and disables unused entries',()=>{
  const html=renderToStaticMarkup(React.createElement(WorkspaceNavigation,{active:'layers',open:true,pending:2,onOpen:()=>{}}));
  for(const label of ['Agents','Assets','Tools','Variables','Figma menu'])assert.ok(html.includes(`disabled="" aria-label="${label}"`));
+ assert.doesNotMatch(html,/prototype-ai-icon|prototype-logo/);
  assert.match(html,/aria-label="Layers"/);assert.match(html,/aria-label="References"/);assert.match(html,/2 unread reference requests/);assert.doesNotMatch(html,/>Study</);
 });
 test('References keeps demo reset without study or simulated collaboration explanations',()=>{
@@ -15,13 +16,13 @@ test('References keeps demo reset without study or simulated collaboration expla
  assert.match(html,/Reset demo/);assert.match(html,/References/);assert.doesNotMatch(html,/Simulated collaboration|Standalone demo|No automatic replies|Workspace mode|References stay in this browser/);
 });
 
-test('Editor logo is outlined and the inspector opens at a compact width',async()=>{
+test('Editor keeps the Figma mark and a wider default inspector',async()=>{
  const {FigmaMark}=await import('./components/WorkspaceNavigation');
  const {default:ComparisonInspector}=await import('./components/ComparisonInspector');
  const logo=renderToStaticMarkup(React.createElement(FigmaMark));
  assert.match(logo,/fill="none"/);assert.match(logo,/stroke="currentColor"/);
  const inspector=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'selection',contentRef:()=>{}}));
- assert.match(inspector,/width:240px/);assert.doesNotMatch(inspector,/avatar|Collaborators/);
+ assert.match(inspector,/width:320px/);assert.doesNotMatch(inspector,/avatar|Collaborators/);
 });
 
 test('Right sidebar contains moved profile and presentation controls, and Page sections match the reference',async()=>{

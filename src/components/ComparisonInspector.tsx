@@ -2,7 +2,7 @@ import React,{useState} from 'react';
 interface Props {workMode?:'edit'|'compare';onModeChange?:(mode:'edit'|'compare')=>void;compareAvailable?:boolean;headerControls?:React.ReactNode;zoomControls?:React.ReactNode;footer?:React.ReactNode;mode?:'selection'|'compare';count?:number;contentRef:(node:HTMLDivElement|null)=>void;children?:React.ReactNode}
 export default function ComparisonInspector({workMode,onModeChange,compareAvailable=false,headerControls,zoomControls,footer,mode='compare',contentRef,children,count}:Props){
  const selection=mode==='selection';
- const [width,setWidth]=useState(240);
+ const [width,setWidth]=useState(320);
  const resize=(e:React.PointerEvent<HTMLDivElement>)=>{e.currentTarget.setPointerCapture(e.pointerId);const start=e.clientX,initial=width;const el=e.currentTarget;el.onpointermove=event=>setWidth(Math.max(240,Math.min(440,initial+start-event.clientX)));const finish=()=>{el.onpointermove=null;el.onpointerup=null;el.onpointercancel=null;};el.onpointerup=finish;el.onpointercancel=finish;};
  return <aside aria-label={selection?'Selection inspector':'Comparison inspector'} className={`comparison-inspector ${selection?'selection-inspector':''} ${workMode?'working-inspector':''}`} style={{width}}>
 

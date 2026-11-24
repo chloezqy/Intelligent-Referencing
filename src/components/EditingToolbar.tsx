@@ -1,6 +1,6 @@
 import {resolutionSelectionTransition,resolutionScrollDelta} from '../resolutionReveal';
 import CanvasComparisonCards from './CanvasComparisonCards';
-import AIActionsPanel from './AIActionsPanel';
+import SelectionAIActions from './SelectionAIActions';
 import AdjustColor from './AdjustColor';
 import TextStyleReview from './TextStyleReview';
 import ColorStyleReview from './ColorStyleReview';
@@ -8,7 +8,6 @@ import LayerStyleReference from './LayerStyleReference';
 import {requestAI} from '../aiClient';
 import DesignInspector from './DesignInspector';
 import {propertyProposal,DesignSection} from '../designInspectorProperties';
-import {tokenFacts,filterTokenFacts} from '../designSystemReferencing';
 import ComparisonPreview from './ComparisonPreview';
 import {resolveComparison,editableDifferences,referencePropertyIssue} from '../comparisonResolution';
 import DesignReferenceIntent from './DesignReferenceIntent';
@@ -21,7 +20,8 @@ import type {TokenSuggestion} from '../designSystemReferencing';
 import {inspectorActions,referenceTransfer,proposedReferenceEdits} from '../inspectorEditing';
 import {ComparisonContext,DESIGN_REFERENCE_PURPOSE} from '../collaboration';
 import React,{useState,useEffect,useRef,useLayoutEffect} from 'react';
-import {AlignLeft,Palette,Type,Layers,Sparkles,Copy,Undo2,Redo2,ChevronRight,X,MousePointer2,Check,ArrowUpRight} from 'lucide-react';
+import {AlignLeft,Palette,Type,Layers,Copy,Undo2,Redo2,ChevronRight,X,MousePointer2,Check} from 'lucide-react';
+import Sparkles from './AIIcon';
 import type {UIElement,InferredReference} from '../types';
 import {COLORS,TYPOGRAPHY} from '../designSystem';
 import {EditProposal,Patch,LayoutOperation,TextRole,roots,descendants,textTargets,colorTargets,layoutPatches,matchStyles,libraryProposal,proposalPatches,changedPatches} from '../editing';
@@ -29,7 +29,6 @@ import {compileActionPlan,validateActionPlan} from '../actionIntent';
 type Panel='Align'|'Match Styles'|'Typography'|'Colors'|'Design System'|'Ask AI';
 export interface EditingToolbarProps {comparisonKeys?:string[];onDesignReference?:(value:DesignReference)=>void;selectionInspector?:boolean;reviewTokens?:boolean;onTokenChanges?:(s:TokenSuggestion[])=>void;context?:ComparisonContext;inline?:boolean;onLocateLibrary?:()=>void;onEvent?:(type:string,details?:{patches:Patch[];ids:string[]})=>void;selection:InferredReference;nodes:UIElement[];onPreview:(patches:Patch[])=>void;onApply:(proposal:EditProposal,patches:Patch[])=>void;onUndo:()=>void;onRedo:()=>void;canUndo:boolean;canRedo:boolean;sourceId:string|null;onSource:(id:string|null)=>void;picking:boolean;onPicking:(value:boolean)=>void;onState:(state:string)=>void}
 export default function EditingToolbar({comparisonKeys=[],onDesignReference,selectionInspector=false,reviewTokens,onTokenChanges,context,inline=false,onEvent,onLocateLibrary,selection,nodes,onPreview,onApply,onUndo,onRedo,canUndo,canRedo,sourceId,onSource,picking,onPicking,onState}:EditingToolbarProps){
- const [fullLibraryPreview,setFullLibraryPreview]=useState(false);
  const [propertySection,setPropertySection]=useState<DesignSection|null>(null),[actionSection,setActionSection]=useState<DesignSection|null>(null),[tokenCategory,setTokenCategory]=useState<string[]|undefined>();
  const editorRoot=useRef<HTMLDivElement|null>(null);
 
@@ -52,14 +51,14 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
   if(h.top<v.top+8||h.bottom>v.bottom-8)scroll.scrollTop+=h.top-v.top-8;
   else {const controls=header.nextElementSibling as HTMLElement|null,needed=h.bottom+Math.min(controls?.offsetHeight||0,140)+8-v.bottom;scroll.scrollTop+=Math.max(0,Math.min(needed,h.top-v.top-8));}
  },[panel,inline]);
- useEffect(()=>{request.current?.abort();setBusy(false);setFullLibraryPreview(false);setPanel(null);setPropertySection(null);setActionSection(null);setProposal(null);setPreviewing(false);setMessage('');onPreview([]);onPicking(false);onSource(null);return()=>request.current?.abort();},[targetKey,contextKey]);
+ useEffect(()=>{request.current?.abort();setBusy(false);setPanel(null);setPropertySection(null);setActionSection(null);setProposal(null);setPreviewing(false);setMessage('');onPreview([]);onPicking(false);onSource(null);return()=>request.current?.abort();},[targetKey,contextKey]);
  useEffect(()=>()=>onPreview([]),[]);
  useEffect(()=>{if(reviewTokens)setPanel('Design System');},[reviewTokens,targetKey,contextKey]);
- useEffect(()=>{if(selectionInspector&&(panel==='Match Styles'||panel==='Design System'&&(tokenCategory?.includes('typography')||tokenCategory?.includes('colors')))&&!comparisonWorkflow&&!design)return;request.current?.abort();setBusy(false);setFullLibraryPreview(false);setProposal(null);setPreviewing(false);onPreview([]);},[nodes,sourceId]);
+ useEffect(()=>{if(selectionInspector&&(panel==='Match Styles'||panel==='Design System'&&(tokenCategory?.includes('typography')||tokenCategory?.includes('colors')))&&!comparisonWorkflow&&!design)return;request.current?.abort();setBusy(false);setProposal(null);setPreviewing(false);onPreview([]);},[nodes,sourceId]);
  const selected=roots(selection.selectedIds,nodes),editable=selected.some(n=>!n.library),label=selected.every(n=>n.type==='card')?'Product Cards':selected.every(n=>n.type==='button')?'Buttons':selected.every(n=>n.type==='text')?'Text Layers':'Objects';
  const sources=nodes.filter(n=>n.type!=='screen'&&(panel==='Colors'?!!(n.bg||n.color||n.border):selected.some(t=>t.type===n.type))&&!selection.selectedIds.includes(n.id)&&`${n.screen} ${n.label} ${n.component}`.toLowerCase().includes(sourceQuery.toLowerCase()));
  const source=nodes.find(n=>n.id===sourceId),sourcePath=source?`${source.screen} / ${source.parent?nodes.find(n=>n.id===source.parent)?.label+' / ':''}${source.label}`:'';
- function clearProposal(){setFullLibraryPreview(false);if(previewing)onState('Choosing Action');setProposal(null);setPreviewing(false);onPreview([]);}
+ function clearProposal(){if(previewing)onState('Choosing Action');setProposal(null);setPreviewing(false);onPreview([]);}
  function propose(fn:()=>EditProposal,origin:'model'|'deterministic'='deterministic'){try{clearProposal();const p=fn();const ids=p.mappings.map(m=>m.id);proposalPatches(p,ids,nodes);setProposal(p);setProposalOrigin(origin);setEnabled(ids);setMessage('');if(panel==='Typography'){onPreview(proposalPatches(p,ids,nodes));setPreviewing(true);onEvent?.('edit_preview_toggled');onState('Previewing Changes');}else onState('Choosing Action');}catch(e){setMessage((e as Error).message);}}
  function batch(title:string,patches:Patch[]):EditProposal{if(!patches.length)throw new Error('No matching layers inside the confirmed reference.');return {title,targetIds:[...selection.selectedIds],mappings:[{id:'batch',label:title,patches}]};}
  function switchPanel(next:Panel){request.current?.abort();setBusy(false);onEvent?.('action_menu_opened');clearProposal();onPicking(false);setPanel(panel===next?null:next);setMessage('');onState(panel===next?'Reference Confirmed':'Choosing Action');}
@@ -147,42 +146,8 @@ export default function EditingToolbar({comparisonKeys=[],onDesignReference,sele
   </div>;
  }
  if(selectionInspector){
-  let completeLibrary:EditProposal|undefined;
-  try{if(editable)completeLibrary=libraryProposal(selection.selectedIds,nodes);}catch{}
-  const openLibraryPreview=()=>{try{
-   clearProposal();setPanel('Design System');setTokenCategory(undefined);setPropertySection(null);setActionSection('Appearance');onPicking(false);
-   const p=libraryProposal(selection.selectedIds,nodes),enabled=p.mappings.map(m=>m.id),patches=proposalPatches(p,enabled,nodes);
-   if(!patches.length){setMessage('Selected objects already match the design system.');return;}
-   setProposal(p);setEnabled(enabled);setProposalOrigin('deterministic');setPreviewing(true);setFullLibraryPreview(true);setMessage('');onPreview(patches);
-   onEvent?.('design_system_previewed',{ids:[...selection.selectedIds],patches});onState('Previewing Changes');
-  }catch(error){setMessage((error as Error).message);}};
   const nativePreview=(section:DesignSection)=><>{propertySection===section&&proposal&&previewing&&<ComparisonPreview onPreview={onPreview} proposal={proposal} enabled={enabled} nodes={nodes} onToggle={toggleMapping} onApply={apply} onCancel={()=>{clearProposal();setPropertySection(null);}}/>}{message&&propertySection===section&&<p className="edit-feedback" role="status">{message}</p>}</>;
-  const tool=(section:DesignSection,name:Panel,title:string,category?:string[],subtitle?:string)=>{
-   const Icon=icons[name],open=!fullLibraryPreview&&panel===name&&actionSection===section;
-   return <div key={section+'-'+name} className={`design-smart-tool selection-action-accordion ${open?'is-open':''}`}><button type="button" className="design-smart-row" data-action-header={name} aria-expanded={open} disabled={!editable} onClick={()=>{
-    setPropertySection(null);setActionSection(section);setTokenCategory(category);
-    if(panel===name&&!open){clearProposal();setPanel(name);setMessage('');}else switchPanel(name);
-   }}><Icon size={15}/><span><strong>{title}</strong>{subtitle&&<small>{subtitle}</small>}</span><ChevronRight size={12}/></button>{open&&!fullLibraryPreview&&editingPanel}</div>;
-  };
-  const actionRows:React.ReactNode[]=[];
-  if(completeLibrary){
-   const open=fullLibraryPreview&&!!proposal&&previewing;
-   actionRows.push(<div key="apply-library" className={"design-smart-tool selection-action-accordion "+(open?'is-open':'')}>
-    <button type="button" className="design-smart-row" data-action-header="Apply design system" aria-expanded={open} onClick={open?clearProposal:openLibraryPreview}><Layers size={15}/><span><strong>Apply design system</strong><small>Match typography, color, spacing, and more</small></span><ChevronRight size={12}/></button>
-    {open&&<>
-     <div className="layer-reference-pick design-library-source-action"><button type="button" onClick={onLocateLibrary}><ArrowUpRight size={14} aria-hidden="true"/>View design system</button></div>
-     <ComparisonPreview onPreview={onPreview} variant="design-system" proposal={proposal!} enabled={enabled} nodes={nodes} onToggle={toggleMapping} onApply={apply} onCancel={clearProposal}/>
-    </>}
-   </div>);
-  }else if(availability.actions.includes('Design System'))actionRows.push(tool('Appearance','Design System','Apply design system',undefined,'Match typography, color, spacing, and more'));
-  if(availability.actions.includes('Match Styles'))actionRows.push(tool('Appearance','Match Styles','Match another layer',undefined,'Copy style from a selected reference'));
-  if(editable&&textTargets(selection.selectedIds,nodes,'all').length)actionRows.push(tool('Typography','Design System','Match text styles',['typography'],'Match typography to existing styles'));
-  if(editable&&filterTokenFacts(tokenFacts(selection.selectedIds,nodes),['colors']).length)actionRows.push(tool('Fill','Design System','Find existing color styles',['colors'],'Match colors to existing styles'));
-  if(availability.actions.includes('Align'))actionRows.push(tool('Layout','Align','Align and distribute'));
-  for(const [section,category,title] of [['Layout','spacing','Find spacing tokens'],['Appearance','cornerRadius','Find corner radius tokens']] as const){
-   if(editable&&!(section==='Appearance'&&completeLibrary)&&filterTokenFacts(tokenFacts(selection.selectedIds,nodes),[category]).some(f=>!f.exact))actionRows.push(tool(section,'Design System',title,[category]));
-  }
-  const aiActions=<AIActionsPanel count={selected.length}>{actionRows.length?actionRows:<p className="ai-actions-empty">No compatible actions for this selection.</p>}{message&&!propertySection&&<p className="edit-feedback" role="status">{message}</p>}</AIActionsPanel>;
+  const aiActions=<SelectionAIActions key={targetKey} ids={selection.selectedIds} nodes={nodes} sourceId={sourceId} onSource={onSource} picking={picking} onPicking={onPicking} onPreview={onPreview} onApply={onApply} onUndo={onUndo} canUndo={canUndo} onState={onState} onEvent={onEvent} onLocateLibrary={onLocateLibrary}/>;
   return <div ref={editorRoot} className="editing-toolbar inspector-editing native-design-editor" onPointerDown={e=>e.stopPropagation()}>
    <DesignInspector ids={selection.selectedIds} nodes={nodes} tools={()=>null} actions={aiActions} preview={nativePreview} onProperties={(section,values)=>{setPropertySection(section);setActionSection(null);try{
     const p=propertyProposal(selection.selectedIds,nodes,section,values),ids=p.mappings.map(m=>m.id);clearProposal();setPanel(null);setPropertySection(section);setProposal(p);setEnabled(ids);setPreviewing(true);onPreview(proposalPatches(p,ids,nodes));setMessage('');onEvent?.('edit_preview_toggled');onState('Previewing Changes');
