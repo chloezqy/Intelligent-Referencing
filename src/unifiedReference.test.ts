@@ -51,11 +51,13 @@ test('Groups retain read-only comparison; one reference supports multiple indepe
 test('Unified presentation has no purpose modes, Resolve or duplicated preview controls',()=>{
  const html=renderToStaticMarkup(React.createElement(UnifiedReferenceWorkflow,{context:pair(),nodes:MOCK_NODES,onPreview:noop,onApply:()=>true,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,onCancel:noop,sharing:()=>React.createElement('span',null,'Sharing controls')}));
  assert.match(html,/Properties to match/);assert.match(html,/Reference Object A/);assert.match(html,/Target Object B/);assert.match(html,/Swap reference and target/);
- assert.match(html,/Other differences \(/);assert.match(html,/Find design system matches/);assert.match(html,/Sharing options/);
+ assert.match(html,/View all properties/);assert.match(html,/Find design system matches/);assert.match(html,/Other actions/);
  assert.doesNotMatch(html,/Comparison purpose|Resolve selected differences|Next steps|type="radio"|>Preview changes<|checked=""|Choose which design properties|Optional assistance|These differences remain unchanged/);
- assert.doesNotMatch(html,/>Apply changes</);
- assert.match(html,/<section class="reference-sharing" aria-label="Sharing options"><h3>Sharing options<\/h3><span>Sharing controls<\/span><\/section>/);
- const footer=html.match(/<footer class="reference-workflow-footer">(.*?)<\/footer>/)![1];assert.match(footer,/>Cancel</);assert.doesNotMatch(footer,/Apply|selected/);
+ assert.match(html,/>Apply changes</);
+ assert.doesNotMatch(html,/Sharing options|reference-preview-actions/);
+ const footer=html.match(/<footer class="reference-workflow-footer">(.*?)<\/footer>/)![1];assert.match(footer,/>Cancel</);assert.match(footer,/Apply changes/);assert.match(footer,/disabled/);assert.match(footer,/No properties selected/);
+ assert.match(html,/>Current</);assert.match(html,/>Proposed</);
+
 });
 test('Actual fill swatches and atomic patch validation preserve unrelated properties',()=>{
  const nodes=MOCK_NODES.map(n=>n.id==='hc1'?{...n,bg:'#123456'}:n.id==='sc2'?{...n,bg:'#abcdef'}:n),c=pair(nodes);
@@ -88,4 +90,29 @@ test('Existing saved reference direction is honored without preselecting propert
  const context=pair();context.purpose=DESIGN_REFERENCE_PURPOSE;context.designReference={direction:{referenceSide:'B',targetSide:'A',referenceUser:'A',targetUser:'A'},properties:['cornerRadius']};
  const html=renderToStaticMarkup(React.createElement(UnifiedReferenceWorkflow,{context,nodes:MOCK_NODES,onPreview:noop,onApply:()=>true,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,onCancel:noop,sharing:()=>null}));
  assert.match(html,/aria-label="Reference Object B"/);assert.match(html,/aria-label="Target Object A"/);assert.doesNotMatch(html,/checked=""/);
+});
+
+test('Compare hierarchy keeps a single disabled Apply in the footer and orders actual target values first',()=>{
+ const nodes=MOCK_NODES.map(n=>n.id==='hc1'?{...n,bg:'#123456'}:n.id==='sc2'?{...n,bg:'#abcdef'}:n);
+ const html=renderToStaticMarkup(React.createElement(UnifiedReferenceWorkflow,{context:pair(nodes),nodes,onPreview:noop,onApply:()=>true,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,onCancel:noop,sharing:()=>React.createElement('button',{type:'button'},'Share comparison')}));
+ assert.equal((html.match(/>Apply changes</g)||[]).length,1);
+ assert.match(html,/<details class="reference-all-properties"><summary>View all properties/);
+ assert.ok(html.indexOf('Other actions')<html.indexOf('Share comparison'));
+ const fill=html.slice(html.indexOf('Match Fill color'),html.indexOf('Match Corner radius'));
+ assert.ok(fill.indexOf('Current')<fill.indexOf('#abcdef'));
+ assert.ok(fill.indexOf('#abcdef')<fill.indexOf('Proposed'));
+ assert.ok(fill.indexOf('Proposed')<fill.indexOf('#123456'));
+ assert.doesNotMatch(html,/textarea|Sharing options/);
+});
+
+test('The collapsed property table preserves all rows without selection controls',()=>{
+ const c=pair(),properties=referenceProperties(c,MOCK_NODES,'A');
+ const html=renderToStaticMarkup(React.createElement(UnifiedReferenceWorkflow,{context:c,nodes:MOCK_NODES,onPreview:noop,onApply:()=>true,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,onCancel:noop,sharing:()=>null}));
+ assert.match(html,/<small class="reference-role-screen">Home Screen<\/small>/);
+ assert.match(html,/<small class="reference-role-screen">Search Screen<\/small>/);
+ assert.doesNotMatch(html,/Other differences|Detailed properties|Property comparison ·|Authored design/);
+ const table=html.match(/<details class="reference-all-properties">([\s\S]*?)<\/details>/)![1];
+ assert.equal((table.match(/<tr>/g)||[]).length,properties.comparison.rows.length+1);
+ assert.doesNotMatch(table,/type="checkbox"|<input|<button/);
+ assert.doesNotMatch(table,/All properties: match (Element label|Screen|Position in screen)/);
 });

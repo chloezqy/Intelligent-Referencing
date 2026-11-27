@@ -1379,7 +1379,7 @@ button:disabled { opacity:.45; }
 
 /* Hover/focus changes only the temporary canvas appearance. */
 [data-preview-appearance] {outline:2px solid transparent;outline-offset:-2px;}
-[data-preview-appearance][data-preview-active="true"] {outline-color:#b8dfff;}
+@media (hover:hover) {[data-preview-appearance]:hover {outline-color:#b8dfff;}}
 [data-preview-appearance]:focus-visible {outline-color:#0d99ff;}
 
 /* Contextual controls float in screen space, independent of document layout. */
@@ -1412,7 +1412,7 @@ button:disabled { opacity:.45; }
 .resolution-action>.inspector-action-card>svg {color:#0d99ff;}
 .resolution-count {display:inline-block;margin-left:8px;font-size:10px;font-weight:500;color:#39769f;white-space:nowrap;}
 .resolution-action .comparison-before-after>div {background:#fff;}
-.resolution-action .comparison-before-after>[data-preview-appearance="after"] {border-color:#86c6f6;}
+.resolution-action .comparison-before-after>[data-preview-appearance="after"] {border-color:#deeaf2;}
 .comparison-next-steps .resolution-action button.primary-action {background:#0d99ff;color:#fff;border-color:#0d99ff;}
 .comparison-next-steps .resolution-action button.primary-action:hover:not(:disabled) {background:#0788e5;}
 
@@ -1461,7 +1461,7 @@ button:disabled { opacity:.45; }
 .unified-reference-preview {border:1px solid #9ed1f6;border-radius:9px;background:#eff7ff;margin-top:14px;overflow:hidden;}
 .unified-reference-preview .comparison-confirmation {background:transparent;padding:10px;margin:0;border:0;}
 .unified-reference-preview .comparison-before-after>div {background:#fff;}
-.unified-reference-preview [data-preview-appearance="after"] {border-color:#78bff4;}
+.unified-reference-preview [data-preview-appearance="after"] {border-color:#deeaf2;}
 .unified-reference-preview .comparison-before-after .element-preview {max-height:130px;}
 .unified-reference-preview .confirmation-note {font-size:10px;line-height:1.4;}
 .reference-history {display:flex;justify-content:flex-end;gap:6px;margin-top:14px;}
@@ -1664,3 +1664,57 @@ body:has(.unified-reference-workflow) .figma-help {bottom:76px;}
 [data-panel-drag-handle] button{cursor:pointer}
 .is-panel-dragging [data-panel-drag-handle]{cursor:grabbing}
 .is-panel-dragging{user-select:none}
+/* Compare & match keeps the task controls above a persistent primary footer. */
+.reference-role-pair{margin-bottom:14px}
+.reference-role-card>strong{font-weight:600;font-size:11px}
+.reference-property-selection h3{font-size:13px}
+.reference-property-row{padding:9px;margin:7px 0}
+.reference-property-values{grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr);gap:5px;margin-top:7px;align-items:center}
+.property-transfer-arrow{color:#8a969e;text-align:center}
+.reference-property-values>div:first-child small{color:#6c8190}
+.reference-row-recommendation.suggested{color:#73818b}
+.reference-other-actions{margin-top:16px}
+.reference-other-actions>h3{font-size:10px;font-weight:500;color:#7c8790;margin:0 0 5px}
+.reference-other-actions .reference-library-assistance{margin:0;padding:0;border:0}
+.reference-other-actions .reference-library-assistance>summary,
+.unified-reference-workflow .reference-share-action{display:flex;align-items:center;gap:7px;width:100%;padding:9px 3px;border:0;background:transparent;border-radius:4px;color:#485b69;font-size:11px;text-align:left;list-style:none}
+.reference-other-actions summary::-webkit-details-marker{display:none}
+.reference-other-actions summary>span,.reference-share-action>span{flex:1}
+.reference-other-actions details[open]>summary>svg:last-child{transform:rotate(90deg)}
+.reference-other-actions summary:hover,.unified-reference-workflow .reference-share-action:hover{background:#f5f7f9}
+.reference-workflow-footer{display:block;padding:10px 12px}
+.reference-workflow-footer>p{font-size:10px;color:#687986;margin:0 0 8px;line-height:1.4}
+.reference-workflow-footer>div{display:flex;gap:7px;align-items:stretch}
+.unified-reference-workflow .reference-workflow-footer .primary-action{flex:1;background:#0d99ff;color:white;border-color:#0d99ff;font-weight:600;padding:9px}
+.unified-reference-workflow .reference-workflow-footer .primary-action:hover:not(:disabled){background:#0788e5}
+body:has(.unified-reference-workflow) .figma-help{bottom:108px}
+/* Secondary comparison data stays available in one quiet disclosure. */
+.reference-role-screen{font-size:9px;color:#7a8790;line-height:1.35}
+.reference-all-properties{margin-top:12px}
+.reference-all-properties>summary{color:#77838c;font-size:10px;padding:4px 0}
+.reference-all-table-scroll{max-width:100%;overflow-x:auto;margin-top:7px}
+.reference-all-table-scroll table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:10px;line-height:1.4}
+.reference-all-table-scroll th,.reference-all-table-scroll td{padding:6px 4px;vertical-align:top;overflow-wrap:anywhere;text-align:left;border-bottom:1px solid #eef1f3}
+.reference-all-table-scroll thead th{font-size:9px;font-weight:500;color:#78858f}
+.reference-all-table-scroll tbody th{font-weight:500;color:#52616b}
+.reference-all-table-scroll th:first-child{width:30%}
+.reference-all-table-scroll .reference-recorded-value{display:block}
+/* Make compatible property choices the primary visual group. */
+.reference-property-selection{background:#f0f7ff;border:1px solid #c4dff7;border-radius:9px;padding:12px}
+.reference-property-selection .reference-property-row{background:#fff;border-color:#dce4eb;margin:9px 0}
+.reference-property-selection .reference-property-row.is-selected{background:#e1f0ff;border-color:#69b6f1}
+.reference-property-selection .reference-property-row:hover{border-color:#91bfe1}
+.reference-property-selection .reference-property-row.is-selected:hover{border-color:#359def}
+.reference-property-selection .reference-all-properties{margin-top:10px}
+.reference-other-actions{border-top:1px solid #e0e7ed;margin-top:16px;padding-top:16px;background:#fff}
+/* Compare details: emphasize property labels and clarify preview direction. */
+.reference-all-table-scroll tbody th{font-weight:700;color:#176da8}
+.reference-all-table-scroll thead th:first-child{font-weight:700;color:#176da8}
+.unified-reference-preview .comparison-before-after{display:grid;grid-template-columns:minmax(0,1fr) 12px minmax(0,1fr);gap:6px}
+.unified-reference-preview .comparison-before-after::before{content:'→';grid-column:2;grid-row:1;align-self:center;justify-self:center;color:#668aa5;font-size:14px}
+.unified-reference-preview .comparison-before-after>div:first-child{grid-column:1;grid-row:1}
+.unified-reference-preview .comparison-before-after>div:last-child{grid-column:3;grid-row:1}
+.unified-reference-preview .confirmation-changes>li:last-child{border-bottom:0}
+.unified-reference-preview .confirmation-changes{margin-bottom:0}
+
+.unified-reference-preview .comparison-confirmation>.confirmation-change-title{display:none}

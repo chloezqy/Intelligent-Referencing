@@ -28,6 +28,6 @@ test('Selection summary reuses actual previews, caps groups, and only calls equa
 });
 test('Working inspector keeps Selection title and sticky mode switch above its content',()=>{
  const html=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'compare',workMode:'compare',onModeChange:()=>{},compareAvailable:true,count:2,contentRef:()=>{}},'Mode content'));
- assert.match(html,/>Use as design reference<\/strong>/);assert.match(html,/Back to Design/);assert.ok(html.indexOf('design-compare-navigation')<html.indexOf('comparison-inspector-content'));
+ assert.match(html,/>Compare &amp; match<\/strong>/);assert.match(html,/Back to Design/);assert.ok(html.indexOf('design-compare-navigation')<html.indexOf('comparison-inspector-content'));
  const single=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'selection',workMode:'edit',onModeChange:()=>{},compareAvailable:false,count:1,contentRef:()=>{}}));assert.match(single,/role="tablist"/);assert.match(single,/aria-selected="true"[^>]*>Design<\/button>/);assert.match(single,/disabled=""[^>]*>Prototype<\/button>/);assert.doesNotMatch(single,/inspector-mode-switch/);
 });

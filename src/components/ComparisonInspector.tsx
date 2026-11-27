@@ -8,7 +8,7 @@ export default function ComparisonInspector({workMode,onModeChange,compareAvaila
 
  <div className="inspector-fixed-header">{headerControls}
  <header className="panel-heading"><div className="design-inspector-tabs" role="tablist" aria-label="Inspector view"><button type="button" role="tab" aria-selected={workMode!=='compare'} onClick={()=>onModeChange?.('edit')}>Design</button><button type="button" role="tab" aria-selected="false" disabled title="Prototyping is not supported in this prototype.">Prototype</button></div>{zoomControls}</header>
- {workMode==='compare'&&onModeChange&&<div className="design-compare-navigation"><button type="button" onClick={()=>onModeChange('edit')}>← Back to Design</button><strong>Use as design reference</strong></div>}
+ {workMode==='compare'&&onModeChange&&<div className="design-compare-navigation"><button type="button" onClick={()=>onModeChange('edit')}>← Back to Design</button><strong>Compare &amp; match</strong></div>}
  </div>
 
  <div ref={contentRef} className="comparison-inspector-content" tabIndex={-1}>{children}</div>

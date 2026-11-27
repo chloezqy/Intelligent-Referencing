@@ -1,5 +1,5 @@
 import {useDraggablePanel} from '../useDraggablePanel';
-import {Crosshair} from 'lucide-react';
+import {Crosshair,Share2,ChevronRight} from 'lucide-react';
 import {ElementPreview} from './ReferencePreviewCard';
 import ShareRecipients from './ShareRecipients';
 import type {UserId} from '../collaboration';
@@ -16,7 +16,7 @@ import { CanvasTransform } from '../workspace';
 import { requestId } from '../useCollaboration';
 import { sharePopoverLayout, shareActionLabel } from '../referencePresentation';
 import PropertyComparison from './PropertyComparison';
-interface Props {renderReferenceWorkflow?:(sharing:(details:ReferenceShareDetails)=>React.ReactNode)=>React.ReactNode;comparisonKeys?:string[];onComparisonKeys?:(keys:string[])=>void;onPickSecond?:()=>void;documentNodes?:UIElement[];editingContent?:React.ReactNode;
+interface Props {comparisonComposer?:boolean;renderReferenceWorkflow?:(sharing:(details:ReferenceShareDetails)=>React.ReactNode)=>React.ReactNode;comparisonKeys?:string[];onComparisonKeys?:(keys:string[])=>void;onPickSecond?:()=>void;documentNodes?:UIElement[];editingContent?:React.ReactNode;
  inspectorHost?:HTMLElement|null; inspector?:boolean;
   onDesignReference:(value:DesignReference)=>void;onComparisonPurpose:(value:string)=>void;onRefreshComparison:()=>void;comparisonChanged:boolean;
   draft:ReferenceDraft; nodes:UIElement[]; camera:CanvasTransform;
@@ -25,7 +25,9 @@ interface Props {renderReferenceWorkflow?:(sharing:(details:ReferenceShareDetail
   onCancel:()=>void; onShared:(id:string)=>void;
   onRoom:()=>void; onLocate:()=>void;
 }
-export default function SharePopover({renderReferenceWorkflow,comparisonKeys,onComparisonKeys,onPickSecond,documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
+export default function SharePopover(props:Props){
+ const {renderReferenceWorkflow,comparisonKeys,onComparisonKeys,onPickSecond,documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate,comparisonComposer=false}=props;
+ const [comparisonShare,setComparisonShare]=useState<ReferenceShareDetails|null>(null);
   const [dragPanel,setDragPanel]=useState<HTMLDivElement|null>(null);
   const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null),pin=useRef<HTMLButtonElement>(null);
  const bindDragPanel=useCallback((element:HTMLDivElement|null)=>{popup.current=element;setDragPanel(element);},[]);
@@ -56,7 +58,8 @@ export default function SharePopover({renderReferenceWorkflow,comparisonKeys,onC
   if(!layout&&!inspector)return null;
   const sharingControls=<ReferenceSharingControls senderAssistance={!inspector} comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} nodes={documentNodes||nodes} elementIds={draft.elementIds}/>;
   const submitButton=<button className="primary-action" disabled={!inspector&&!chosenRecipients.length||!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':'Share reference'}</button>;
-  if(inspector&&renderReferenceWorkflow)return visible&&inspectorHost?createPortal(renderReferenceWorkflow(details=>{const comparison=referenceSharingContext(draft.comparison!,details);return <form className="unified-reference-share-form" onSubmit={async event=>{event.preventDefault();const result=await c.share({...draft,comparison,...(documentNodes?{document:documentNodes}:{})},intent,[note,details.summary].filter(Boolean).join('\n\n'),sendId,true);if(result)onShared(result.id);}}>{sharingControls}{!c.connected&&<p className="subtle">Connect to share this reference.</p>}{c.error&&<p role="alert">{c.error}</p>}<div className="comparison-share-submit">{React.cloneElement(submitButton,{disabled:!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2})}</div></form>;}),inspectorHost):null;
+  if(inspector&&renderReferenceWorkflow)return <>{visible&&inspectorHost?createPortal(renderReferenceWorkflow(details=><button type="button" className="reference-share-action" onClick={()=>setComparisonShare(details)}><Share2 size={14}/><span>Share comparison</span><ChevronRight size={13}/></button>),inspectorHost):null}{comparisonShare&&<SharePopover {...props} comparisonComposer inspector={false} inspectorHost={undefined} renderReferenceWorkflow={undefined} visible draft={{...draft,comparison:referenceSharingContext(draft.comparison!,comparisonShare)}} onVisible={open=>{if(!open)setComparisonShare(null);}} onCancel={()=>setComparisonShare(null)} onShared={()=>setComparisonShare(null)}/>}</>;
+
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     {!inspector&&!visible&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
     {visible&&<div ref={bindDragPanel} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover sender-share-popover pointer-events-auto'} style={inspector?undefined:layout?{...layout.popup,...(writingAnchor?.key===placementKey?{top:writingAnchor.top,maxHeight:Math.min(640,viewport.height-writingAnchor.top-8)}:{})}:undefined}>
@@ -66,7 +69,7 @@ export default function SharePopover({renderReferenceWorkflow,comparisonKeys,onC
         <ShareRecipients members={c.room?.members||[]} self={c.session?.userId} selected={chosenRecipients} onChange={setRecipients}/>
         {layout?.offscreen&&<p className="subtle">Targets offscreen.</p>}</>}
 
-        {inspector?<ComparisonOverview selectedKeys={comparisonKeys} onSelectedKeys={onComparisonKeys} purposeControls={draft.comparison?<ComparisonPurpose showDesignControls={false} context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>:undefined}  showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={documentNodes||nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
+        {comparisonComposer?null:inspector?<ComparisonOverview selectedKeys={comparisonKeys} onSelectedKeys={onComparisonKeys} purposeControls={draft.comparison?<ComparisonPurpose showDesignControls={false} context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>:undefined}  showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={documentNodes||nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
         {inspector&&draft.elementIds.length===1&&onPickSecond&&<button type="button" className="choose-second-object" onClick={onPickSecond}>Choose second object on canvas</button>}
         {inspector&&editingContent}
         {draft.comparison&&comparisonChanged&&<p className="subtle">Selection changed. <button type="button" onClick={onRefreshComparison}>Refresh comparison</button></p>}
