@@ -6,7 +6,7 @@ export default function ReferenceActions({selectionPending=false,compareOwn=fals
  const other=shareLabel.includes('User A')?'A':shareLabel.includes('User B')?'B':null;
  return <div className={`reference-actions action-stack horizontal-actions ${expanded?'':'merged-reference-toolbar'}`} aria-label="Selection reference actions">
    {!expanded&&!selectionPending&&compareReady&&<span className="action-pill-wrap">
-     <button type="button" className={`action-pill collaboration-pill user-${other||'A'}`} aria-label={compareOwn?'Use as design reference':`Use User ${other||'A/B'}’s selection as design reference`} onClick={onCompare}><span className="contextual-action-icon" aria-hidden="true"><GitCompareArrows size={14}/></span><span className="action-label">Use as design reference</span></button>
+     <button type="button" className={`action-pill collaboration-pill user-${other||'A'}`} aria-label={compareOwn?'Reference styling':`Use User ${other||'A/B'}’s selection for styling`} onClick={onCompare}><span className="contextual-action-icon" aria-hidden="true"><GitCompareArrows size={14}/></span><span className="action-label">Reference styling</span></button>
    </span>}
    {!expanded&&!selectionPending&&<button type="button" className="action-pill neutral-pill" onClick={()=>onAction()}><span className="contextual-action-icon" aria-hidden="true"><Share2 size={14}/></span><span className="action-label">Share reference</span></button>}
    <section className={`interpretation-step ${expanded?'is-expanded':''}`} aria-label="Interpretation adjustment">
