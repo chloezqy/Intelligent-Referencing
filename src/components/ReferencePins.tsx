@@ -1,3 +1,4 @@
+import {useDraggablePanel} from '../useDraggablePanel';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SharedReference } from '../collaboration';
 import { UIElement } from '../types';
@@ -5,6 +6,7 @@ import { CanvasTransform } from '../workspace';
 import { layoutReferencePins, orderedReferences, referenceShortLabel, referenceChooserTitle, pinChooserBounds } from '../referencePresentation';
 interface Props { references:SharedReference[]; nodes:UIElement[]; camera:CanvasTransform; viewport:{width:number;height:number}; activeId:string|null; dismissChooser:boolean; onChooserChange:(open:boolean)=>void; onOpen:(id:string)=>void }
 export default function ReferencePins({references,nodes,camera,viewport,activeId,dismissChooser,onChooserChange,onOpen}:Props){
+  const [dragPanel,setDragPanel]=useState<HTMLDivElement|null>(null);
   const [chooser,setChooser]=useState<string|null>(null),host=useRef<HTMLDivElement>(null),lastTrigger=useRef<HTMLButtonElement|null>(null);
   useEffect(()=>{onChooserChange(!!chooser);},[chooser,onChooserChange]);
   useEffect(()=>{if(dismissChooser)setChooser(null);},[dismissChooser]);
@@ -12,6 +14,7 @@ export default function ReferencePins({references,nodes,camera,viewport,activeId
   const ordered=useMemo(()=>orderedReferences(references),[references]);
   const byId=new Map(references.map(r=>[r.id,r]));
   const selected=pins.find(p=>p.key===chooser);
+  useDraggablePanel(dragPanel,chooser||'');
   useEffect(()=>{
     if(!chooser)return;
     const outside=(event:PointerEvent)=>{if(!host.current?.contains(event.target as Node))setChooser(null);};
@@ -32,8 +35,8 @@ export default function ReferencePins({references,nodes,camera,viewport,activeId
         <span>{refs.length>1?refs.length:`${display.sourceUser}${ordered.findIndex(r=>r.id===display.id)+1}`}</span><span className="pin-status" aria-hidden="true">{reviewed?'✓':'•'}</span>{pin.anchors.length>1&&refs.length===1&&<span className="pin-target-count" aria-hidden="true">{pin.anchors.length}</span>}
       </button>;
     })}
-    {selected&&<div role="dialog" aria-label="Shared reference conversations" className="pin-chooser pointer-events-auto" style={pinChooserBounds(selected,viewport)} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
-      <div className="pin-chooser-heading"><strong>Shared references</strong></div>
+    {selected&&<div ref={setDragPanel} role="dialog" aria-label="Shared reference conversations" className="pin-chooser pointer-events-auto" style={pinChooserBounds(selected,viewport)} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
+      <div className="pin-chooser-heading" data-panel-drag-handle title="Drag to move panel"><strong>Shared references</strong></div>
       <div className="pin-chooser-list">{selected.referenceIds.map(id=>{const ref=byId.get(id)!;const title=referenceChooserTitle(ref);return <button type="button" className="pin-conversation" aria-label={`Open ${title} from User ${ref.sourceUser}`} key={id} onClick={()=>open(id)}><span className={`chooser-author user-${ref.sourceUser}`} aria-hidden="true">{ref.sourceUser}</span><span className="chooser-label"><span className="chooser-title" title={title}>{title}</span><small>{ref.elementIds.length} {ref.elementIds.length===1?'object':'objects'} · {new Date(ref.createdAt).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}</small></span></button>;})}</div>
     </div>}
   </div>;

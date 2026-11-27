@@ -1,5 +1,5 @@
 import {decideDesignChange} from '../src/designChanges';
-import {mentionedUsers} from '../src/mentions';
+import {mentionedUsers,validateShareRecipients} from '../src/mentions';
 import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -68,7 +68,8 @@ export class RoomStore {
     if (!/^[a-f0-9-]{36}$/i.test(body.requestId || '')) throw new ApiError(400, 'Invalid request ID.');
     const r = this.room(code), targetUser = user === 'A' ? 'B' : 'A';
     if (!r.members.some(m => m.userId === targetUser)) throw new ApiError(409, 'Invite the other user before sharing.');
-    const mentions=mentionedUsers(message,r.members),notificationRecipients=mentions.filter(id=>id!==user);
+    let recipients:UserId[]|undefined;try{recipients=validateShareRecipients(body.recipientIds,user,r.members);}catch(error){throw new ApiError(400,(error as Error).message);}
+    const mentions=mentionedUsers(message,r.members),notificationRecipients=[...new Set([...mentions.filter(id=>id!==user),...(recipients||[])])];
     const duplicate = r.references.find(ref => ref.id === body.requestId);
     if (duplicate) { if (duplicate.sourceUser !== user) throw new ApiError(409, 'Request ID already used.'); return duplicate.id; }
     if (r.references.length >= 200) throw new ApiError(409, 'This prototype supports up to 200 references per room.');

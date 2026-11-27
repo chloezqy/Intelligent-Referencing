@@ -22,3 +22,10 @@ export function needsReferenceNotification(reference:SharedReference,user?:UserI
  if(reference.simulated||reference.notificationRecipients===undefined)return reference.targetUser===user&&!reference.activity?.some(event=>event.userId===user&&event.kind==='opened');
  return unreadMention(reference,user);
 }
+
+/** Explicit picker recipients use the existing two-person room identities. */
+export function validateShareRecipients(value:unknown,self:UserId,members:readonly {userId:UserId}[]):UserId[]|undefined{
+ if(value===undefined)return undefined;
+ if(!Array.isArray(value)||!value.length||value.length>1||new Set(value).size!==value.length||value.some(id=>id===self||!members.some(m=>m.userId===id)))throw Error('Choose an available recipient.');
+ return value as UserId[];
+}

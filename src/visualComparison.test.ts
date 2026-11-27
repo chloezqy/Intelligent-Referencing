@@ -86,6 +86,6 @@ test('Saved Compare uses the same overview and keeps replies/review, while ordin
  assert.ok(!normal.includes('class="comparison-overview"'));assert.match(normal,/Property comparison · rule-based/);
  assert.doesNotMatch(normal,/Interpret reference with AI/);
  const sender=renderToStaticMarkup(React.createElement(ReferenceConversation,{active:{...ref,intent:'Review'},nodes:MOCK_NODES,collaboration:{...c,session:{...c.session,userId:'A'}} as CollaborationClient,onLocate:()=>{},onClear:()=>{}}));
- assert.match(sender,/Interpret reference with AI/);
+ assert.doesNotMatch(sender,/Interpret reference with AI|AI reference interpretation/);
 
 });

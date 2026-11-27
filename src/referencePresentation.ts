@@ -107,7 +107,7 @@ export function sharePopoverLayout(ids:string[],nodes:UIElement[],camera:CanvasT
   const inView=(p:{x:number;y:number})=>p.x>=12&&p.y>=12&&p.x<=viewport.width-12&&p.y<=viewport.height-12;
   const anchor=targets.find(inView)||targets[0],offscreen=!targets.some(inView);
   const pin={x:Math.max(12,Math.min(viewport.width-12,anchor.x)),y:Math.max(12,Math.min(viewport.height-12,anchor.y))};
-  const width=Math.min(312,Math.max(0,viewport.width-16)),maxHeight=Math.min(360,Math.max(0,viewport.height-16)),height=Math.min(measuredHeight,maxHeight);
+  const width=Math.min(360,Math.max(0,viewport.width-16)),maxHeight=Math.min(640,Math.max(0,viewport.height-16)),height=Math.min(measuredHeight,maxHeight);
   const selected=nodes.filter(n=>ids.includes(n.id)),x=Math.min(...selected.map(n=>n.x)),y=Math.min(...selected.map(n=>n.y));
   const box={x,y,w:Math.max(...selected.map(n=>n.x+n.w))-x,h:Math.max(...selected.map(n=>n.y+n.h))-y};
   const position=selectionActionLayout(box,camera,viewport,{width,height});

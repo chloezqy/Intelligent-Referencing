@@ -1,3 +1,4 @@
+import {useDraggablePanel} from '../useDraggablePanel';
 import CanvasFrameLabels from './CanvasFrameLabels';
 import ProductIllustration from './ProductIllustration';
 import MockSymbol,{isMockSymbol} from './MockSymbol';
@@ -361,6 +362,7 @@ export default function Canvas({
   // Candidate hover affects canvas highlighting, never the popup's selection anchor.
   const actionBounds=getBoundingBox(draftRef?draftRef.exemplarIds:confirmedRef?.selectedIds||[],nodes);
   const actionBoundsKey=JSON.stringify(actionBounds);
+  useDraggablePanel(actionSurface,JSON.stringify(confirmedRef?.selectedIds||draftRef?.exemplarIds||[]),adjustOpen);
   useLayoutEffect(()=>{
     if(!actionSurface)return;
     const place=()=>{

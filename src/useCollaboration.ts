@@ -91,9 +91,9 @@ export function useRealtimeCollaboration(enabled=true) {
       let recovery = token(); try { recovery = sessionStorage.getItem(`sr-join-${code}`) || recovery; sessionStorage.setItem(`sr-join-${code}`, recovery); } catch { /* Retry identity is held in this request. */ }
       const identity = await api(`/rooms/${code}/join`, { token: recovery }, null); remember(identity); return identity;
     }),
-    share: (draft: ReferenceDraft, intent: ReferenceIntent, message: string, id: string,inviteNow=false) => action(async () => {
+    share: (draft: ReferenceDraft, intent: ReferenceIntent, message: string, id: string,inviteNow=false,recipientIds?:import('./collaboration').UserId[]) => action(async () => {
       if (!session || !connected) throw new Error('Reconnect before sharing.');
-      return await api(`/rooms/${session.code}/references`, { ...draft, intent, message, requestId: id,inviteNow }) as unknown as import('./collaboration').SharedReference;
+      return await api(`/rooms/${session.code}/references`, { ...draft, intent, message, requestId: id,inviteNow,...(recipientIds?{recipientIds}:{}) }) as unknown as import('./collaboration').SharedReference;
     }),
     inviteAttention:(id:string,requestId:string)=>action(async()=>{if(!session||!connected)throw new Error('Reconnect before inviting.');return api(`/rooms/${session.code}/references/${id}/attention`,{requestId});}),
     viewAttention:(id:string,invitationId:string)=>action(async()=>{if(!session||!connected)throw new Error('Reconnect before viewing.');return api(`/rooms/${session.code}/references/${id}/attention/${invitationId}/view`,{});}),

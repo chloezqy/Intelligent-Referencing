@@ -10,7 +10,7 @@ export default function ReferenceActions({selectionPending=false,compareOwn=fals
    </span>}
    {!expanded&&!selectionPending&&<button type="button" className="action-pill neutral-pill" onClick={()=>onAction()}><span className="contextual-action-icon" aria-hidden="true"><Share2 size={14}/></span><span className="action-label">Share reference</span></button>}
    <section className={`interpretation-step ${expanded?'is-expanded':''}`} aria-label="Interpretation adjustment">
-     <button type="button" className={expanded?'interpretation-panel-header':'action-pill neutral-pill refine-selection'} aria-label="Adjust interpretation" aria-controls="interpretation-adjustments" aria-expanded={expanded} onClick={onMore}>{!expanded&&<span className="contextual-action-icon" aria-hidden="true"><SlidersHorizontal size={14}/></span>}<span className="action-label">Adjust interpretation</span><ChevronDown size={12} aria-hidden="true" className={expanded?'rotate-180':''}/></button>
+     <button data-panel-drag-handle={expanded?true:undefined} title={expanded?"Drag to move panel; click to collapse":undefined} type="button" className={expanded?'interpretation-panel-header':'action-pill neutral-pill refine-selection'} aria-label="Adjust interpretation" aria-controls="interpretation-adjustments" aria-expanded={expanded} onClick={onMore}>{!expanded&&<span className="contextual-action-icon" aria-hidden="true"><SlidersHorizontal size={14}/></span>}<span className="action-label">Adjust interpretation</span><ChevronDown size={12} aria-hidden="true" className={expanded?'rotate-180':''}/></button>
      {expanded&&interpretationContent}
    </section>
  </div>;

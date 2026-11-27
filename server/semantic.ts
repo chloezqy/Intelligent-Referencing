@@ -1,3 +1,4 @@
+import {shareNoteRequest,shareNotePayload,parseShareNote} from './shareNote.js';
 import {textStyleContext,textStylePayload,parseTextStyleOutput} from './textStyleMatching.js';
 import {requestOpenAI,AIServiceError} from './openaiTransport.js';
 import {reviewFocusRequest,reviewFocusPayload,parseReviewFocus} from './reviewFocus.js';
@@ -61,6 +62,9 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   const textStyles=req.body?.task==='text-styles';
   let textContext:ReturnType<typeof textStyleContext>|undefined;
   if(textStyles)try{textContext=textStyleContext(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
+  const shareNote=req.body?.task==='share-note';
+  let shareContext:ReturnType<typeof shareNoteRequest>|undefined;
+  if(shareNote)try{shareContext=shareNoteRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
   const review=req.body?.task==='review-focus';
   let reviewContext:ReturnType<typeof reviewFocusRequest>|undefined;
   if(review)try{reviewContext=reviewFocusRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
@@ -74,14 +78,14 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
   let editContext:ReturnType<typeof actionContext>|undefined;
   if(editing)try{editContext=actionContext(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
   let changeContext:ReturnType<typeof designChangesRequest>|undefined;
-  if(req.body?.task!==undefined&&!changes&&!editing&&!tokens&&!analysis&&!review&&!textStyles)throw new SemanticError(400,'Unknown AI task.');
+  if(req.body?.task!==undefined&&!changes&&!editing&&!tokens&&!analysis&&!review&&!textStyles&&!shareNote)throw new SemanticError(400,'Unknown AI task.');
   if(changes)try{changeContext=designChangesRequest(req.body);}catch(error){throw new SemanticError(400,(error as Error).message);}
-  const request=changes||editing||tokens||analysis||review||textStyles?{contextId:req.body.contextId}:semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini';
+  const request=changes||editing||tokens||analysis||review||textStyles||shareNote?{contextId:req.body.contextId}:semanticContext(req.body),model=options.model||process.env.OPENAI_MODEL||'gpt-4.1-mini';
   if(changeContext&&!changeContext.facts.length){res.json({contextId:request.contextId,proposals:[],cached:false,message:'No fully recorded differences for these properties.'});return;}
   if(libraryContext&&!libraryContext.facts.length){res.json({contextId:request.contextId,tokenSuggestions:[],cached:false});return;}
   if(analysisContext&&!analysisContext.differences.length){res.json({contextId:request.contextId,recommendations:[],cached:false});return;}
   if(textContext&&(!textContext.targets.length||!textContext.styles.length)){res.json({contextId:request.contextId,textStyleSuggestions:[],cached:false});return;}
-  const payload=textContext?textStylePayload(textContext,model):reviewContext?reviewFocusPayload(reviewContext,model):analysisContext?comparisonAnalysisPayload(analysisContext,model):libraryContext?tokenPayload(libraryContext,model):editContext?actionPayload(editContext,model):changeContext?designChangesPayload(changeContext,model):modelPayload(request as SemanticRequest,model),now=(options.now||Date.now)();
+  const payload=shareContext?shareNotePayload(shareContext,model):textContext?textStylePayload(textContext,model):reviewContext?reviewFocusPayload(reviewContext,model):analysisContext?comparisonAnalysisPayload(analysisContext,model):libraryContext?tokenPayload(libraryContext,model):editContext?actionPayload(editContext,model):changeContext?designChangesPayload(changeContext,model):modelPayload(request as SemanticRequest,model),now=(options.now||Date.now)();
   const hash=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
   for(const [key,value] of cache)if(value.until<now)cache.delete(key);
   const cached=cache.get(hash);if(cached){res.json({...cached.value,contextId:request.contextId,cached:true});return;}
@@ -102,14 +106,15 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
    try{
    const output=await requestOpenAI(payload,options.key??process.env.OPENAI_API_KEY!,{fetcher:options.fetcher,timeoutMs:Math.max(1,(options.timeoutMs??25000)-(Date.now()-started)),sleep:options.sleep,random:options.random});
    const responseId=typeof output.id==='string'?output.id:undefined,rejectedSuggestions:{index:number;code:string}[]=[];
+   let interpretation:ReturnType<typeof parseShareNote>|undefined;
    let suggestion:ReturnType<typeof parseReviewFocus>|undefined;
    let recommendations:ReturnType<typeof parseComparisonAnalysis>|undefined;
    let plan:ReturnType<typeof parseActionOutput>|undefined;
    let textStyleSuggestions:ReturnType<typeof parseTextStyleOutput>|undefined;
    let tokenSuggestions:ReturnType<typeof parseTokenOutput>|undefined;
    let candidates:SemanticCandidate[]|undefined,proposals:ReturnType<typeof parseDesignChanges>|undefined;
-   try{if(textContext)textStyleSuggestions=parseTextStyleOutput(output,textContext);else if(reviewContext)suggestion=parseReviewFocus(output,reviewContext);else if(analysisContext)recommendations=parseComparisonAnalysis(output,analysisContext);else if(libraryContext)tokenSuggestions=parseTokenOutput(output,libraryContext);else if(editContext)plan=parseActionOutput(output,editContext);else if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:200,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
-   const value={...(textContext?{textStyleSuggestions}:reviewContext?{suggestion}:analysisContext?{recommendations}:libraryContext?{tokenSuggestions,...(libraryContext.paletteMode?{colorPaletteVersion:1}:{})}:editContext?{plan}:changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
+   try{if(shareContext)interpretation=parseShareNote(output,shareContext);else if(textContext)textStyleSuggestions=parseTextStyleOutput(output,textContext);else if(reviewContext)suggestion=parseReviewFocus(output,reviewContext);else if(analysisContext)recommendations=parseComparisonAnalysis(output,analysisContext);else if(libraryContext)tokenSuggestions=parseTokenOutput(output,libraryContext);else if(editContext)plan=parseActionOutput(output,editContext);else if(changeContext)proposals=parseDesignChanges(output,changeContext);else candidates=parseModelOutput(output,request as SemanticRequest,(index,code)=>rejectedSuggestions.push({index,code}));}catch(error){if(error instanceof SemanticError)error.details={model,responseId,upstreamStatus:200,rejectedSuggestions};if(!(error instanceof SemanticError))throw new SemanticError(502,'AI returned unsupported proposed changes. Property comparisons remain available.');throw error;}
+   const value={...(shareContext?{interpretation}:textContext?{textStyleSuggestions}:reviewContext?{suggestion}:analysisContext?{recommendations}:libraryContext?{tokenSuggestions,...(libraryContext.paletteMode?{colorPaletteVersion:1}:{})}:editContext?{plan}:changeContext?{proposals}:{candidates}),model,responseId,rejectedSuggestions,cached:false};
    if(cache.size>=100)cache.delete(cache.keys().next().value!);cache.set(hash,{until:now+600000,value});return value;
    }finally{release();}
   })();pending.set(hash,job);
@@ -117,7 +122,7 @@ export function semanticHandler(options:SemanticOptions={}):RequestHandler{
  }catch(error){
   const service=error instanceof AIServiceError?error:undefined,status=service?.status||(error instanceof SemanticError?error.status:500),code=service?.code||(error instanceof SemanticError?(error.status<500?(['Invalid document snapshot.','Invalid document IDs.'].includes(error.message)?'document_mismatch':'invalid_request'):'invalid_response'):'server_error');
   const retryable=service?.retryable??status>=500;
-  const log={event:'semantic_ai_failure',traceId,task:typeof req.body?.task==='string'&&['text-styles','review-focus','comparison-analysis','design-system','design-changes','editing'].includes(req.body.task)?req.body.task:'interpretation',code,status,upstreamStatus:service?.upstreamStatus,elapsedMs:Date.now()-started};
+  const log={event:'semantic_ai_failure',traceId,task:typeof req.body?.task==='string'&&['share-note','text-styles','review-focus','comparison-analysis','design-system','design-changes','editing'].includes(req.body.task)?req.body.task:'interpretation',code,status,upstreamStatus:service?.upstreamStatus,elapsedMs:Date.now()-started};
   (options.logger||((entry)=>console.warn(JSON.stringify(entry))))(log);
   if(service?.retryAfter)res.setHeader('Retry-After',String(service.retryAfter));
   res.status(status).json({error:service?.message||(error instanceof SemanticError&&error.status<500?error.message:(error instanceof SemanticError?'AI returned an unsupported response. Rule-based tools remain available.':'The AI server encountered a temporary error. Rule-based tools remain available.')),code,retryable,requestId:traceId,...(service?.retryAfter?{retryAfter:service.retryAfter}:{})});

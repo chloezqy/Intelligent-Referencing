@@ -1,4 +1,3 @@
-import ReviewFocus from './ReviewFocus';
 import {SharedDesignChanges} from './DesignChangeSuggestions';
 import type {CollaborationClient} from '../collaborationClient';
 import ComparisonContext from './ComparisonContext';
@@ -19,7 +18,7 @@ export default function ReferenceConversation({active,nodes,collaboration:c,onLo
  const status=active.archivedAt?'Archived':active.status==='reviewed'?(isSender?`Reviewed by User ${active.targetUser}`:'You reviewed this'):'Awaiting review';
  useEffect(()=>{setResponse('');setReplyId(requestId());},[active.id]);
  return (<section className="reference-detail">
-      <header className="conversation-header">
+      <header className="conversation-header" data-panel-drag-handle title="Drag to move panel">
         <div className="conversation-heading"><h3>{heading}</h3><span className="conversation-status" role="status">{status}</span></div>
         <p className="conversation-recipient">{recipient}</p>
       </header>
@@ -28,7 +27,6 @@ export default function ReferenceConversation({active,nodes,collaboration:c,onLo
         <p className="conversation-note-label">{isSender?'Your note':`User ${active.sourceUser}’s note`}</p>
         <p className={active.message?'conversation-body':'conversation-empty'}>{active.message || 'No additional note'}</p>
       </div>
-      {isSender&&active.intent.trim().toLowerCase()==='review'&&active.message.trim()&&!active.archivedAt&&<ReviewFocus reference={active} nodes={nodes} onInspect={onInspect} onCompare={onCompare}/>}
       {active.intent!=='Compare'&&active.comparison&&<ComparisonContext context={active.comparison} nodes={nodes} user={c.session?.userId}/>}
       {active.intent!=='Compare'&&<PropertyComparison ownership={active.comparison} contextId={active.id} ids={active.elementIds} nodes={nodes} expanded={false}/>}
       <div className="responses" aria-live="polite">{active.responses.map(reply=><div key={reply.id}><strong className={`user-${reply.userId}`}>{reply.userId===c.session?.userId?'You · ':''}User {reply.userId}</strong><p>{reply.message}</p><small>{new Date(reply.createdAt).toLocaleString()}</small></div>)}</div>

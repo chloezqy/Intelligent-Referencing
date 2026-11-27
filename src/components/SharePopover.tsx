@@ -1,10 +1,15 @@
+import {useDraggablePanel} from '../useDraggablePanel';
+import {Crosshair} from 'lucide-react';
+import {ElementPreview} from './ReferencePreviewCard';
+import ShareRecipients from './ShareRecipients';
+import type {UserId} from '../collaboration';
 import {referenceSharingContext,type ReferenceShareDetails} from '../unifiedReference';
 import ReferenceSharingControls from './ReferenceSharingControls';
 import {createPortal} from 'react-dom';
 import type {CollaborationClient} from '../collaborationClient';
 import ComparisonOverview from './ComparisonOverview';
 import ComparisonContext, {ComparisonPurpose} from './ComparisonContext';
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import { ReferenceDraft, ReferenceIntent, DesignReference, DESIGN_REFERENCE_PURPOSE } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
@@ -21,16 +26,22 @@ interface Props {renderReferenceWorkflow?:(sharing:(details:ReferenceShareDetail
   onRoom:()=>void; onLocate:()=>void;
 }
 export default function SharePopover({renderReferenceWorkflow,comparisonKeys,onComparisonKeys,onPickSecond,documentNodes,editingContent,inspector=false,inspectorHost,onDesignReference,onComparisonPurpose,onRefreshComparison,comparisonChanged,draft,nodes,camera,collaboration:c,visible,onVisible,note,intent,onNote,onIntent,onCancel,onShared,onRoom,onLocate}:Props){
+  const [dragPanel,setDragPanel]=useState<HTMLDivElement|null>(null);
   const host=useRef<HTMLDivElement>(null),popup=useRef<HTMLDivElement>(null),pin=useRef<HTMLButtonElement>(null);
+ const bindDragPanel=useCallback((element:HTMLDivElement|null)=>{popup.current=element;setDragPanel(element);},[]);
   const [viewport,setViewport]=useState({width:800,height:600}),[height,setHeight]=useState(320),[sendId,setSendId]=useState(requestId);
   useEffect(()=>{if(inspector&&draft.comparison&&!draft.comparison.purpose.trim())onComparisonPurpose('Compare differences');},[inspector,draft.comparison?.snapshotId]);
   const label=shareActionLabel(c.session?.userId),target=c.session?.userId==='B'?'A':'B';
+  const availableRecipients=(c.room?.members||[]).filter(member=>member.userId!==c.session?.userId).map(member=>member.userId);
+  const [recipients,setRecipients]=useState<UserId[]>(availableRecipients);
+  useEffect(()=>setRecipients(availableRecipients),[draft.elementIds.join('|'),c.session?.userId,availableRecipients.join('|')]);
+  const chosenRecipients=recipients.filter(id=>availableRecipients.includes(id));
   useEffect(()=>{const el=host.current;if(!el)return;const observer=new ResizeObserver(()=>setViewport({width:el.clientWidth,height:el.clientHeight}));observer.observe(el);return()=>observer.disconnect();},[inspector,inspectorHost]);
-  useEffect(()=>{setSendId(requestId());},[draft,note,intent]);
+  useEffect(()=>{setSendId(requestId());},[draft,note,intent,recipients.join('|')]);
   useLayoutEffect(()=>{
     if(!visible)return;
     const element=popup.current;if(!element)return;
-    element.querySelector<HTMLInputElement>('input[type=text]')?.focus({preventScroll:true});
+    element.querySelector<HTMLInputElement>('input[aria-label="Intended action"]')?.focus({preventScroll:true});
     const measure=()=>setHeight(element.getBoundingClientRect().height);measure();const observer=new ResizeObserver(measure);observer.observe(element);
     const outside=(e:PointerEvent)=>{if(!inspector&&!host.current?.contains(e.target as Node))onVisible(false);};
     const escape=(e:KeyboardEvent)=>{if(e.key==='Escape'){if(element.querySelector('[data-mention-options]'))return;e.preventDefault();e.stopPropagation();onVisible(false);pin.current?.focus({preventScroll:true});}};
@@ -38,17 +49,21 @@ export default function SharePopover({renderReferenceWorkflow,comparisonKeys,onC
     return()=>{observer.disconnect();document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape,true);};
   },[visible,inspector,inspectorHost]);
   const layout=sharePopoverLayout(draft.elementIds,nodes,camera,viewport,height);
+  const placementKey=JSON.stringify([draft.elementIds,camera,viewport]);
+  const [writingAnchor,setWritingAnchor]=useState<{key:string;top:number}|null>(null);
+  useEffect(()=>{if(!visible||inspector||!note.trim()){setWritingAnchor(null);return;}if(layout&&writingAnchor?.key!==placementKey)setWritingAnchor({key:placementKey,top:layout.popup.top});},[visible,inspector,!!note.trim(),placementKey]);
+  useDraggablePanel(dragPanel,JSON.stringify(draft.elementIds),visible&&!inspector);
   if(!layout&&!inspector)return null;
-  const sharingControls=<ReferenceSharingControls comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} nodes={documentNodes||nodes} elementIds={draft.elementIds}/>;
-  const submitButton=<button className="primary-action" disabled={!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':'Share reference'}</button>;
+  const sharingControls=<ReferenceSharingControls senderAssistance={!inspector} comparison={!!draft.comparison} inspector={inspector} c={c} note={note} intent={intent} onNote={onNote} onIntent={onIntent} nodes={documentNodes||nodes} elementIds={draft.elementIds}/>;
+  const submitButton=<button className="primary-action" disabled={!inspector&&!chosenRecipients.length||!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2||!!draft.comparison&&(!draft.comparison.purpose.trim()||draft.comparison.purpose===DESIGN_REFERENCE_PURPOSE&&!draft.comparison.designReference?.properties.length)} type="submit">{c.busy?'Sending…':draft.comparison?'Share comparison':'Share reference'}</button>;
   if(inspector&&renderReferenceWorkflow)return visible&&inspectorHost?createPortal(renderReferenceWorkflow(details=>{const comparison=referenceSharingContext(draft.comparison!,details);return <form className="unified-reference-share-form" onSubmit={async event=>{event.preventDefault();const result=await c.share({...draft,comparison,...(documentNodes?{document:documentNodes}:{})},intent,[note,details.summary].filter(Boolean).join('\n\n'),sendId,true);if(result)onShared(result.id);}}>{sharingControls}{!c.connected&&<p className="subtle">Connect to share this reference.</p>}{c.error&&<p role="alert">{c.error}</p>}<div className="comparison-share-submit">{React.cloneElement(submitButton,{disabled:!intent.trim()||c.busy||!c.connected||!c.room||c.room.members.length<2})}</div></form>;}),inspectorHost):null;
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
     {!inspector&&!visible&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
-    {visible&&<div ref={popup} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover pointer-events-auto'} style={inspector?undefined:layout?.popup}>
-      {!inspector&&<header><h3>Share reference</h3><button type="button" aria-label="Close sharing popup" onClick={onCancel}>×</button></header>}
-      <form onSubmit={async e=>{e.preventDefault();const result=await c.share({...draft,...(documentNodes?{document:documentNodes}:{})},intent,note,sendId,true);if(result)onShared(result.id);}}>
-        <div className="share-form-body" onKeyDown={e=>{const target=e.target as HTMLElement;if(e.key==='Enter'&&target.matches('input,select')&&target.closest('.comparison-overview,.comparison-next-steps')){e.preventDefault();e.stopPropagation();}}} role={inspector?'region':undefined} aria-label={inspector?'Comparison content':undefined} tabIndex={inspector?0:undefined}>{!inspector&&<><p className="share-target-label" title={draft.label}>{draft.label}</p>
-        <div className="share-target-meta"><span>{draft.elementIds.length} {draft.elementIds.length===1?'object':'objects'}</span><button type="button" onClick={onLocate}>Locate</button></div>
+    {visible&&<div ref={bindDragPanel} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover sender-share-popover pointer-events-auto'} style={inspector?undefined:layout?{...layout.popup,...(writingAnchor?.key===placementKey?{top:writingAnchor.top,maxHeight:Math.min(640,viewport.height-writingAnchor.top-8)}:{})}:undefined}>
+      {!inspector&&<header data-panel-drag-handle title="Drag to move panel"><h3>Share reference</h3><button type="button" aria-label="Close sharing popup" onClick={onCancel}>×</button></header>}
+      <form onSubmit={async e=>{e.preventDefault();if(!inspector&&!chosenRecipients.length)return;const result=await c.share({...draft,...(documentNodes?{document:documentNodes}:{})},intent,note,sendId,true,inspector?undefined:chosenRecipients);if(result)onShared(result.id);}}>
+        <div className="share-form-body" onKeyDown={e=>{const target=e.target as HTMLElement;if(e.key==='Enter'&&target.matches('input,select')&&target.closest('.comparison-overview,.comparison-next-steps')){e.preventDefault();e.stopPropagation();}}} role={inspector?'region':undefined} aria-label={inspector?'Comparison content':undefined} tabIndex={inspector?0:undefined}>{!inspector&&<><section className="share-selected-object" aria-label="Selected reference"><div className="share-object-thumbnails">{draft.elementIds.slice(0,2).map(id=>{const node=(documentNodes||nodes).find(n=>n.id===id);return node?<span key={id}><ElementPreview element={node} nodes={documentNodes||nodes}/></span>:null;})}</div><div className="share-object-copy"><strong title={draft.elementIds.map(id=>(documentNodes||nodes).find(n=>n.id===id)?.label||id).join(', ')}>{draft.elementIds.map(id=>(documentNodes||nodes).find(n=>n.id===id)?.label||id).join(', ')}</strong><small>{draft.elementIds.length} {draft.elementIds.length===1?'layer':'layers'} selected</small></div><button type="button" className="share-locate" onClick={onLocate}><Crosshair size={13}/>Locate</button></section>
+        <ShareRecipients members={c.room?.members||[]} self={c.session?.userId} selected={chosenRecipients} onChange={setRecipients}/>
         {layout?.offscreen&&<p className="subtle">Targets offscreen.</p>}</>}
 
         {inspector?<ComparisonOverview selectedKeys={comparisonKeys} onSelectedKeys={onComparisonKeys} purposeControls={draft.comparison?<ComparisonPurpose showDesignControls={false} context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>:undefined}  showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={documentNodes||nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}

@@ -23,7 +23,7 @@ test('Compare is a communication intent in Edit sharing, without comparison navi
 
 test('Sender can interpret review context in the sharing composer before sending',()=>{
  const html=renderToStaticMarkup(React.createElement(SelectionSharing,{selection:{selectedIds:['hc1'],exemplarIds:['hc1'],label:'Card',scope:'exemplars'},nodes:MOCK_NODES,collaboration:c,footerHost:null,note:'Review the images',intent:'Review',onNote:noop,onIntent:noop,onShared:noop}));
- assert.match(html,/Interpret reference with AI/);
+ assert.doesNotMatch(html,/Interpret reference with AI|Accept suggestion|Try again/);
 });
 
 test('Accepted AI context keeps interpreted text visible without product previews',async()=>{

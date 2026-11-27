@@ -1,4 +1,4 @@
-import type {CollaboratorCursor,ComparisonContext,ReferenceDraft,ReferenceIntent,RoomSnapshot,SelectionPresence,Session,SharedReference} from './collaboration';
+import type {UserId,CollaboratorCursor,ComparisonContext,ReferenceDraft,ReferenceIntent,RoomSnapshot,SelectionPresence,Session,SharedReference} from './collaboration';
 export type CollaborationMode='demo'|'realtime';
 export interface CollaborationClient {
  mode:CollaborationMode; session:Session|null;room:RoomSnapshot|null;
@@ -8,7 +8,7 @@ export interface CollaborationClient {
  cursor(x:number,y:number,visible:boolean):Promise<void>;
  comparisonDraft(localIds?:string[],referenceId?:string):Promise<ComparisonContext|undefined>;
  create():Promise<unknown>;join(input:string):Promise<unknown>;
- share(draft:ReferenceDraft,intent:ReferenceIntent,message:string,id:string,inviteNow?:boolean):Promise<SharedReference|undefined>;
+ share(draft:ReferenceDraft,intent:ReferenceIntent,message:string,id:string,inviteNow?:boolean,recipientIds?:UserId[]):Promise<SharedReference|undefined>;
  inviteAttention(id:string,requestId:string):Promise<unknown>;
  viewAttention(id:string,invitationId:string):Promise<unknown>;
  respond(id:string,message:string,responseId:string):Promise<unknown>;

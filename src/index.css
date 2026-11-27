@@ -1598,3 +1598,69 @@ body:has(.unified-reference-workflow) .figma-help {bottom:76px;}
 .frame-inspector button {width:100%;padding:8px;background:#f5f5f5;border:1px solid #e5e5e5;border-radius:5px;}
 .frame-inspector button:hover:not(:disabled) {background:#e5f4ff;color:#007be5;}
 .frame-inspector-hint {font-size:10px;line-height:1.5;color:#999;margin-top:10px;}
+
+/* Sender-side sharing: object context, recipients, and note assistance. */
+.sender-share-popover {display:flex;flex-direction:column;overflow:hidden;}
+.sender-share-popover>header {flex-shrink:0;padding:12px 14px;}
+.sender-share-popover>header h3 {font-size:15px;}
+.sender-share-popover>form {display:flex;flex-direction:column;min-height:0;padding:0;overflow:hidden;}
+.sender-share-popover .share-form-body {min-height:0;overflow-y:auto;padding:12px 14px;overscroll-behavior:contain;}
+.sender-share-popover .share-form-footer {flex-shrink:0;margin:0;padding:12px 14px;background:white;}
+.sender-share-popover .share-form-footer .primary-action {background:#0d99ff;color:white;border-color:#0d99ff!important;}
+.sender-share-popover .share-form-footer .primary-action:hover:not(:disabled) {background:#0788e5;}
+.share-selected-object {display:flex;align-items:center;gap:8px;padding:9px;background:#eff7ff;border-radius:9px;margin-bottom:14px;min-width:0;}
+.share-object-thumbnails {display:flex;flex:0 0 44px;max-width:56px;height:44px;gap:3px;align-items:center;}
+.share-object-thumbnails>span {flex:1;min-width:0;height:44px;display:flex;align-items:center;}
+.share-object-thumbnails .element-preview {width:100%;max-height:44px;height:44px;}
+.share-object-copy {flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;}
+.share-object-copy>strong {font-size:12px;font-weight:600;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere;color:#252d36;}
+.share-object-copy>small {font-size:10px;color:#7c8190;}
+.sender-share-popover .share-locate {display:flex;align-items:center;gap:3px;padding:3px;background:transparent;border:0;color:#0d99ff;white-space:nowrap;}
+.share-recipients {position:relative;margin:10px 0 12px;}
+.sender-share-popover .share-recipients>label {margin-bottom:5px;}
+.share-recipient-input {display:flex;align-items:center;flex-wrap:wrap;gap:5px;border:1px solid #d7dce4;border-radius:6px;padding:5px;min-height:34px;background:#fff;}
+.sender-share-popover .share-recipient-input input {flex:1;min-width:80px;width:80px;border:0;padding:3px;outline:0;}
+.share-recipient-input:focus-within {outline:2px solid #0d99ff;outline-offset:1px;}
+.share-recipient-chip {display:inline-flex;align-items:center;gap:4px;background:#eaf6ff;color:#1688da;padding:3px 4px;border-radius:5px;font-size:11px;white-space:nowrap;}
+.share-recipient-chip>i {display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#8771cb;color:white;font-size:10px;font-style:normal;}
+.sender-share-popover .share-recipient-chip button {padding:0 2px;color:#537d9c;border:0;background:transparent;}
+.share-recipient-options {border:1px solid #d7e4ed;border-radius:6px;padding:4px;background:white;margin-top:3px;}
+.share-recipient-options>button {display:flex;gap:10px;justify-content:space-between;width:100%;padding:6px;color:#315b79;}
+.share-recipient-options small {font-size:10px;color:#8996a1;}
+.sender-share-popover .attached-note>label {display:block;margin:12px 0 6px;}
+.sender-share-popover .note-writing-control {border:1px solid #d7dce4;border-radius:7px;overflow:hidden;background:white;}
+.sender-share-popover .note-writing-control:focus-within {outline:2px solid #0d99ff;outline-offset:1px;}
+.sender-share-popover .note-writing-control.has-assistance {border-color:#d8c8f3;}
+.sender-share-popover .note-writing-control textarea {display:block;border:0;outline:none;box-shadow:none;margin:0;border-radius:0;width:100%;min-height:76px;max-height:140px;background:white;resize:vertical;}
+.sender-share-popover .note-writing-control textarea:focus-visible {outline:0;}
+.sender-note-ai {background:#f7f0ff;padding:9px 10px;color:#5b4e73;font-size:11px;line-height:1.45;}
+.sender-note-ai>header {display:flex;justify-content:space-between;align-items:center;gap:6px;padding:0;margin-bottom:5px;}
+.sender-note-ai>header>span {display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:#8b52d5;}
+.sender-note-ai>header button {display:flex;gap:3px;align-items:center;}
+.sender-note-ai p {margin:0;overflow-wrap:anywhere;}
+.sender-note-ai button {border:0;background:transparent;color:#7b56b2;padding:2px 3px;font-size:10px;}
+.sender-note-ai-actions {display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+.note-ai-loading {display:flex;align-items:center;gap:5px;font-size:10px;}
+.note-ai-error {font-size:10px;color:#7a7187;}
+.note-ai-error button {margin-left:6px;}
+.sender-share-popover .sender-note-ai>header button {width:auto;height:auto;font-size:10px;line-height:1.4;padding:2px 3px;white-space:nowrap;}
+/* Native note editing with noninteractive, text-aligned suggestion decoration. */
+.note-text-editor{position:relative;background:#fff}
+.sender-share-popover .note-text-editor>textarea,.note-highlight-mirror{font:inherit;font-size:12px;line-height:1.5;letter-spacing:normal;padding:8px;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:break-word}
+.note-highlight-mirror{position:absolute;inset:0;overflow:hidden;pointer-events:none;color:transparent;user-select:none}
+.note-highlight-mirror mark{color:transparent;background:none;text-decoration:underline;text-decoration-color:#69baff;text-decoration-thickness:2px;text-underline-offset:3px}
+.sender-share-popover .note-text-editor>textarea{position:relative;background:transparent!important}
+.sender-share-popover .note-writing-control.has-assistance{border-color:#9bd1ff}
+.sender-share-popover .sender-note-ai{background:#eff7ff;color:#344b60}
+.sender-share-popover .sender-note-ai header span,.sender-share-popover .sender-note-ai button{color:#0879c9}
+.sender-share-popover .sender-note-ai-actions button{border:1px solid #a5d5f8;border-radius:5px;padding:3px 7px;background:#fff}
+.sender-share-popover .sender-note-ai button:focus-visible{outline:2px solid #0d99ff;outline-offset:2px}
+.sender-share-popover .sender-note-ai button:hover{background:#e0f0ff}
+.sender-share-popover .sender-note-ai-actions button{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+/* The recipient group owns the focus ring, including keyboard input focus. */
+.sender-share-popover .share-recipient-input input:focus,
+.sender-share-popover .share-recipient-input input:focus-visible{border:0;outline:none;box-shadow:none;}
+[data-panel-drag-handle]{cursor:grab;touch-action:none;user-select:none}
+[data-panel-drag-handle] button{cursor:pointer}
+.is-panel-dragging [data-panel-drag-handle]{cursor:grabbing}
+.is-panel-dragging{user-select:none}
