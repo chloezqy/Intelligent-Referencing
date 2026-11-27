@@ -5,6 +5,7 @@ const messages:Record<string,string>={
  insufficient_quota:'AI project quota is unavailable. Please contact the study organizer; rule-based tools still work.',
  invalid_api_key:'AI authentication is unavailable. Please contact the study organizer; rule-based tools still work.',
  configuration_error:'AI is disabled or not configured. Please contact the study organizer; rule-based tools still work.',
+ backend_missing:'The AI backend is missing. Start the app with `npm run dev` (not `npm run dev:standalone`) and open http://localhost:3000.',
  rate_limit:'AI is temporarily rate-limited. Please wait and retry.',
  session_limit:'Session AI limit reached. Please wait or contact the study organizer; rule-based tools still work.',
  timeout:'AI timed out. Retry AI when ready; your selection is unchanged.',
@@ -33,7 +34,10 @@ export async function requestAI(body:any,options:{signal?:AbortSignal;fetcher?:t
   const current=entry;
   entry.promise=(async()=>{
    let response:Response;try{response=await fetcher('/api/semantic/interpret',{method:'POST',headers:{'Content-Type':'application/json','X-Smart-Reference-Session':session()},body:JSON.stringify(body),signal:AbortSignal.timeout(28000)});}catch(error){throw new AIRequestError('timeout',true);}
-   if(!response.headers.get('content-type')?.toLowerCase().includes('application/json'))throw new Error('AI endpoint unavailable. Rule-based tools remain available.');
+   if(!response.headers.get('content-type')?.toLowerCase().includes('application/json')){
+    if(response.status===404||response.headers.get('content-type')?.toLowerCase().includes('text/html'))throw new AIRequestError('backend_missing',false);
+    throw new AIRequestError('invalid_response',true);
+   }
    let result:any;try{result=await response.json();}catch{throw new AIRequestError('invalid_response',true);}
    if(!response.ok)throw new AIRequestError(result.code||'upstream_error',result.retryable===true,Number(result.retryAfter)||undefined);
    if(result.contextId!==body.contextId)throw new AIRequestError('invalid_response',true);

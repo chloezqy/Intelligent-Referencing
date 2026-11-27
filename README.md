@@ -40,7 +40,7 @@ OPENAI_MODEL=gpt-4.1-mini
 
 Restart the server after changing configuration. Keep the key server-side; never prefix it with `VITE_`. Enabled AI requests use the configured OpenAI project and may incur charges. Manual selection, library/source matching, property editing, and local reference sharing work without AI. Smart Gesture can fall back to manually confirming touched objects when AI is unavailable.
 
-`npm run dev:standalone` serves the frontend only. It has no AI or real-time room backend.
+`npm run dev:standalone` serves the frontend only. It has no AI or real-time room backend; AI requests there return 404. If the app shows a missing AI endpoint, stop the standalone server and run `npm run dev`, then open `http://localhost:3000`.
 
 ## A short demo
 
