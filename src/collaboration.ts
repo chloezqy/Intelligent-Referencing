@@ -38,9 +38,9 @@ export interface ComparisonContext {tokenSuggestions?:import('./designSystemRefe
 export interface AttentionRequest {id:string;sourceUser:UserId;targetUser:UserId;createdAt:string;viewedAt?:string}
 
 
-/** Completed references belong in Archived without rewriting their review evidence. */
+/** Only explicit resolution archives a reference; viewed/reviewed evidence is independent. */
 export function referenceLists(references:SharedReference[],isPending?:(reference:SharedReference)=>boolean){
- const archived=(reference:SharedReference)=>!!reference.archivedAt||reference.status==='reviewed'&&!isPending?.(reference);
+ const archived=(reference:SharedReference)=>!!reference.archivedAt;
  return {active:references.filter(reference=>!archived(reference)),archived:references.filter(archived)};
 }
 

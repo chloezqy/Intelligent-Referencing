@@ -95,11 +95,11 @@ test('The share popup is centered above frozen targets and clamps to the top rat
  assert.equal(sharePopoverLayout(['missing'],MOCK_NODES,camera,viewport),null);
 });
 
-test('Reviewing removes object pins without deleting or archiving the conversation',()=>{
+test('Reviewing retains active object pins until explicit resolution',()=>{
  const ref=reference('review',['hc1-cta','sc1-cta']);
  assert.equal(layoutReferencePins([ref],MOCK_NODES,camera,viewport,null).length,2);
  const reviewed={...ref,status:'reviewed' as const};
- assert.equal(layoutReferencePins([reviewed],MOCK_NODES,camera,viewport,ref.id).length,0);
+ assert.equal(layoutReferencePins([reviewed],MOCK_NODES,camera,viewport,ref.id).length,2);
  assert.equal(reviewed.archivedAt,undefined);assert.deepEqual(reviewed.elementIds,ref.elementIds);
  assert.equal(orderedReferences([reviewed]).length,1);
 });

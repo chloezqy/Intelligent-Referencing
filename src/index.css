@@ -1795,3 +1795,51 @@ body:has(.unified-reference-workflow) .figma-help{bottom:108px}
 .canvas-toolstrip .canvas-comment-menu{width:218px}
 .canvas-toolstrip .canvas-comment-menu button{display:grid;grid-template-columns:16px 18px 1fr auto;gap:9px;padding:0 9px;height:36px;text-align:left;font-size:12px}
 .canvas-toolstrip .canvas-comment-menu{left:auto;right:0}
+/* Incoming reference banner: a compact, single-row collaboration notice. */
+.attention-notice.incoming-reference-notice{width:min(560px,calc(100% - 24px));display:grid;grid-template-columns:34px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:12px;border:1px solid #e1e5e9;border-radius:12px;background:#fff;box-shadow:0 3px 12px #263b4c12;font-size:12px}
+.incoming-reference-notice>.incoming-reference-avatar{grid-column:auto;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--participant-color);color:white;font-size:14px;font-weight:500}
+.incoming-reference-copy{min-width:0}
+.incoming-reference-copy>strong{display:block;font-weight:600;font-size:12px;color:#29333c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.5}
+.incoming-reference-notice .incoming-reference-copy>small{display:flex;align-items:center;gap:3px;max-width:none;min-width:0;font-size:10px;line-height:1.5;color:#808a93;margin-top:3px}
+.incoming-reference-copy small>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.incoming-reference-copy time{flex-shrink:0;white-space:nowrap}
+.attention-notice.incoming-reference-notice button{width:auto;height:32px;padding:6px 10px;border-radius:6px;font-size:11px;white-space:nowrap}
+.attention-notice.incoming-reference-notice .incoming-reference-view{border:1px solid #0d99ff;background:#0d99ff;color:#fff}
+.attention-notice.incoming-reference-notice .incoming-reference-view:disabled{opacity:.45}
+.attention-notice.incoming-reference-notice .incoming-reference-later{border:0;background:transparent;color:#7b8791;padding:6px 2px}
+.attention-notice.incoming-reference-notice .incoming-reference-later:hover{color:#344958;background:#f6f8fa}
+.attention-notice.incoming-reference-notice{gap:8px}
+.attention-notice.incoming-reference-notice .incoming-reference-view{padding:6px 8px}
+/* Shared references follow the inspector's quiet tabs and compact list rhythm. */
+.shared-reference-panel>section:last-child{padding:0;border:0}
+.reference-tabs-bar{position:relative;display:flex;align-items:center;gap:4px;padding:8px 0 10px;border-bottom:1px solid #e5e9ed}
+.shared-reference-panel .reference-filter{display:flex;align-items:center;gap:4px;margin:0;flex:1}
+.shared-reference-panel .reference-filter button{border:0;background:transparent;border-radius:6px;padding:6px 8px;font-size:11px;font-weight:500;color:#899198;white-space:nowrap}
+.shared-reference-panel .reference-filter button[aria-selected=true]{background:#f0f1f2;color:#292e33}
+.references-overflow{position:relative}
+.collab-panel .references-overflow>button{border:0;background:transparent;padding:4px;color:#88939b}
+.references-overflow [role=menu]{position:absolute;top:100%;right:0;z-index:10;min-width:125px;background:white;border:1px solid #e4e8eb;border-radius:6px;padding:4px;box-shadow:0 3px 12px #0001}
+.collab-panel .references-overflow [role=menuitem]{display:flex;align-items:center;gap:6px;width:100%;border:0;background:white;padding:7px;white-space:nowrap;font-size:10px}
+.collab-panel .references-overflow [role=menuitem]:hover{background:#f5f6f7}
+.shared-reference-panel .reference-list{display:block}
+.shared-reference-panel .reference-list .reference-list-row{display:grid;grid-template-columns:4px 20px 32px minmax(0,1fr) 13px;align-items:start;gap:6px;width:100%;border:0;border-bottom:1px solid #eceff2;border-radius:0;padding:12px 0;background:white;text-align:left;color:#39444c}
+.shared-reference-panel .reference-list .reference-list-row:hover{background:#f5f6f7}
+.shared-reference-panel .reference-list .reference-list-row.selected{background:#edf6ff}
+.reference-row-unread{width:4px;display:grid;place-items:center;padding-top:8px}
+.reference-row-unread>i{width:4px;height:4px;background:#0d99ff;border-radius:50%}
+.reference-row-avatar{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--participant-color);color:white;font-size:9px;font-weight:500}
+.reference-row-thumbnail{display:flex;align-items:center;justify-content:center;width:32px;height:44px;background:#f9fafb;border-radius:3px;overflow:hidden}
+.reference-row-thumbnail .element-preview{width:100%;height:100%}
+.reference-row-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.reference-row-copy>strong{font-size:11px;font-weight:600;color:#29343c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reference-row-copy>span{font-size:10px;font-weight:400;color:#46515a;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.reference-row-copy>small{font-size:9px;line-height:1.5;color:#8b949c}
+.reference-list-row>svg{align-self:center;color:#87949d}
+.references-empty{padding:12px 0;font-size:11px;color:#8a949c}
+/* Consistent inset spacing for the Shared References panel. */
+#workspace-panel>.shared-references-heading{border-bottom:0;padding-left:16px;padding-right:16px}
+.shared-reference-panel>section:last-child{padding-left:16px;padding-right:16px}
+.shared-reference-panel .reference-tabs-bar{padding-top:12px;padding-bottom:12px}
+.shared-reference-panel .reference-list .reference-list-row{padding-top:14px;padding-bottom:14px}
+.shared-reference-panel .reference-list .reference-list-row:last-child{border-bottom:0}
+.shared-reference-panel .reference-row-avatar{align-self:center}

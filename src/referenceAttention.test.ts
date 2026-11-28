@@ -51,7 +51,7 @@ test('New view invitations on previously opened/reviewed references appear unrea
  assert.equal(referenceLists([ref],r=>needsReferenceNotification(r,'A')).active.length,1);
  const seen={...ref,attention:ref.attention.map(i=>({...i,viewedAt:'now'}))};
  assert.equal(needsReferenceNotification(seen,'A'),false);
- assert.equal(referenceLists([seen],r=>needsReferenceNotification(r,'A')).archived.length,1);
+ assert.equal(referenceLists([seen],r=>needsReferenceNotification(r,'A')).active.length,1);
  assert.equal(seen.reviewedAt,'earlier');
 });
 test('Opening an older Look at this reference silences its banner without requiring review',()=>{

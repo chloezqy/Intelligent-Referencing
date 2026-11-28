@@ -10,7 +10,7 @@ const render=(user='B',reference=ref)=>renderToStaticMarkup(React.createElement(
 test('Comment thread presents messages, accessible header actions and compact reply input',()=>{
  const html=render();assert.match(html,/Review request/);assert.match(html,/Please review this card/);assert.match(html,/I will take a look/);assert.match(html,/Close conversation/);assert.match(html,/Mark reviewed/);assert.match(html,/Locate reference/);assert.match(html,/Reply to User A/);assert.match(html,/title="Send response" disabled/);assert.match(html,/dateTime="2026-11-28T12:00:00Z" title=/);assert.doesNotMatch(html,/Your note|Sent to User|conversation-note-label|Follow up<|Send response<\/button>/);
  assert.doesNotMatch(render('A'),/Mark reviewed/);assert.match(render('A'),/Follow up with User B/);
- const archived=render('B',{...ref,archivedAt:'2026-11-28T13:00:00Z',message:''});assert.match(archived,/Archived/);assert.match(archived,/No additional note/);assert.match(archived,/<textarea[^>]*disabled/);
+ const archived=render('B',{...ref,archivedAt:'2026-11-28T13:00:00Z',message:''});assert.match(archived,/Resolved/);assert.match(archived,/Reopen reference/);assert.match(archived,/No additional note/);assert.match(archived,/<textarea[^>]*disabled/);
 });
 test('Relative times stay concise and handle future and invalid timestamps',()=>{
  const now=Date.parse('2026-11-28T12:10:00Z');assert.equal(conversationTime(ref.createdAt,now),'10 minutes ago');assert.equal(conversationTime('2026-11-28T12:11:00Z',now),'Just now');assert.equal(conversationTime('bad',now),'');
