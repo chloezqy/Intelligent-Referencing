@@ -1,8 +1,8 @@
 import React,{useRef,useState,useId} from 'react';
 import {MentionParticipant,mentionQueryAt,insertMention} from '../mentions';
 import {UserId} from '../collaboration';
-interface Props {highlight?:{start:number;end:number};attached?:boolean;assistance?:React.ReactNode;value:string;onChange:(text:string)=>void;members:MentionParticipant[];self?:UserId}
-export default function MentionNote({value,onChange,members,self,attached=false,assistance,highlight}:Props){
+interface Props {quick?:boolean;highlight?:{start:number;end:number};attached?:boolean;assistance?:React.ReactNode;value:string;onChange:(text:string)=>void;members:MentionParticipant[];self?:UserId}
+export default function MentionNote({value,onChange,members,self,attached=false,assistance,highlight,quick=false}:Props){
  const input=useRef<HTMLTextAreaElement>(null),listId=useId();
  const [query,setQuery]=useState<ReturnType<typeof mentionQueryAt>>(null),[active,setActive]=useState(0);
  const matches=query?members.filter(m=>`User ${m.userId}`.toLowerCase().includes(query.query.trim().toLowerCase())):[];
@@ -15,7 +15,7 @@ export default function MentionNote({value,onChange,members,self,attached=false,
   else if((e.key==='ArrowDown'||e.key==='ArrowUp')&&matches.length){e.preventDefault();setActive(i=>(i+(e.key==='ArrowDown'?1:-1)+matches.length)%matches.length);}
   else if(e.key==='Enter'&&matches.length){e.preventDefault();choose(matches[Math.min(active,matches.length-1)].userId);}
  }}/>;
- return <div className={`mention-note ${attached?'attached-note':''}`}>{attached?<><label htmlFor={`${listId}-note`}>Note (optional)</label><div className={`note-writing-control ${assistance?'has-assistance':''}`}><div className="note-text-editor">{highlight&&<div className="note-highlight-mirror" ref={mirror} aria-hidden="true">{value.slice(0,highlight.start)}<mark>{value.slice(highlight.start,highlight.end)}</mark>{value.slice(highlight.end)}{'\n'}</div>}{React.cloneElement(field,{id:`${listId}-note`,placeholder:'Add context...'})}</div>{assistance}</div></>:<label>Note (optional){field}</label>}
+ return <div className={`mention-note ${attached?'attached-note':''}`}>{attached?<><label className={quick?'sr-only':undefined} htmlFor={`${listId}-note`}>{quick?'Message (optional)':'Note (optional)'}</label><div className={`note-writing-control ${assistance?'has-assistance':''}`}><div className="note-text-editor">{highlight&&<div className="note-highlight-mirror" ref={mirror} aria-hidden="true">{value.slice(0,highlight.start)}<mark>{value.slice(highlight.start,highlight.end)}</mark>{value.slice(highlight.end)}{'\n'}</div>}{React.cloneElement(field,{id:`${listId}-note`,placeholder:quick?'Add a message (optional)...':'Add context...'})}</div>{assistance}</div></>:<label>Note (optional){field}</label>}
  {query&&<div data-mention-options className="mention-options"><div role="listbox" id={listId} aria-label="Room participants">{matches.map((member,index)=><button type="button" id={`${listId}-${index}`} role="option" aria-selected={active===index} className={active===index?'active':''} key={member.userId} onPointerDown={e=>e.preventDefault()} onMouseEnter={()=>setActive(index)} onClick={()=>choose(member.userId)}><span className={`mention-avatar user-${member.userId}`} aria-hidden="true">{member.userId}</span><span><strong>User {member.userId}{member.userId===self?' (you)':''}</strong><small>{member.online?'Online':'Offline'}</small></span><i className={member.online?'online':''} aria-hidden="true"/></button>)}</div>{!matches.length&&<p role="status">{members.length?'No matching room participants.':'Join a room to mention its participants.'}</p>}</div>}
  </div>;
 }

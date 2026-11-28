@@ -14,3 +14,12 @@ test('Canvas toolbar exposes exactly one active functional tool and inert placeh
  }
  assert.deepEqual(CANVAS_TOOLS.map(tool=>tool.key),['V','G','H']);
 });
+
+test('Share reference has the only active toolbar highlight while its mode is selected',()=>{
+ const html=renderToStaticMarkup(React.createElement(CanvasToolbar,{mode:'pointer',shareSelecting:true,onChange:()=>{},onShare:()=>{}}));
+ assert.equal((html.match(/aria-pressed="true"/g)||[]).length,1);
+ assert.match(html,/aria-label="Share reference \(R\)"/);
+ assert.match(html,/class="canvas-tool-active is-active" aria-pressed="true"/);
+ assert.doesNotMatch(html,/class="canvas-tool-active is-active" aria-label="Select/);
+ assert.doesNotMatch(html,/Leave feedback on the canvas|Direct a teammate/);
+});

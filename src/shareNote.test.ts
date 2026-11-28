@@ -50,3 +50,11 @@ test('Writing decoration isolates the changed words and suppression ignores cosm
  assert.deepEqual(noteSuggestionRange('Please review this today.','Please review the Product Card today.'),{start:14,end:18});
  assert.equal(noteIdentity('Look at this! '),noteIdentity('look  at this'));
 });
+
+test('Quick Share avatars reflect actual presence and empty messages use the neutral sharing intent',()=>{
+ const room=freshDemo();
+ const picker=renderToStaticMarkup(React.createElement(ShareRecipients,{quick:true,members:room.members.map(m=>({...m,online:false})),self:'A',selected:['B'],onChange:()=>{}}));
+ assert.match(picker,/Teammates in this file/);assert.match(picker,/Share with User B/);assert.match(picker,/aria-pressed="true"/);assert.match(picker,/Offline/);assert.doesNotMatch(picker,/● Online|User C|combobox/);
+ const shared=demoShare(room,{elementIds:['hc1'],exemplarIds:['hc1'],scope:'exemplars',label:'Card'},'Look at this','','quick-empty',false,'A',['B']);
+ assert.equal(shared.references[0].intent,'Look at this');assert.equal(shared.references[0].message,'');assert.deepEqual(shared.references[0].notificationRecipients,['B']);
+});

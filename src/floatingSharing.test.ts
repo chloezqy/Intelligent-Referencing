@@ -17,11 +17,11 @@ test('single and multiple selections retain all sharing controls and explicit su
  const html=renderToStaticMarkup(React.createElement(SharePopover,{
  draft:{elementIds:ids,exemplarIds:ids,scope:'exemplars',label:'Selected objects'},
  nodes:MOCK_NODES,camera:{x:0,y:0,scale:.5},collaboration:{session:{userId:'A'},room:{members:[{userId:'A',online:true},{userId:'B',online:true}]},connected:true,busy:false,share:()=>{throw Error('Must require submit');}} as any,
- visible:true,onVisible:noop,note:'Please review @B',intent:'Review',onNote:noop,onIntent:noop,onCancel:noop,onShared:noop,onRoom:noop,onLocate:noop,onDesignReference:noop,onComparisonPurpose:noop,onRefreshComparison:noop,comparisonChanged:false,
+ visible:true,onVisible:noop,note:'',intent:'',onNote:noop,onIntent:noop,onCancel:noop,onShared:noop,onRoom:noop,onLocate:noop,onDesignReference:noop,onComparisonPurpose:noop,onRefreshComparison:noop,comparisonChanged:false,
  }));
  assert.match(html,/role="dialog"/);assert.doesNotMatch(html,/share-draft-pin/);assert.match(html,/>Share reference</);
- assert.match(html,/type="text"/);assert.match(html,/maxLength="120"/);assert.doesNotMatch(html,/<select/);
- assert.match(html,/Reference note/);assert.match(html,/@B/);assert.doesNotMatch(html,/notified automatically/);assert.doesNotMatch(html,/type="checkbox"/);assert.match(html,/Close sharing popup/);assert.match(html,/>Cancel</);
+ assert.doesNotMatch(html,/Intended action|<select/);assert.match(html,/Teammates in this file/);assert.match(html,/Share with User B/);assert.match(html,/More options/);assert.match(html,/>Send reference</);
+ assert.match(html,/Reference note/);assert.match(html,/Add a message \(optional\)\.\.\./);assert.doesNotMatch(html,/notified automatically/);assert.doesNotMatch(html,/type="checkbox"/);assert.match(html,/Close sharing popup/);assert.doesNotMatch(html,/>Cancel</);
  }
 });
 test('floating sharing stays within small canvas bounds even for offscreen selections',()=>{
@@ -36,5 +36,5 @@ test('floating sharing stays within small canvas bounds even for offscreen selec
 test('comparison submission lives in Sharing options while the fixed footer only cancels',()=>{
  const source=readFileSync(new URL('./components/SharePopover.tsx',import.meta.url),'utf8');
  assert.match(source,/<div className="comparison-share-submit">\{submitButton\}<\/div>/);
- assert.match(source,/share-form-footer">\{!inspector&&submitButton\}<button type="button" onClick=\{onCancel\}>Cancel/);
+ assert.match(source,/quick-more-options/);assert.match(source,/intent.trim\(\)\|\|'Look at this'/);
 });

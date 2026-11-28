@@ -1764,3 +1764,34 @@ body:has(.unified-reference-workflow) .figma-help{bottom:108px}
 .comment-thread .conversation-reply-field>button:disabled{background:#d9e0e5;color:#8d98a1;opacity:1}
 .conversation-reference-details>summary{font-size:10px;color:#78838d;cursor:pointer}
 .conversation-reference-details>.comparison-overview{margin-top:8px}
+/* Quick sharing reuses the composer without imposing a request form. */
+.quick-share-teammates{border:0;padding:0;margin:12px 0 14px;min-width:0}
+.quick-share-teammates legend{font-size:11px;color:#74808b;padding:0;margin-bottom:10px}
+.quick-share-teammates>div{display:flex;gap:16px;flex-wrap:wrap}
+.sender-share-popover .quick-share-teammates button{display:flex;align-items:center;gap:5px;flex-direction:column;min-width:50px;padding:2px;border:0;background:transparent;color:#354653}
+.quick-teammate-avatar{position:relative;display:grid;place-items:center;width:34px;height:34px;background:var(--participant-color,#e9eef3);color:white;border-radius:50%;font-size:14px;font-weight:500}
+.quick-share-teammates .is-selected .quick-teammate-avatar{outline:2px solid #0d99ff;outline-offset:3px}
+.quick-teammate-avatar>i{position:absolute;right:-4px;bottom:-2px;display:grid;place-items:center;width:13px;height:13px;background:#0d99ff;color:white;border:1px solid white;border-radius:50%}
+.quick-share-teammates strong{font-size:10px;font-weight:500}
+.quick-share-teammates small{font-size:9px;color:#929ba3}
+.quick-share-teammates small.is-online{color:#26875c}
+.quick-share-popover .note-writing-control textarea{min-height:66px;max-height:180px;field-sizing:content}
+.quick-share-popover .note-highlight-mirror mark{text-decoration-color:#a688e8}
+.quick-share-popover .share-form-footer{justify-content:space-between;align-items:center}
+.sender-share-popover .quick-more-options{display:inline-flex;align-items:center;gap:5px;background:transparent;border:0;color:#78858f;padding:5px 0;font-size:11px}
+.quick-share-options{margin-top:12px}
+.quick-share-options label{font-size:11px;color:#6c7883}
+.quick-share-options input{margin-top:5px}
+.canvas-comment-choice{position:relative;display:flex;align-items:center}
+.canvas-comment-menu{width:240px}
+.canvas-comment-menu button[role=menuitem]{display:flex;align-items:center;gap:9px;width:100%;padding:10px;text-align:left}
+.canvas-comment-menu button[role=menuitem]>span{display:flex;flex-direction:column;gap:3px}
+.canvas-comment-menu strong{font-size:11px;font-weight:500}
+.canvas-comment-menu small{font-size:10px;color:#89949d;white-space:normal}
+.quick-share-selection-hint{position:absolute;top:10px;left:10px;z-index:45;display:flex;align-items:center;gap:8px;max-width:calc(100% - 20px);flex-wrap:wrap;background:#fff;border:1px solid #dce9f4;border-radius:7px;padding:8px 10px;font-size:11px;box-shadow:0 2px 8px #0000000c}
+.quick-share-selection-hint button{border:1px solid #d1e5f5;border-radius:5px;padding:4px 7px;color:#1887db}
+.quick-share-selection-hint button:disabled{opacity:.4}
+.sender-share-popover .share-form-footer .quick-more-options{border:0;background:transparent;box-shadow:none;padding:5px 0;color:#78858f}
+.canvas-toolstrip .canvas-comment-menu{width:218px}
+.canvas-toolstrip .canvas-comment-menu button{display:grid;grid-template-columns:16px 18px 1fr auto;gap:9px;padding:0 9px;height:36px;text-align:left;font-size:12px}
+.canvas-toolstrip .canvas-comment-menu{left:auto;right:0}

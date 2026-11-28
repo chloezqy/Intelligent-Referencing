@@ -23,6 +23,7 @@ import {Check,X,Share2,GitCompareArrows} from 'lucide-react';
 import Sparkles from './AIIcon';
 
 interface CanvasProps {
+  shareMode?:boolean;onSelectionCommitted?:(selection:InferredReference)=>void;
   previewSpotlightIds?:string[];
   onMoveEnd:()=>void;
   pickingSource:boolean;
@@ -55,7 +56,7 @@ interface CanvasProps {
 }
 
 export default function Canvas({
-  previewSpotlightIds=[],onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,inspectorOpen=false,onSelectionStart,onMove,onCompare,onInterpretationConfirmed,compareOwn=false,compareReady,compareHint,
+  shareMode=false,onSelectionCommitted,previewSpotlightIds=[],onMoveEnd,pickingSource,sourceId,onPickSource,shareLabel, sharing,inspectorOpen=false,onSelectionStart,onMove,onCompare,onInterpretationConfirmed,compareOwn=false,compareReady,compareHint,
   toolMode,
   setToolMode,
   selectionState,
@@ -248,7 +249,7 @@ export default function Canvas({
     if(panPoint.current){const previous=panPoint.current;panPoint.current={x:e.clientX,y:e.clientY};setTransform(t=>({...t,x:t.x+e.clientX-previous.x,y:t.y+e.clientY-previous.y}));return;}
     const pending=pendingPointer.current;if(!pending||pending.id!==e.pointerId)return;
     appendGestureSamples(pending,e.nativeEvent,getCanvasCoords);
-    const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
+    const intent=shareMode&&pending.tool==='pointer'?'box':toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(!pending.dragging&&isSelectionDrag(pending.screenStart,pending.screenPoints)){
       onSelectionStart();lastLayerClick.current=null;pending.dragging=true;
       if(intent==='move'){pending.moveNodes=moveTargets(nodes,pending.node!.id,pending.previous?.selectedIds||[]);setMovingIds(pending.previous?.selectedIds.includes(pending.node!.id)?pending.previous.selectedIds:[pending.node!.id]);}
@@ -271,7 +272,9 @@ export default function Canvas({
     const count=clicksCounter+1;setClicksCounter(count);
     const ids=mergeLayerSelection(previous?.selectedIds||[],node.id,nodes,shift);
     if(!ids.length){setInferredRef(null);setSelectionState('idle');return;}
-    setInferredRef({selectedIds:ids,exemplarIds:ids,label:ids.length===1?nodes.find(n=>n.id===ids[0])!.label:`${ids.length} layers selected`,...(ids.length===1?{matchingRole:nodes.find(n=>n.id===ids[0])?.role,matchingComponent:nodes.find(n=>n.id===ids[0])?.component}:{}),scope:'exemplars',selectionMethod:'conventional',clicksCount:count});
+    const committed:InferredReference={selectedIds:ids,exemplarIds:ids,label:ids.length===1?nodes.find(n=>n.id===ids[0])!.label:`${ids.length} layers selected`,...(ids.length===1?{matchingRole:nodes.find(n=>n.id===ids[0])?.role,matchingComponent:nodes.find(n=>n.id===ids[0])?.component}:{}),scope:'exemplars',selectionMethod:'conventional',clicksCount:count};
+    setInferredRef(committed);
+    onSelectionCommitted?.(committed);
     setSelectionState('preview');
   };
   const handlePointerCancel=()=>{
@@ -300,7 +303,7 @@ export default function Canvas({
       return;
     }
     if(!pending.dragging){onSelectionStart();lastLayerClick.current=null;}
-    const intent=toolDragIntent(pending.tool,!!pending.node,pending.shift);
+    const intent=shareMode&&pending.tool==='pointer'?'box':toolDragIntent(pending.tool,!!pending.node,pending.shift);
     if(intent==='move'){
       const snapshot=pending.moveNodes.length?pending.moveNodes:moveTargets(nodes,pending.node!.id,pending.previous?.selectedIds||[]);
       onMove(movePositions(snapshot,{x:end.x-pending.start.x,y:end.y-pending.start.y},nodes));setMovingIds([]);onMoveEnd();onResearchEvent('object_move');
@@ -311,7 +314,7 @@ export default function Canvas({
       const hitIds=canvasMarqueeTargets(nodes.filter(n=>!n.library&&n.type!=='screen'&&rectIntersect(n,r)).map(n=>n.id),nodes,pending.previous?.selectedIds||[],pending.deep);
       const ids=[...new Set([...(pending.shift?(pending.previous?.selectedIds||[]):[]),...hitIds])];
       const count=clicksCounter+1;setClicksCounter(count);
-      setInferredRef(ids.length?{selectedIds:ids,exemplarIds:ids,label:`${ids.length} layers selected`,scope:'exemplars',selectionMethod:'conventional',clicksCount:count}:null);setSelectionState(ids.length?'preview':'idle');return;
+      const committed:InferredReference|null=ids.length?{selectedIds:ids,exemplarIds:ids,label:`${ids.length} layers selected`,scope:'exemplars',selectionMethod:'conventional',clicksCount:count}:null;setInferredRef(committed);setSelectionState(ids.length?'preview':'idle');if(committed)onSelectionCommitted?.(committed);return;
     }
     onResearchEvent('gesture_attempt');
     setInterpretationEngaged(false);
@@ -455,7 +458,7 @@ export default function Canvas({
       {gestureNotice&&<div className="gesture-notice" role="status">{gestureNotice}<button type="button" aria-label="Dismiss gesture message" onClick={()=>setGestureNotice('')}><X size={14}/></button></div>}
       <ReferencePins references={sharedReferences} nodes={nodes} camera={transform} viewport={viewport} activeId={activeSharedId} dismissChooser={sharing} onChooserChange={setPinChooserOpen} onOpen={onOpenShared}/>
       {/* One AI review surface; editing is available only after reference confirmation. */}
-      {!sharing&&!inspectorOpen&&inferredRef?.selectedIds.every(id=>nodes.find(node=>node.id===id)?.type!=='screen')&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context horizontal-reference-context absolute z-40 flex flex-col items-stretch pointer-events-none ${adjustOpen?'is-expanded':''} ${viewport.width<380?'is-compact':''} ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:adjustOpen?Math.min(336,viewport.width-16):'max-content',maxWidth:Math.max(0,viewport.width-16),maxHeight:Math.max(0,viewport.height-16),'--adjustment-space':`${Math.max(0,viewport.height-16-44)}px`} as React.CSSProperties}>
+      {!shareMode&&!sharing&&!inspectorOpen&&inferredRef?.selectedIds.every(id=>nodes.find(node=>node.id===id)?.type!=='screen')&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context horizontal-reference-context absolute z-40 flex flex-col items-stretch pointer-events-none ${adjustOpen?'is-expanded':''} ${viewport.width<380?'is-compact':''} ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:adjustOpen?Math.min(336,viewport.width-16):'max-content',maxWidth:Math.max(0,viewport.width-16),maxHeight:Math.max(0,viewport.height-16),'--adjustment-space':`${Math.max(0,viewport.height-16-44)}px`} as React.CSSProperties}>
         <ReferenceActions selectionPending={!!draftRef} compareOwn={compareOwn} compareReady={compareReady&&inferredRef.selectedIds.length>=2} compareHint={compareHint} shareLabel={shareLabel} onCompare={onCompare} onAction={intent=>{setAdjustOpen(false);onAcceptReference(intent);}} expanded={adjustOpen} onMore={()=>{const opening=!adjustOpen;setAdjustOpen(opening);setHoveredInterpretation(null);if(opening&&!ai.done&&!ai.loading){onResearchEvent('ai_interpretation_requested');void ai.request();}}} interpretationContent={<div id="interpretation-adjustments" className="interpretation-adjustments">
           <div className="interpretation-chat" role="log" aria-label="Selection conversation" aria-live="polite">
             {chatMessage&&<p className="user-message">{chatMessage}</p>}
