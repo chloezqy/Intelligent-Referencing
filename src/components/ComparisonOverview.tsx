@@ -16,6 +16,6 @@ export default function ComparisonOverview({selectedKeys,onSelectedKeys,context,
   {!purposeControls&&context&&<p className="comparison-purpose-summary">{context.purpose==='Compare selected elements'?'Compare differences':context.purpose}</p>}
   {!purposeControls&&showDesignIntent&&context?.purpose===DESIGN_REFERENCE_PURPOSE&&context.designReference&&<DesignReferenceIntent context={context} value={context.designReference}/>}
   {proposedChanges}
-  {!purposeControls&&context?.tokenSuggestions?.length>0&&<section><h4>Proposed design system properties</h4><SharedTokenSuggestions suggestions={context.tokenSuggestions} nodes={nodes}/></section>}
+  {!purposeControls&&context?.tokenSuggestions?.length>0&&<section><h4>Proposed library styles</h4><SharedTokenSuggestions suggestions={context.tokenSuggestions} nodes={nodes}/></section>}
  </div>;
 }

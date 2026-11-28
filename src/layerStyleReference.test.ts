@@ -24,7 +24,7 @@ test('AI reference IDs and operations are validated; identical styling remains a
 test('compact reference section offers picking and Apply/Cancel without old source controls',()=>{
  const noop=()=>{},html=renderToStaticMarkup(React.createElement(LayerStyleReference,{ids:['hc2-title'],nodes:MOCK_NODES,sourceId:'hc1-title',picking:false,onSource:noop,onPicking:noop,onPreview:noop,onApply:noop,onCancel:noop}));
  assert.match(html,/Current selection/);assert.match(html,/Chosen reference/);assert.match(html,/Pick another layer/);assert.ok(html.indexOf('>Apply changes<')<html.indexOf('>Cancel<'));
- assert.doesNotMatch(html,/First Selected|Choose Reference|Find source in file|Source object|Propose changes from source|Rule-based proposal|type="checkbox"/);
+ assert.doesNotMatch(html,/First selected|Choose source|Find source in file|Source layer|Propose changes from source|Rule-based proposal|type="checkbox"/);
 });
 
 test('Typography-scoped matching never transfers color or appearance',()=>{

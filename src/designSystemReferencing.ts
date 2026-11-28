@@ -41,7 +41,7 @@ export function tokenProposal(suggestions:TokenSuggestion[],ids:string[],nodes:U
  const valid=validateTokenSuggestions(suggestions,tokenFacts(ids,nodes));
  const mappings=valid.filter(s=>!s.fact.exact).map(s=>({id:s.fact.id,label:`${s.fact.property} · ${s.fact.tokenLabel}`,patches:[{id:s.fact.targetId,changes:{[s.fact.property]:s.fact.proposed}}]}));
  if(!mappings.length)throw new Error('Selected properties already match the library.');
- validatePatches(nodes,ids,mappings.flatMap(m=>m.patches));return {title:'Use existing design system properties',targetIds:ids,mappings};
+ validatePatches(nodes,ids,mappings.flatMap(m=>m.patches));return {title:'Use existing library styles',targetIds:ids,mappings};
 }
 export function exactTokenSuggestions(facts:TokenFact[]):TokenSuggestion[]{
  const seen=new Set<string>();return facts.filter(f=>f.exact&&!seen.has(`${f.targetId}:${f.property}`)&&!!seen.add(`${f.targetId}:${f.property}`)).slice(0,8).map(fact=>({fact,reason:'Recorded value matches an existing library property.',source:'deterministic'}));

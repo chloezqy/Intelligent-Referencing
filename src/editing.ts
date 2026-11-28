@@ -21,11 +21,11 @@ export function changedPatches(nodes:UIElement[],patches:Patch[]){return patches
 export function validatePatches(nodes:UIElement[],targetIds:string[],patches:Patch[]){
  const allowed=new Set(descendants(targetIds,nodes).filter(n=>!n.library&&n.type!=='screen').map(n=>n.id));
  const fields=new Set<string>([...STYLE_KEYS,'x','y','w','h','token','textAlign','textVerticalAlign']);
- for(const p of patches){if(!allowed.has(p.id))throw new Error('The edit includes an object outside the confirmed reference.');for(const [key,value] of Object.entries(p.changes)){if(!fields.has(key)||value===undefined)throw new Error('Unsupported edit property.');if(key==='textAlign'&&!['left','center','right'].includes(String(value))||key==='textVerticalAlign'&&!['top','middle','bottom'].includes(String(value)))throw new Error('Invalid text alignment.');if(typeof value==='number'&&(!Number.isFinite(value)||(['w','h','fontSize'].includes(key)&&value<=0)||(['radius','spacing','lineHeight'].includes(key)&&value<0)))throw new Error('Invalid property value.');if(typeof value==='string'&&(value.length>200||/[<>]/.test(value)))throw new Error('Invalid style value.');}}
+ for(const p of patches){if(!allowed.has(p.id))throw new Error('The edit includes a layer outside the confirmed reference.');for(const [key,value] of Object.entries(p.changes)){if(!fields.has(key)||value===undefined)throw new Error('Unsupported edit property.');if(key==='textAlign'&&!['left','center','right'].includes(String(value))||key==='textVerticalAlign'&&!['top','middle','bottom'].includes(String(value)))throw new Error('Invalid text alignment.');if(typeof value==='number'&&(!Number.isFinite(value)||(['w','h','fontSize'].includes(key)&&value<=0)||(['radius','spacing','lineHeight'].includes(key)&&value<0)))throw new Error('Invalid property value.');if(typeof value==='string'&&(value.length>200||/[<>]/.test(value)))throw new Error('Invalid style value.');}}
 }
 export function layoutPatches(ids:string[],nodes:UIElement[],op:LayoutOperation):Patch[]{
- const selected=roots(ids,nodes).filter(n=>!n.library);if(selected.length<2)throw new Error('Select at least two editable objects.');
- if(new Set(selected.map(n=>n.parent)).size!==1)throw new Error('Layout requires objects in the same parent frame. Select siblings to keep nested layouts intact.');
+ const selected=roots(ids,nodes).filter(n=>!n.library);if(selected.length<2)throw new Error('Select at least two editable layers.');
+ if(new Set(selected.map(n=>n.parent)).size!==1)throw new Error('Layout requires layers in the same parent frame. Select siblings to keep nested layouts intact.');
  const horizontal=['left','center','right','horizontal','width'].includes(op),axis=horizontal?'x':'y',size=horizontal?'w':'h';
  const low=Math.min(...selected.map(n=>n[axis])),high=Math.max(...selected.map(n=>n[axis]+n[size]));
  let ordered=[...selected].sort((a,b)=>a[axis]-b[axis]),gap=(high-low-selected.reduce((v,n)=>v+n[size],0))/(selected.length-1),cursor=low;
@@ -75,9 +75,9 @@ export function internalSpacing(ids:string[],nodes:UIElement[],inset:number):Pat
  return patches;
 }
 export function matchStyles(ids:string[],nodes:UIElement[],sourceId:string):EditProposal{
- const source=nodes.find(n=>n.id===sourceId);if(!source||source.type==='screen')throw new Error('Choose an existing component or object as the source.');
+ const source=nodes.find(n=>n.id===sourceId);if(!source||source.type==='screen')throw new Error('Choose an existing component or layer as the source.');
  const targets=roots(ids,nodes),sourceTree=descendants([source.id],nodes),sourceSet=new Set(sourceTree.map(n=>n.id));
- if(targets.some(n=>sourceSet.has(n.id))&&sourceId!==targets[0]?.id)throw new Error('Choose a style source separate from the target objects.');
+ if(targets.some(n=>sourceSet.has(n.id))&&sourceId!==targets[0]?.id)throw new Error('Choose a style source separate from the target layers.');
  const mappings:Mapping[]=[];
  for(const target of targets){if(target.id===source.id)continue;if(target.type!==source.type)continue;
   for(const n of descendants([target.id],nodes)){if(sourceSet.has(n.id))continue;const s=n.id===target.id?source:sourceTree.find(s=>s.id!==source.id&&s.type===n.type&&(n.role?s.role===n.role:!s.role));if(!s||n.type==='image')continue;
@@ -85,7 +85,7 @@ export function matchStyles(ids:string[],nodes:UIElement[],sourceId:string):Edit
   }
  }
  if(source.spacing!==undefined){const patches=internalSpacing(targets.filter(n=>n.id!==source.id).map(n=>n.id),nodes,source.spacing);if(patches.length)mappings.push({id:'match-spacing',label:`Internal spacing → ${source.spacing}px`,patches});}
- if(!mappings.length)throw new Error('No compatible target objects for this source. Choose a matching component type.');
+ if(!mappings.length)throw new Error('No compatible target layers for this source. Choose a matching component type.');
  return {title:'Match styles',targetIds:[...ids],sourceId,mappings};
 }
 export function libraryProposal(ids:string[],nodes:UIElement[]):EditProposal{
@@ -104,7 +104,7 @@ export function libraryProposal(ids:string[],nodes:UIElement[]):EditProposal{
  // Layout spacing is applied using existing geometry, preserving image and text content.
  const spacing=internalSpacing(ids,nodes,nodes.find(n=>n.id==='ds-product-card')?.spacing||16);
  if(spacing.length)mappings.push({id:'spacing',label:'Internal spacing → Spacing / 16',patches:spacing});
- if(!mappings.length)throw new Error('No library styles match this selection.');return {title:`Match ${roots(ids,nodes).length} objects to Design System`,targetIds:[...ids],sourceId:'ds-product-card',mappings:mappings.map(m=>({...m,patches:m.patches.map(p=>({...p,changes:Object.fromEntries(Object.entries(p.changes).filter(([key,value])=>nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]!==value))})).filter(p=>Object.keys(p.changes).length)}))};
+ if(!mappings.length)throw new Error('No library styles match this selection.');return {title:`Match ${roots(ids,nodes).length} layers to the library`,targetIds:[...ids],sourceId:'ds-product-card',mappings:mappings.map(m=>({...m,patches:m.patches.map(p=>({...p,changes:Object.fromEntries(Object.entries(p.changes).filter(([key,value])=>nodes.find(n=>n.id===p.id)?.[key as keyof UIElement]!==value))})).filter(p=>Object.keys(p.changes).length)}))};
 }
 export function proposalPatches(proposal:EditProposal,enabled:string[],nodes:UIElement[]){const patches=proposal.mappings.filter(m=>enabled.includes(m.id)).flatMap(m=>m.patches);validatePatches(nodes,proposal.targetIds,patches);return patches;}
 export const tokenColor=(name:string)=>COLORS[name as keyof typeof COLORS];

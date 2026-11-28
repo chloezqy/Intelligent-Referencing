@@ -42,7 +42,7 @@ test('Recipients notify actual room members without altering the sender-approved
 test('Empty sender note has no AI panel or generation button; recipient chips use real users',()=>{
  const html=renderToStaticMarkup(React.createElement(SenderNote,{note:'',onNote:()=>{},request:'Review',ids:input.ids,nodes:MOCK_NODES,members:freshDemo().members,self:'A'}));
  assert.match(html,/Add context\.\.\./);assert.doesNotMatch(html,/AI interpretation|Interpret reference with AI|Accept suggestion|Try again/);
- const picker=renderToStaticMarkup(React.createElement(ShareRecipients,{members:freshDemo().members,self:'A',selected:['B'],onChange:()=>{}}));assert.match(picker,/@User B/);assert.match(picker,/Remove User B/);assert.match(picker,/Add people\.\.\./);
+ const picker=renderToStaticMarkup(React.createElement(ShareRecipients,{members:freshDemo().members,self:'A',selected:['B'],onChange:()=>{}}));assert.match(picker,/@User B/);assert.match(picker,/Remove User B/);assert.match(picker,/Add people…/);
 });
 
 test('Writing decoration isolates the changed words and suppression ignores cosmetic edits',async()=>{

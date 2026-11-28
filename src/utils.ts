@@ -171,7 +171,7 @@ export function generateScopeInterpretations(
 
   // Determine dominant screen
   const screen = screenHint || exemplarNodes[0]?.screen || 'Home';
-  const roleInfo = (role && ROLE_LABELS[role]) || { single: role || 'element', plural: role ? `${role}s` : 'elements' };
+  const roleInfo = (role && ROLE_LABELS[role]) || { single: role || 'layer', plural: role ? `${role}s` : 'layers' };
 
   const interpretations: Interpretation[] = [];
 

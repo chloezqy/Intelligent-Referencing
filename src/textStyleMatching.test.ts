@@ -42,6 +42,6 @@ test('unified references accept compatible canvas text and reject self, descenda
 });
 test('unified browser exposes source picking alongside actual library styles',()=>{
  const noop=()=>{},html=renderToStaticMarkup(React.createElement(TextStyleReview,{ids:['hc2-title'],nodes:MOCK_NODES,picking:true,onPicking:noop,onPreview:noop,onApply:noop,onCancel:noop}));
- assert.match(html,/Choose another reference/);assert.match(html,/Pick source/);assert.match(html,/Escape to cancel/);assert.match(html,/Other available text styles/);
- assert.doesNotMatch(html,/Source object|Find source in file|Propose changes/);
+ assert.match(html,/Choose another source/);assert.match(html,/Pick source/);assert.match(html,/Escape to cancel/);assert.match(html,/Other available text styles/);
+ assert.doesNotMatch(html,/Source layer|Find source in file|Propose changes/);
 });

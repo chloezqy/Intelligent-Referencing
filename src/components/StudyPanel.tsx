@@ -14,7 +14,7 @@ export default function StudyPanel({study:s}:{study:ReturnType<typeof useStudy>}
  </section>:done?<section aria-live="polite"><h3>Study finished</h3><p>Thank you! Your task times and interactions have been saved.</p><button onClick={s.exportLog}>Download study records</button></section>:<section aria-live="polite">
  <p className="subtle">{s.session.participant} · Task {task.group} of 4{task.level?` · Selection level ${task.level} of 3`:null}</p>
  <h3>{task.title}</h3><p>{task.prompt}</p>
- <p className="subtle">{progress?`${progress.selected}/${progress.total} target objects selected${progress.extra?` · ${progress.extra} extra`:""}. `:""}The next task will appear automatically when you finish.</p>
+ <p className="subtle">{progress?`${progress.selected}/${progress.total} target layers selected${progress.extra?` · ${progress.extra} extra`:""}. `:""}The next task will appear automatically when you finish.</p>
  <button type="button" disabled={!s.attempt||!!s.attempt.endedAt} onClick={s.skip}>{task.level?'Skip this level':'Skip task'}</button>
  </section>}
  {s.error&&<p role="alert">{s.error}</p>}

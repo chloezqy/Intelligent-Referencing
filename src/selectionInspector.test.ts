@@ -12,7 +12,7 @@ test('Selection inspector has its own identity, details and no implicit comparis
  const compare=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'compare',count:2,contentRef:()=>{}}));assert.match(compare,/Comparison inspector/);assert.match(compare,/Design/);assert.doesNotMatch(compare,/Close/);
 });
 test('Selection group details preserve every target, aggregate recorded values and omit absent properties',()=>{
- const html=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1','hc2'],nodes:MOCK_NODES}));assert.match(html,/2 objects/);assert.match(html,/Nordic Lounge Chair/);assert.match(html,/Minimalist Desk Lamp/);assert.doesNotMatch(html,/Font family|Unavailable|Object B/);
+ const html=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1','hc2'],nodes:MOCK_NODES}));assert.match(html,/2 layers/);assert.match(html,/Nordic Lounge Chair/);assert.match(html,/Minimalist Desk Lamp/);assert.doesNotMatch(html,/Font family|Unavailable|Object B/);
 });
 test('Selection actions share the existing editor and present Design system once in its own section',()=>{
  const noop=()=>{};const html=renderToStaticMarkup(React.createElement(EditingToolbar,{selectionInspector:true,inline:true,selection:{selectedIds:['hc1','hc2'],exemplarIds:['hc1','hc2'],label:'Cards',scope:'exemplars'},nodes:MOCK_NODES,onPreview:noop,onApply:noop,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,sourceId:null,onSource:noop,picking:false,onPicking:noop,onState:noop}));
@@ -24,7 +24,7 @@ test('Selection summary reuses actual previews, caps groups, and only calls equa
  assert.equal((html.match(/class="element-preview"/g)||[]).length,3);assert.match(html,/\+5 more/);assert.match(html,/View all properties/);
  const summary=html.slice(0,html.indexOf('View all properties'));assert.doesNotMatch(summary,/<dt>Corner radius<\/dt>|<dt>Dimensions<\/dt>/);
  const single=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1'],nodes:MOCK_NODES}));assert.equal((single.match(/class="element-preview"/g)||[]).length,1);assert.match(single,/165 × 220 px/);
- const unavailable=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1','missing'],nodes:MOCK_NODES}));assert.doesNotMatch(unavailable,/selection-shared-properties/);assert.match(unavailable,/1 unavailable objects/);
+ const unavailable=renderToStaticMarkup(React.createElement(SelectionDetails,{ids:['hc1','missing'],nodes:MOCK_NODES}));assert.doesNotMatch(unavailable,/selection-shared-properties/);assert.match(unavailable,/1 unavailable layer</);
 });
 test('Working inspector keeps Selection title and sticky mode switch above its content',()=>{
  const html=renderToStaticMarkup(React.createElement(ComparisonInspector,{mode:'compare',workMode:'compare',onModeChange:()=>{},compareAvailable:true,count:2,contentRef:()=>{}},'Mode content'));

@@ -14,7 +14,7 @@ test('Compact comparison places ownership before one rule-based summary and omit
  assert.ok(html.indexOf('Your selection')<html.indexOf('Relationship · rule-based'));
  assert.equal((html.match(/Relationship · rule-based/g)||[]).length,1);
  assert.ok(!html.includes('Authored differences:'));assert.ok(!html.includes('Comparison purpose'));
- assert.ok(html.includes('1 object ·'));assert.ok(!html.includes('1 objects'));
+ assert.ok(html.includes('1 layer ·'));assert.ok(!html.includes('1 layers'));
  assert.ok(!html.includes('semantic · AI'));
 });
 test('Compact property display makes metadata readable without changing comparison values or omitting rows',()=>{

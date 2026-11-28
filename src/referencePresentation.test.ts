@@ -109,7 +109,7 @@ test('Compact chooser titles show intent and object name without changing saved 
  assert.equal(referenceChooserTitle(ref),'Review · Minimalist Desk Lamp');
  assert.equal(ref.label,'Image · Minimalist Desk Lamp');
  assert.equal(referenceChooserTitle({...ref,intent:'Help',label:'Text · Title · Minimalist Desk Lamp'}),'Help · Minimalist Desk Lamp');
- assert.equal(referenceChooserTitle({...ref,label:'  '}),'Review · Selected objects');
+ assert.equal(referenceChooserTitle({...ref,label:'  '}),'Review · Selected layers');
  assert.equal(referenceChooserTitle({...ref,label:'Lamp · Floor model'}),'Review · Lamp · Floor model');
 });
 

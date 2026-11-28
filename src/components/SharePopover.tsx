@@ -72,7 +72,7 @@ export default function SharePopover(props:Props){
         {layout?.offscreen&&<p className="subtle">Targets offscreen.</p>}</>}
 
         {!inspector?null:inspector?<ComparisonOverview selectedKeys={comparisonKeys} onSelectedKeys={onComparisonKeys} purposeControls={draft.comparison?<ComparisonPurpose showDesignControls={false} context={draft.comparison} onPurpose={onComparisonPurpose} onDesignReference={onDesignReference}/>:undefined}  showDesignIntent={false} context={draft.comparison} contextId={draft.comparison?.snapshotId||`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={documentNodes||nodes} user={c.session?.userId}/>:draft.comparison?<><ComparisonContext context={draft.comparison} nodes={nodes} user={c.session?.userId} onPurpose={onComparisonPurpose}/><PropertyComparison ownership={draft.comparison} contextId={draft.comparison.snapshotId} ids={draft.elementIds} nodes={nodes} expanded/></>:intent==='Compare'?<PropertyComparison contextId={`share-${draft.elementIds.join('|')}`} ids={draft.elementIds} nodes={nodes} expanded/>:null}
-        {inspector&&draft.elementIds.length===1&&onPickSecond&&<button type="button" className="choose-second-object" onClick={onPickSecond}>Choose second object on canvas</button>}
+        {inspector&&draft.elementIds.length===1&&onPickSecond&&<button type="button" className="choose-second-object" onClick={onPickSecond}>Choose second layer on canvas</button>}
         {inspector&&editingContent}
         {draft.comparison&&comparisonChanged&&<p className="subtle">Selection changed. <button type="button" onClick={onRefreshComparison}>Refresh comparison</button></p>}
         {inspector?<section className="comparison-sharing-options" aria-label="Sharing options"><h4>Sharing options</h4>

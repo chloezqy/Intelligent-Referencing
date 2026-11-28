@@ -8,7 +8,7 @@ export const freshDemo=():RoomSnapshot=>({code:'demo',documentId:DOCUMENT_ID,rev
 export function demoShare(room:RoomSnapshot,draft:ReferenceDraft,intent:ReferenceIntent,message:string,id:string,inviteNow=false,sourceUser:UserId='A',recipientIds?:UserId[]):RoomSnapshot{
  if(room.references.some(r=>r.id===id))return room;
  const valid=new Set(MOCK_NODES.filter(n=>n.type!=='screen').map(n=>n.id));
- if(!draft.elementIds.length||draft.elementIds.some(id=>!valid.has(id)))throw new Error('Select valid design objects.');
+ if(!draft.elementIds.length||draft.elementIds.some(id=>!valid.has(id)))throw new Error('Select valid design layers.');
  const recipients=validateShareRecipients(recipientIds,sourceUser,room.members);
  const at=new Date().toISOString(),mentions=mentionedUsers(message,room.members);
  const comparison=draft.comparison?structuredClone(draft.comparison):undefined;
@@ -19,6 +19,6 @@ export function demoShare(room:RoomSnapshot,draft:ReferenceDraft,intent:Referenc
  return {...room,revision:room.revision+1,references:[...room.references,ref]};
 }
 export function demoComparison(a:SelectionPresence,b:SelectionPresence,id:string):ComparisonContext{
- if(!a.elementIds.length||!b.elementIds.length)throw new Error('Both selections need objects.');
+ if(!a.elementIds.length||!b.elementIds.length)throw new Error('Both selections need layers.');
  return {snapshotId:id,selections:structuredClone({A:a,B:b}),purpose:'',interpretation:ruleBasedInterpreter.interpret(a.elementIds,b.elementIds,MOCK_NODES)};
 }

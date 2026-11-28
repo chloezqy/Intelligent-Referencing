@@ -11,6 +11,7 @@ The root [README](../README.md) describes the current prototype and how to run i
 | [AI_RELIABILITY.md](AI_RELIABILITY.md) | Request limits, queue/cache behavior, diagnostics, and operational checks |
 | [VERCEL.md](VERCEL.md) | Frontend + serverless AI deployment for the local A/B demo |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Persistent Node hosting for real-time rooms and SSE |
+| [UI_WORDING.md](UI_WORDING.md) | Agreed word list for UI labels (library, layer, source, casing) |
 
 ## Research and history
 

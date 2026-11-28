@@ -48,10 +48,10 @@ test('Missing values are not differences; incomplete details remain collapsed an
 test('Preview cards preserve selection order, show at most three actual tiles, and label missing elements',()=>{
  const nodes=[node('c'),node('a'),node('b'),node('d')];
  const html=renderToStaticMarkup(React.createElement(ReferencePreviewCard,{ids:['b','missing','a','c'],nodes,user:'B',self:'B'}));
- assert.match(html,/User B/);assert.match(html,/You/);assert.match(html,/4 objects/);assert.match(html,/\+1 more selected/);
+ assert.match(html,/User B/);assert.match(html,/You/);assert.match(html,/4 layers/);assert.match(html,/\+1 more selected/);
  assert.equal((html.match(/<figure/g)||[]).length,3);
- assert.ok(html.indexOf('Preview of b')<html.indexOf('Element unavailable'));
- assert.ok(html.indexOf('Element unavailable')<html.indexOf('Preview of a'));
+ assert.ok(html.indexOf('Preview of b')<html.indexOf('Layer unavailable'));
+ assert.ok(html.indexOf('Layer unavailable')<html.indexOf('Preview of a'));
  assert.ok(!html.includes('<image'));assert.ok(!html.includes('https://'));
 });
 test('Preview geometry includes existing descendants once, is bounded, and tolerates cycles',()=>{

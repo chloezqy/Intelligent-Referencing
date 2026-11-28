@@ -50,8 +50,8 @@ test('Groups retain read-only comparison; one reference supports multiple indepe
 });
 test('Unified presentation has no purpose modes, Resolve or duplicated preview controls',()=>{
  const html=renderToStaticMarkup(React.createElement(UnifiedReferenceWorkflow,{context:pair(),nodes:MOCK_NODES,onPreview:noop,onApply:()=>true,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,onCancel:noop,sharing:()=>React.createElement('span',null,'Sharing controls')}));
- assert.match(html,/Properties to match/);assert.match(html,/Reference Object A/);assert.match(html,/Target Object B/);assert.match(html,/Swap reference and target/);
- assert.match(html,/View all properties/);assert.match(html,/Find design system matches/);assert.match(html,/Other actions/);
+ assert.match(html,/Properties to match/);assert.match(html,/Reference Layer A/);assert.match(html,/Target Layer B/);assert.match(html,/Swap reference and target/);
+ assert.match(html,/View all properties/);assert.match(html,/Find library matches/);assert.match(html,/Other actions/);
  assert.doesNotMatch(html,/Comparison purpose|Resolve selected differences|Next steps|type="radio"|>Preview changes<|checked=""|Choose which design properties|Optional assistance|These differences remain unchanged/);
  assert.match(html,/>Apply changes</);
  assert.doesNotMatch(html,/Sharing options|reference-preview-actions/);
@@ -89,7 +89,7 @@ test('External preview footer has no duplicate Apply or Cancel and renders every
 test('Existing saved reference direction is honored without preselecting properties',()=>{
  const context=pair();context.purpose=DESIGN_REFERENCE_PURPOSE;context.designReference={direction:{referenceSide:'B',targetSide:'A',referenceUser:'A',targetUser:'A'},properties:['cornerRadius']};
  const html=renderToStaticMarkup(React.createElement(UnifiedReferenceWorkflow,{context,nodes:MOCK_NODES,onPreview:noop,onApply:()=>true,onUndo:noop,onRedo:noop,canUndo:false,canRedo:false,onCancel:noop,sharing:()=>null}));
- assert.match(html,/aria-label="Reference Object B"/);assert.match(html,/aria-label="Target Object A"/);assert.doesNotMatch(html,/checked=""/);
+ assert.match(html,/aria-label="Reference Layer B"/);assert.match(html,/aria-label="Target Layer A"/);assert.doesNotMatch(html,/checked=""/);
 });
 
 test('Compare hierarchy keeps a single disabled Apply in the footer and orders actual target values first',()=>{

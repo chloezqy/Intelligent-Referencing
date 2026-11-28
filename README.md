@@ -10,10 +10,10 @@ Smart Reference explores how designers can point to objects, clarify what they m
 
 The canvas contains six editable mobile shopping mockups and a separate **Studio Blue** design-system board. The screens use a warm editorial style; the library uses blue accents and different typography, surfaces, corners, and spacing. This makes style changes easy to inspect during a demo.
 
-- **Select or gesture:** click layers, select groups, or draw with Smart Gesture. Review AI interpretations at Touched, This Screen, or Whole File scope before confirming.
+- **Select or gesture:** click layers, select groups, or draw with Smart Gesture. In Adjust interpretation, choose where to find matches (Drawn area, This screen or All screens) and review AI suggestions before confirming.
 - **Take action:** the right sidebar puts AI Actions below the selection preview. Match library styles, pick a source layer, choose property categories, inspect changes, and Apply or Copy.
 - **Ask for a change:** submit a command such as “Make the buttons pill-shaped.” Validated edits apply to the selected targets and support Undo.
-- **Compare:** select two objects, compare recorded properties, and resolve specific differences while keeping intentional layout differences.
+- **Compare:** select two layers, compare recorded properties, and resolve specific differences while keeping intentional layout differences.
 - **Reference and discuss:** References → Active includes the current selection and saved open requests. Share through the canvas context menu, switch A/B perspectives, reply, or mark a request reviewed.
 
 This is a working interaction prototype. The shopping screens are design objects, not a checkout application. Applied edits stay in the current browser; collaboration shares references and conversations rather than co-editing the document. Library matching copies style values rather than creating live component bindings.

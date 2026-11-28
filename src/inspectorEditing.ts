@@ -15,29 +15,29 @@ export function inspectorActions(ids:string[],nodes:UIElement[],context?:Compari
  const sameKinds=all.every(n=>n.type===all[0]?.type&&n.role===all[0]?.role);
  const design=context?.purpose===DESIGN_REFERENCE_PURPOSE,properties=context?.designReference?.properties||[];
  const actions:InspectorAction[]=[];
- if(design&&overlappingReference(context!,nodes))return {actions,reason:'Reference and target overlap. Compare them here, or select separate target objects before editing.'};
- if(!selected.length)return {actions,reason:'No editable target objects are selected.'};
- if(!design&&!sameKinds)return {actions,reason:'These objects have different roles or types. You can inspect their differences; select corresponding elements to edit them together.'};
- if(!compatible)return {actions,reason:'The targets have different roles or types. Select corresponding target elements for editing.'};
+ if(design&&overlappingReference(context!,nodes))return {actions,reason:'Reference and target overlap. Compare them here, or select separate target layers before editing.'};
+ if(!selected.length)return {actions,reason:'No editable target layers are selected.'};
+ if(!design&&!sameKinds)return {actions,reason:'These layers have different roles or types. You can inspect their differences; select corresponding layers to edit them together.'};
+ if(!compatible)return {actions,reason:'The targets have different roles or types. Select corresponding target layers for editing.'};
  if(!design){try{layoutPatches(ids,nodes,'left');actions.push('Align');}catch{} }
  if(design){try{referenceTransfer(context!,nodes);actions.push('Match Styles');}catch{}}else if(nodes.some(source=>{if(ids.includes(source.id)||source.type!==selected[0].type)return false;try{return matchStyles(ids,nodes,source.id).mappings.length>0;}catch{return false;}}))actions.push('Match Styles');
  if((!design||properties.includes('typography'))&&textTargets(ids,nodes,'all').length)actions.push('Typography');
  if((!design||properties.includes('colors'))&&descendants(ids,nodes).some(n=>n.bg!==undefined||n.color!==undefined||n.border!==undefined))actions.push('Colors');
  if(tokenFacts(ids,nodes).length)actions.push('Design System');
  if(!design&&ids.length<=512)actions.push('Ask AI');
- return {actions,reason:!sameKinds?'The reference and target have different roles or types. Only applicable property actions are offered; select corresponding elements for broader style matching.':''};
+ return {actions,reason:!sameKinds?'The reference and target have different roles or types. Only applicable property actions are offered; select corresponding layers for broader style matching.':''};
 }
 export function referenceTransfer(context:ComparisonContext,nodes:UIElement[]):EditProposal{
- if(overlappingReference(context,nodes))throw new Error('Reference and target overlap. Choose separate objects before editing.');
- const sides=referenceSides(context);if(sides.reference.elementIds.length!==1)throw new Error('Choose one reference object for style transfer; grouped references can still be compared or shared.');
+ if(overlappingReference(context,nodes))throw new Error('Reference and target overlap. Choose separate layers before editing.');
+ const sides=referenceSides(context);if(sides.reference.elementIds.length!==1)throw new Error('Choose one reference layer for style transfer; grouped references can still be compared or shared.');
  const original=matchStyles(sides.target.elementIds,nodes,sides.reference.elementIds[0]);
  const allowed=new Set((context.designReference?.properties||[]).flatMap(key=>categories[key]));
  const mappings=original.mappings.map(m=>({...m,patches:m.patches.map(p=>({id:p.id,changes:Object.fromEntries(Object.entries(p.changes).filter(([key])=>allowed.has(key)||context.designReference?.properties.includes('spacing')&&m.id==='match-spacing'))})).filter(p=>Object.keys(p.changes).length&&changedPatches(nodes,[p]).length>0)})).filter(m=>m.patches.length);
- if(!mappings.length)throw new Error('No recorded reference values match the chosen properties and target objects.');
+ if(!mappings.length)throw new Error('No recorded reference values match the chosen properties and target layers.');
  return {...original,title:'Match selected reference properties',mappings:mappings.flatMap(m=>m.id==='match-spacing'?[m]:m.patches.flatMap(p=>Object.entries(p.changes).map(([key,value])=>({id:`${m.id}-${key}`,label:`${nodes.find(n=>n.id===p.id)?.label} · ${key}`,patches:[{id:p.id,changes:{[key]:value}}]}))))};
 }
 export function proposedReferenceEdits(context:ComparisonContext,nodes:UIElement[]):EditProposal{
- if(overlappingReference(context,nodes))throw new Error('Reference and target overlap. Choose separate objects before editing.');
+ if(overlappingReference(context,nodes))throw new Error('Reference and target overlap. Choose separate layers before editing.');
  const sides=referenceSides(context),changes=context.designReference?.proposedChanges||[];
  const keys:Record<string,keyof UIElement>={'Font size':'fontSize','Font weight':'fontWeight','Text color':'color','Background':'bg','Corner radius':'radius','Spacing':'spacing'};
  const mappings=changes.map(change=>({id:change.id,label:change.title,patches:change.facts.map(f=>{

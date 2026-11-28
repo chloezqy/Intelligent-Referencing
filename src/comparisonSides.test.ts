@@ -12,7 +12,7 @@ import {ComparisonPurpose} from './components/ComparisonContext';
 const selection=(userId:'A'|'B',elementIds:string[])=>({userId,elementIds,exemplarIds:elementIds,scope:'exemplars' as const,method:'conventional' as const,revision:1});
 test('Local comparisons keep object order and true selector identity without inventing a peer selection',()=>{
  for(const user of ['A','B'] as const){const c=localComparison(user,['sc2','sc3'],'fixture',MOCK_NODES),sides=comparisonSides(c);assert.deepEqual(sides.A,{elementIds:['sc2'],selectedBy:user});assert.deepEqual(sides.B,{elementIds:['sc3'],selectedBy:user});assert.deepEqual(c.selections[user==='A'?'B':'A'].elementIds,[]);
- const html=renderToStaticMarkup(React.createElement(ComparisonOverview,{context:c,contextId:c.snapshotId,ids:['sc2','sc3'],nodes:MOCK_NODES,user}));assert.match(html,/Object A/);assert.match(html,/Object B/);assert.equal((html.match(new RegExp(`Selected by User ${user}`,'g'))||[]).length,2);assert.doesNotMatch(html,/0 differences/);assert.match(html,/Differences are available in detailed properties/);
+ const html=renderToStaticMarkup(React.createElement(ComparisonOverview,{context:c,contextId:c.snapshotId,ids:['sc2','sc3'],nodes:MOCK_NODES,user}));assert.match(html,/Layer A/);assert.match(html,/Layer B/);assert.equal((html.match(new RegExp(`Selected by User ${user}`,'g'))||[]).length,2);assert.doesNotMatch(html,/0 differences/);assert.match(html,/Differences are available in detailed properties/);
  }
  assert.throws(()=>localComparison('A',['sc2','sc2'],'invalid',MOCK_NODES));
 });

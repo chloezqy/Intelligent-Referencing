@@ -12,7 +12,7 @@ test('Compact list uses saved reference counts, avatars, actual previews, unread
  const resolved={...reference,id:'resolved',archivedAt:reference.createdAt};
  const html=renderToStaticMarkup(React.createElement(CollaborationPanel,{nodes:MOCK_NODES,collaboration:{mode:'demo',session:{userId:'B'},room:{references:[reference,viewed,resolved],members:[]}} as any,hasDraft:false,activeId:'viewed',openRevision:0,onResumeDraft:noop,onOpen:noop,onLocate:noop,onClear:noop}));
  assert.match(html,/role="tablist"/);assert.match(html,/Active \(2\)/);assert.match(html,/Resolved \(1\)/);assert.match(html,/data-reference-id="unread" data-unread="true"/);assert.match(html,/data-reference-id="viewed" data-unread="false"/);assert.doesNotMatch(html,/data-reference-id="resolved"/);
- assert.match(html,/Sender User A/);assert.match(html,/Preview of Product Card \(Nordic Lounge Chair\)/);assert.match(html,/Home · 1 object · Just now/);
+ assert.match(html,/Sender User A/);assert.match(html,/Preview of Product Card \(Nordic Lounge Chair\)/);assert.match(html,/Home · 1 layer · Just now/);
  assert.doesNotMatch(html,/sent a request|Awaiting review|Viewed ·|Reset demo|<h3>References/);
  assert.match(html,/<strong title="Product Card \(Nordic Lounge Chair\)">Product Card \(Nordic Lounge Chair\)<\/strong>/);
 });

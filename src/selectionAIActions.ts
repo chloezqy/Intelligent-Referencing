@@ -26,7 +26,7 @@ export function categoryProposal(ids:string[],nodes:UIElement[],changes:StyleCha
  });
  validatePatches(nodes,ids,patches);
  if(!patches.length)throw Error('Choose at least one property category.');
- return {title:sourceId?'Copy source styles':'Apply Design System styles',targetIds:[...ids],sourceId:sourceId||'ds-product-card',mappings:[{id:'selected-categories',label:categories.join(', '),patches}]};
+ return {title:sourceId?'Copy source styles':'Apply library styles',targetIds:[...ids],sourceId:sourceId||'ds-product-card',mappings:[{id:'selected-categories',label:categories.join(', '),patches}]};
 }
 export function unevenSpacing(ids:string[],nodes:UIElement[]):{gaps:number[];gap:number;patches:Patch[]}|null{
  const selected=roots(ids,nodes);if(selected.length<3||selected.some(n=>n.library)||new Set(selected.map(n=>n.parent)).size!==1)return null;

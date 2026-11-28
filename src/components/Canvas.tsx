@@ -335,14 +335,14 @@ export default function Canvas({
     setGesturePaths(paths=>pending.shift?[...paths,closedPath]:[closedPath]);
     const touched=smartGestureEvidence(closedPath,nodes,transform.scale);
     const results=touched.length?inferSelection(closedPath,nodes):[];
-    const first=results[0]||{id:'touched',label:`${touched.length} touched objects`,description:'Directly touched objects',reasoning:'Direct gesture coverage',selectedIds:touched,exemplarIds:touched,inferredIds:[],scope:'exemplars' as const,confidence:'medium' as const};
+    const first=results[0]||{id:'touched',label:`${touched.length} touched layers`,description:'Directly touched layers',reasoning:'Direct gesture coverage',selectedIds:touched,exemplarIds:touched,inferredIds:[],scope:'exemplars' as const,confidence:'medium' as const};
     const base=pending.shift?(activeInterpretation?.selectedIds??inferredRef?.selectedIds??[]):[];
     if(!first.selectedIds.length&&pending.shift&&base.length){
-      setGestureNotice('No objects near this gesture. Try drawing a little closer.');
+      setGestureNotice('No layers near this gesture. Try drawing a little closer.');
       setSelectionState(draftRef?'disambiguating':'preview');return;
     }
     additiveBase.current=[...base];
-    if(first.selectedIds.length){const evidence=touched.length?touched:first.selectedIds;setDraftRef({selectedIds:mergeGestureIds(evidence),exemplarIds:evidence,label:'Gesture reference',scope:'exemplars',selectionMethod:'smart-ref'});setActiveInterpretation(null);setSelectionState('disambiguating');setAdjustOpen(true);onResearchEvent('gesture_interpreted');}else{setGestureNotice('No objects near this gesture. Try drawing a little closer.');setInferredRef(null);setSelectionState('idle');}
+    if(first.selectedIds.length){const evidence=touched.length?touched:first.selectedIds;setDraftRef({selectedIds:mergeGestureIds(evidence),exemplarIds:evidence,label:'Gesture reference',scope:'exemplars',selectionMethod:'smart-ref'});setActiveInterpretation(null);setSelectionState('disambiguating');setAdjustOpen(true);onResearchEvent('gesture_interpreted');}else{setGestureNotice('No layers near this gesture. Try drawing a little closer.');setInferredRef(null);setSelectionState('idle');}
     setCurrentPath([]);
   };
 
@@ -508,8 +508,8 @@ export default function Canvas({
             <div><button type="submit" disabled={!chatInput.trim()||ai.loading}>Send</button></div>
           </form>
           <p className="scope-label composer-scope-note">{SCOPE_NOTE[currentScope]}</p>
-          {activeInterpretation&&<button type="button" className="primary-action confirm-reference" onClick={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(activeInterpretation);}}><Check size={14}/>Select {activeInterpretation.selectedIds.length} objects</button>}
-          {!ai.loading&&!!draftRef&&<button type="button" onClick={()=>commitInterpretation({id:'manual-touched',label:`${inferredRef.selectedIds.length} selected objects`,description:'Manual selection',reasoning:'Directly indicated objects',selectedIds:mergeGestureIds(inferredRef.exemplarIds),exemplarIds:inferredRef.exemplarIds,inferredIds:[],scope:'exemplars',confidence:'high'})}>Keep my drawn selection</button>}
+          {activeInterpretation&&<button type="button" className="primary-action confirm-reference" onClick={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(activeInterpretation);}}><Check size={14}/>Select {activeInterpretation.selectedIds.length} layers</button>}
+          {!ai.loading&&!!draftRef&&<button type="button" onClick={()=>commitInterpretation({id:'manual-touched',label:`${inferredRef.selectedIds.length} selected layers`,description:'Manual selection',reasoning:'Directly indicated layers',selectedIds:mergeGestureIds(inferredRef.exemplarIds),exemplarIds:inferredRef.exemplarIds,inferredIds:[],scope:'exemplars',confidence:'high'})}>Keep my drawn selection</button>}
 
         </div>}/>
       </div>}
@@ -681,7 +681,7 @@ export default function Canvas({
                 }}
               >
                 <div className="w-3 h-3 border-2 border-[#0d99ff] border-t-white rounded-full animate-spin" />
-                <span>Interpreting reference...</span>
+                <span>Understanding your selection…</span>
               </motion.div>
             )}
           </AnimatePresence>

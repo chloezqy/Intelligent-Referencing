@@ -35,8 +35,8 @@ export function compileActionPlan(plan:ActionPlan,ids:string[],nodes:UIElement[]
   const targets=s.action==='typography'||s.action==='color'&&s.property==='color'&&s.role==='all'?textTargets(roleIds,nodes,'all'):colorTargets(roleIds,nodes,'selection');
   mappings.push({id:`ai-${i}`,label:s.token?`${s.action} / ${s.token}`:`${s.action} / ${s.property} → ${s.value}`,patches:targets.map(n=>({id:n.id,changes:style}))});
  });
- const labels={layout:'Layout changes',library:'Match Design System',matchStyles:'Match reference styles',typography:'Typography changes',color:'Color changes',appearance:'Corner radius changes'};
- const title=`${[...new Set(plan.steps.map(s=>labels[s.action]))].join(' + ')} · ${roots(ids,nodes).length} objects`;
+ const labels={layout:'Layout changes',library:'Match library',matchStyles:'Match source styles',typography:'Typography changes',color:'Color changes',appearance:'Corner radius changes'};
+ const title=`${[...new Set(plan.steps.map(s=>labels[s.action]))].join(' + ')} · ${roots(ids,nodes).length} layers`;
  const sourceId=plan.steps.find(s=>s.action==='matchStyles')?.sourceId??(plan.steps.some(s=>s.action==='library')?'ds-product-card':undefined);
- const proposal={title,targetIds:[...ids],sourceId,mappings:mappings.map((m,i)=>({...m,id:`ai-${i}-${m.id}`}))};validatePatches(nodes,ids,mappings.flatMap(m=>m.patches));if(!mappings.some(m=>m.patches.length))throw new Error('No relevant objects inside the confirmed reference.');return proposal;
+ const proposal={title,targetIds:[...ids],sourceId,mappings:mappings.map((m,i)=>({...m,id:`ai-${i}-${m.id}`}))};validatePatches(nodes,ids,mappings.flatMap(m=>m.patches));if(!mappings.some(m=>m.patches.length))throw new Error('No relevant layers inside the confirmed reference.');return proposal;
 }

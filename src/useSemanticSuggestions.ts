@@ -13,7 +13,7 @@ export function useSemanticSuggestions(selection:InferredReference|null,nodes:UI
  const request=async(intent='')=>{
   const requestKey=JSON.stringify([key,intent]);
   if(!selection||state.key===key&&state.loading)return;
-  if(!selection.selectedIds.length){setState({key,loading:false,candidates:[],message:'Select or draw across the objects you mean.',done:true});return;}
+  if(!selection.selectedIds.length){setState({key,loading:false,candidates:[],message:'Select or draw across the layers you mean.',done:true});return;}
   const saved=cache.current.get(requestKey);if(saved){setState({key,loading:false,candidates:saved,message:'',done:true});return;}
   const abort=new AbortController();controller.current?.abort();controller.current=abort;setState({key,loading:true,candidates:[],message:'',done:false});
   const elements=scopeElements(selection.exemplarIds,nodes,selection.scope),eligible=new Set(elements.map(n=>n.id));

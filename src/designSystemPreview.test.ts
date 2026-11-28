@@ -12,9 +12,9 @@ test('Lamp library preview uses the same object and only selected Fill, preservi
  const p=proposal(['bg']),patches=proposalPatches(p,p.mappings.map(m=>m.id),MOCK_NODES),after=applyPatches(MOCK_NODES,patches),before=MOCK_NODES.find(n=>n.id===ids[0])!,updated=after.find(n=>n.id===before.id)!;
  assert.equal(updated.bg,'#eaf0ff');assert.equal(before.bg,'#fef3c7');for(const key of Object.keys(before).filter(key=>key!=='bg'))assert.equal(updated[key],before[key]);
  const html=renderToStaticMarkup(React.createElement(ComparisonPreview,{variant:'design-system',proposal:p,enabled:p.mappings.map(m=>m.id),nodes:MOCK_NODES,onToggle:()=>{},onApply:()=>{},onCancel:()=>{}}));
- assert.match(html,/Preview design system changes/);assert.match(html,/Current/);assert.match(html,/With library styles/);assert.match(html,/#fef3c7/);assert.match(html,/#eaf0ff/);assert.match(html,/Background color/);assert.match(html,/library-property-value/);assert.match(html,/No changes applied yet/);assert.match(html,/Apply changes/);
+ assert.match(html,/Preview changes/);assert.match(html,/Current/);assert.match(html,/With library styles/);assert.match(html,/#fef3c7/);assert.match(html,/#eaf0ff/);assert.match(html,/Background color/);assert.match(html,/library-property-value/);assert.match(html,/No changes applied yet/);assert.match(html,/Apply changes/);
  assert.equal((html.match(/aria-label="Preview of Image · Minimalist Desk Lamp"/g)||[]).length,2);
- assert.doesNotMatch(html,/Sample image|AI suggestion|Use existing design system properties|Customize|Show Current|affected layers|confirmed objects/);
+ assert.doesNotMatch(html,/Sample image|AI suggestion|Use existing library styles|Customize|Show Current|affected layers|confirmed objects/);
  assert.equal((html.match(/type="button"/g)||[]).length,2);
 });
 test('Multiple selected library properties retain identity and cancel leaves the original document unchanged',()=>{

@@ -15,7 +15,7 @@ const fields:{category:DesignProperty;key:keyof UIElement;label:string;unit?:str
 ];
 export function designChangeContext(referenceIds:string[],targetIds:string[],properties:DesignProperty[],nodes:UIElement[]):DesignChangeContext {
  const roots=[...referenceIds,...targetIds];
- if(referenceIds.length>24||targetIds.length>24||!referenceIds.length||!targetIds.length||roots.some(id=>!nodes.some(n=>n.id===id&&n.type!=='screen')))throw new Error('Choose 1–24 existing objects on each side.');
+ if(referenceIds.length>24||targetIds.length>24||!referenceIds.length||!targetIds.length||roots.some(id=>!nodes.some(n=>n.id===id&&n.type!=='screen')))throw new Error('Choose 1–24 existing layers on each side.');
  const descendants=(ids:string[])=>{const set=new Set(ids);for(let i=0;i<nodes.length;i++){let changed=false;for(const n of nodes)if(n.type!=='screen'&&n.parent&&set.has(n.parent)&&!set.has(n.id)){set.add(n.id);changed=true;}if(!changed)break;}return nodes.filter(n=>set.has(n.id)).slice(0,32);};
  const a=descendants(referenceIds),b=descendants(targetIds),facts:DesignChangeFact[]=[];
  for(const source of a)for(const target of b){

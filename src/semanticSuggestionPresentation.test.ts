@@ -20,5 +20,5 @@ test('mixed roles describe the proposed selection, with unique screens and exact
 });
 test('unavailable objects never expose model explanations or technical IDs',()=>{
  const summary=semanticSuggestionPresentation(candidate,[]);
- assert.deepEqual(summary,{title:'Related design elements',context:'Selected design elements',count:2});
+ assert.deepEqual(summary,{title:'Related design layers',context:'Selected design layers',count:2});
 });

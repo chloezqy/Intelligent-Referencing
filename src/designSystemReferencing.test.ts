@@ -41,6 +41,6 @@ test('Same-user comparison shares only checked token properties without applying
 
 test('Design system review omits the explanatory sentence and manual AI trigger',()=>{
  const html=renderToStaticMarkup(React.createElement(DesignSystemReview,{ids:['hc1'],nodes:MOCK_NODES,onPropose:()=>{},onSelected:()=>{}}));
- assert.doesNotMatch(html,/Selected objects →|Changes are optional|Suggest relevant tokens/);
+ assert.doesNotMatch(html,/Selected layers →|Changes are optional|Suggest relevant tokens/);
  const empty=renderToStaticMarkup(React.createElement(DesignSystemReview,{ids:[],nodes:MOCK_NODES,onPropose:()=>{},onSelected:()=>{}}));assert.match(empty,/No recorded properties support a library match/);
 });

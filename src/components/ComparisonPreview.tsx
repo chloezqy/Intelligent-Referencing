@@ -12,7 +12,7 @@ const styleCategories=[
  ['Effects',['shadow','opacity']],
  ['Layout',['spacing','x','y','w','h']],
 ] as const;
-const shortName=(node:UIElement|undefined)=>node?.label.replace(/^Product Card \((.*)\)$/,'$1').replace(/^Image · /,'')||'Selected object';
+const shortName=(node:UIElement|undefined)=>node?.label.replace(/^Product Card \((.*)\)$/,'$1').replace(/^Image · /,'')||'Selected layer';
 export default function ComparisonPreview({hideActions=false,supportingMessage,beforeActions,applyDisabled=false,beforeChanges,emptyMessage='Already matches this style',compact=false,selectable=true,variant='comparison',proposal,enabled,nodes,onPreview,onToggle,onApply,onCancel}:{hideActions?:boolean;supportingMessage?:string|null;beforeActions?:React.ReactNode;applyDisabled?:boolean;beforeChanges?:React.ReactNode;emptyMessage?:string;compact?:boolean;selectable?:boolean;variant?:'comparison'|'design-system'|'typography';proposal:EditProposal;enabled:string[];nodes:UIElement[];onPreview?:(patches:Patch[])=>void;onToggle:(id:string)=>void;onApply:()=>void;onCancel:()=>void}){
  const [expandedChanges,setExpandedChanges]=useState<Record<string,boolean>>({});
  const typography=variant==='typography';
@@ -25,7 +25,7 @@ export default function ComparisonPreview({hideActions=false,supportingMessage,b
  if(variant==='design-system'){
   const targets=roots(proposal.targetIds,nodes).filter(root=>{const ids=new Set(descendants([root.id],nodes).map(n=>n.id));return patches.some(p=>ids.has(p.id));});
   const displayValue=(key:string,v:unknown)=>{const color=['bg','color','border'].includes(key)&&typeof v==='string'?v.match(/#[0-9a-f]{3,8}\b|rgba?\([\d\s.,%]+\)/i)?.[0]:undefined;return <span className="library-property-value">{color&&<i aria-hidden="true" style={{backgroundColor:color}}/>}{value(key,v)}</span>;};
-  return <section className="comparison-confirmation library-confirmation" aria-label="Preview design system changes"><header><h4>Preview design system changes</h4></header>
+  return <section className="comparison-confirmation library-confirmation" aria-label="Preview changes"><header><h4>Preview changes</h4></header>
    {targets.map(root=>{const proposed=after.find(n=>n.id===root.id)!,ids=new Set(descendants([root.id],nodes).map(n=>n.id)),changes=patches.filter(p=>ids.has(p.id));return <div key={root.id} className="library-object-preview">
     {targets.length>1&&<strong className="library-object-title">{shortName(root)}</strong>}
     <div className="comparison-before-after"><div {...comparison.card('before','Current',[root.id])}><small>Current</small><ElementPreview element={root} nodes={nodes}/></div><div {...comparison.card('after','With library styles',[root.id])}><small>With library styles</small><ElementPreview element={proposed} nodes={after}/></div></div>

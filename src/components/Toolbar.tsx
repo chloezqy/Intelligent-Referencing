@@ -65,7 +65,7 @@ export default function Toolbar({
               ? 'bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/40'
               : 'text-zinc-500 hover:text-amber-300 hover:bg-zinc-800/40'
           }`}
-          title="HCI Research Tasks"
+          title="HCI Research tasks"
         >
           <Zap className="w-4 h-4" />
         </button>

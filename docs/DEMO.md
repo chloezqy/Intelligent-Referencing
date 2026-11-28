@@ -10,9 +10,9 @@ The six screens use a warm commerce style with furniture illustrations. Studio B
 
 ## 1. Select by meaning
 
-Choose Smart Gesture (G) and draw through two Home product examples. In Adjust interpretation, try This Screen or Whole File, inspect the candidate highlights, and confirm the intended group. A useful example is selecting primary shopping actions without including favorites or color swatches.
+Choose Smart Gesture (G) and draw through two Home product examples. In Adjust interpretation, switch Find matches in to This screen or All screens, inspect the candidate highlights, and confirm the intended group. A useful example is selecting primary shopping actions without including favorites or color swatches.
 
-AI candidates depend on the live model. Inspect the actual result rather than promising a specific group. If AI is unavailable, explicitly confirm touched objects or use normal selection; explain which method is being shown.
+AI candidates depend on the live model. Inspect the actual result rather than promising a specific group. If AI is unavailable, choose Keep my drawn selection or use normal selection; explain which method is being shown.
 
 ## 2. Make a visible library transformation
 
