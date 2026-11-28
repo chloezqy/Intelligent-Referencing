@@ -11,6 +11,20 @@ export function scopeElements(ids:string[],nodes:UIElement[],scope:ScopeLevel){
  for(let changed=true;changed;){changed=false;for(const n of nodes)if(n.parent&&eligible.has(n.parent)&&!eligible.has(n.id)){eligible.add(n.id);changed=true;}}
  return nodes.filter(n=>n.type!=='screen'&&eligible.has(n.id));
 }
+/** Scopes offered in the interpretation panel, narrowest first. */
+export const PANEL_SCOPES=['exemplars','screen','document'] as const satisfies readonly ScopeLevel[];
+/** Layers in each scope that share a type/role/component signature with the selected roots. */
+export function scopeMatchCounts(ids:string[],nodes:UIElement[]):Record<typeof PANEL_SCOPES[number],number>{
+ const signature=(n:UIElement)=>`${n.type}|${n.role??''}|${n.component??''}`;
+ const wanted=new Set(referenceRoots(ids,nodes).map(signature));
+ const count=(scope:ScopeLevel)=>wanted.size?scopeElements(ids,nodes,scope).filter(n=>wanted.has(signature(n))).length:0;
+ return {exemplars:count('exemplars'),screen:count('screen'),document:count('document')};
+}
+/** Screen frames covered by a scope, used to outline the scope on the canvas. */
+export function scopeScreens(ids:string[],nodes:UIElement[],scope:ScopeLevel){
+ const screens=new Set(scopeElements(ids,nodes,scope).map(n=>n.screen));
+ return nodes.filter(n=>n.type==='screen'&&screens.has(n.screen));
+}
 export function distinctCandidates<T extends {elementIds:string[]}>(candidates:T[]){const sets=new Set<string>();return candidates.filter(c=>{const key=[...c.elementIds].sort().join('|');if(sets.has(key))return false;sets.add(key);return true;});}
 
 /** Execute an AI-chosen homogeneous semantic reference within its eligible scope.

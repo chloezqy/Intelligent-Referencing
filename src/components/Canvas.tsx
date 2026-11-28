@@ -9,6 +9,7 @@ import {appendGestureSamples} from '../gestureSamples';
 import {canvasSelectionTarget,nestedSelection,mergeLayerSelection,canvasMarqueeTargets,isSelectionDrag} from '../selectionInteraction';
 import {toolDragIntent,moveTargets,movePositions,Positions} from '../toolInteraction';
 import {useSemanticSuggestions} from '../useSemanticSuggestions';
+import {PANEL_SCOPES,scopeMatchCounts,scopeScreens} from '../gestureContext';
 import {closeSmartGesture,smartGestureEvidence} from '../smartGesture';
 import {semanticSuggestionPresentation} from '../semanticSuggestionPresentation';
 import { selectionActionLayout } from '../selectionActionLayout';
@@ -20,6 +21,15 @@ import { ReferenceIntent, SharedReference } from '../collaboration';
 import { zoomAtPoint } from '../workspace';
 import { getBoundingBox, rectIntersect,inferSelection } from '../utils';
 import {Check,X,Share2,GitCompareArrows} from 'lucide-react';
+
+type PanelScope=typeof PANEL_SCOPES[number];
+// Scope names match the wording used in the research tasks.
+const SCOPE_COPY:Record<PanelScope,{name:string;short:string;place:string}>={
+  exemplars:{name:'Drawn area',short:'Drawn',place:'in drawn area'},
+  screen:{name:'This screen',short:'Screen',place:'on this screen'},
+  document:{name:'All screens',short:'All',place:'across all screens'},
+};
+const SCOPE_NOTE:Record<PanelScope,string>={exemplars:'Searches the drawn area',screen:'Searches this screen',document:'Searches all screens'};
 import Sparkles from './AIIcon';
 
 interface CanvasProps {
@@ -109,6 +119,9 @@ export default function Canvas({
 
   // Candidate previews are separate from the confirmed reference.
   const [hoveredInterpretation, setHoveredInterpretation] = useState<Interpretation | null>(null);
+  // Scope segment under the pointer; outlines that area on the canvas.
+  const [hoveredScope,setHoveredScope]=useState<PanelScope|null>(null);
+  const scopeChangePending=useRef(false);
   const [clicksCounter, setClicksCounter] = useState(0);
 
   // Keyboard navigation & shortcuts (Figma standard)
@@ -338,11 +351,27 @@ export default function Canvas({
     additiveBase.current=[];setDraftRef(null);setActiveInterpretation(null);setInferredRef(selection);
     if(record){onResearchEvent('interpretation_choice',{ids:[...selection.selectedIds],method:selection.selectionMethod});setAdjustOpen(false);onInterpretationConfirmed();}setHoveredInterpretation(null);setSelectionState('preview');
   };
-  const handleScopeChange=(scope:ScopeLevel)=>{if(!inferredRef)return;const updated={...inferredRef,scope};setDraftRef(updated);setInferredRef(updated);setSelectionState('disambiguating');setActiveInterpretation(null);setHoveredInterpretation(null);setInterpretationEngaged(true);onResearchEvent('scope_changed');};
+  const handleScopeChange=(scope:ScopeLevel)=>{if(!inferredRef||inferredRef.scope===scope)return;scopeChangePending.current=true;const updated={...inferredRef,scope};setDraftRef(updated);setInferredRef(updated);setSelectionState('disambiguating');setActiveInterpretation(null);setHoveredInterpretation(null);setInterpretationEngaged(true);onResearchEvent('scope_changed');};
   const candidateInterpretation=(candidate:typeof ai.candidates[number]):Interpretation=>{
     const summary=semanticSuggestionPresentation(candidate,nodes),exemplars=candidate.elementIds.filter(id=>inferredRef?.exemplarIds.includes(id));
     return {id:candidate.id,label:`${summary.count} ${summary.title.replace(/^Matching /,'')}`,description:candidate.reason,reasoning:candidate.reason,selectedIds:mergeGestureIds(candidate.elementIds),exemplarIds:exemplars,inferredIds:candidate.elementIds.filter(id=>!exemplars.includes(id)),scope:inferredRef?.scope||'exemplars',confidence:'medium',source:'model',level:'semantic'};
   };
+
+  // Scope switcher: counts of similar layers per scope, and the area each scope covers.
+  const scopeSource=draftRef||inferredRef;
+  const scopeIds=scopeSource?(scopeSource.exemplarIds.length?scopeSource.exemplarIds:scopeSource.selectedIds):[];
+  const scopeIdsKey=scopeIds.join('|');
+  const scopeCounts=React.useMemo(()=>scopeMatchCounts(scopeIds,nodes),[scopeIdsKey,nodes]);
+  const currentScope:PanelScope=(PANEL_SCOPES as readonly ScopeLevel[]).includes(inferredRef?.scope as ScopeLevel)?inferredRef!.scope as PanelScope:inferredRef?.scope==='flow'?'document':'exemplars';
+  const compactPanel=viewport.width<380;
+  const scopeOutline=React.useMemo(()=>{
+    if(!hoveredScope||!scopeIds.length)return [];
+    if(hoveredScope==='exemplars'){const box=getBoundingBox(scopeIds,nodes);return box?[{id:'drawn',x:box.x-8,y:box.y-8,w:box.w+16,h:box.h+16}]:[];}
+    return scopeScreens(scopeIds,nodes,hoveredScope).map(frame=>({id:frame.id,x:frame.x,y:frame.y,w:frame.w,h:frame.h}));
+  },[hoveredScope,scopeIdsKey,nodes]);
+  // Switching scope refreshes suggestions for the new area while the panel is open.
+  useEffect(()=>{if(!scopeChangePending.current)return;scopeChangePending.current=false;if(adjustOpen&&!ai.loading){onResearchEvent('ai_interpretation_requested');void ai.request(chatMessage);}},[inferredRef?.scope]);
+  useEffect(()=>{if(!adjustOpen)setHoveredScope(null);},[adjustOpen]);
 
   // Generate SVG path for the ink trail
   const pathD = (selectionState === 'drawing' || selectionState === 'interpreting' || selectionState === 'disambiguating') && currentPath.length > 1
@@ -460,17 +489,25 @@ export default function Canvas({
       {/* One AI review surface; editing is available only after reference confirmation. */}
       {!shareMode&&!sharing&&!inspectorOpen&&inferredRef?.selectedIds.every(id=>nodes.find(node=>node.id===id)?.type!=='screen')&&(selectionState==='preview'||!!draftRef)&&inferredRef&&<div ref={setActionSurface} className={`selection-context action-context horizontal-reference-context absolute z-40 flex flex-col items-stretch pointer-events-none ${adjustOpen?'is-expanded':''} ${viewport.width<380?'is-compact':''} ${inferredRef.selectionMethod==='conventional'?'conventional':''}`} role="region" aria-label="Selection actions" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()} style={{left:actionPosition.left,top:actionPosition.top,width:adjustOpen?Math.min(336,viewport.width-16):'max-content',maxWidth:Math.max(0,viewport.width-16),maxHeight:Math.max(0,viewport.height-16),'--adjustment-space':`${Math.max(0,viewport.height-16-44)}px`} as React.CSSProperties}>
         <ReferenceActions selectionPending={!!draftRef} compareOwn={compareOwn} compareReady={compareReady&&inferredRef.selectedIds.length>=2} compareHint={compareHint} shareLabel={shareLabel} onCompare={onCompare} onAction={intent=>{setAdjustOpen(false);onAcceptReference(intent);}} expanded={adjustOpen} onMore={()=>{const opening=!adjustOpen;setAdjustOpen(opening);setHoveredInterpretation(null);if(opening&&!ai.done&&!ai.loading){onResearchEvent('ai_interpretation_requested');void ai.request();}}} interpretationContent={<div id="interpretation-adjustments" className="interpretation-adjustments">
+          <div className="scope-picker">
+            <p className="scope-label" id="scope-picker-label">Find matches in</p>
+            <div className="scope-switch" role="radiogroup" aria-labelledby="scope-picker-label" onMouseLeave={()=>setHoveredScope(null)}>
+              {PANEL_SCOPES.map(scope=>{const count=scopeCounts[scope];return <button type="button" key={scope} role="radio" aria-checked={currentScope===scope} aria-label={`${SCOPE_COPY[scope].name}, ${count} ${count===1?'layer':'layers'}`} className={count===0?'is-empty':undefined} onMouseEnter={()=>setHoveredScope(scope)} onFocus={()=>setHoveredScope(scope)} onBlur={()=>setHoveredScope(null)} onClick={()=>handleScopeChange(scope)}><span>{compactPanel?SCOPE_COPY[scope].short:SCOPE_COPY[scope].name}</span><small>{count} {count===1?'layer':'layers'}</small></button>;})}
+            </div>
+          </div>
           <div className="interpretation-chat" role="log" aria-label="Selection conversation" aria-live="polite">
             {chatMessage&&<p className="user-message">{chatMessage}</p>}
+            {(ai.loading||ai.done||ai.candidates.length>0)&&<p className="scope-label">Suggestions {SCOPE_COPY[currentScope].place}</p>}
             {ai.loading&&<div className="interpretation-loading" role="status"><span aria-hidden="true"/>Understanding your selection…</div>}
-            {ai.message&&<p role="status" className="subtle">{ai.message}</p>}
-            {!ai.loading&&ai.candidates.length>0&&<><p className="subtle">Suggested interpretations</p><div className="selection-suggestion-list">{ai.candidates.map(candidate=><button type="button" key={candidate.id} aria-pressed={activeInterpretation?.id===candidate.id} onMouseEnter={()=>{setInterpretationEngaged(true);setHoveredInterpretation(candidateInterpretation(candidate));}} onMouseLeave={()=>setHoveredInterpretation(null)} onFocus={()=>{setInterpretationEngaged(true);setHoveredInterpretation(candidateInterpretation(candidate));}} onBlur={()=>setHoveredInterpretation(null)} onClick={()=>{onResearchEvent('candidate_activated');setActiveInterpretation(candidateInterpretation(candidate));setHoveredInterpretation(null);}}><span>{candidate.label.replace(/^Matching /,'Select similar ')}</span><small>{mergeGestureIds(candidate.elementIds).length} layers</small></button>)}</div></>}
+            {!ai.loading&&ai.done&&!ai.candidates.length?<p role="status" className="subtle scope-empty">Nothing else like this {SCOPE_COPY[currentScope].place.replace(/^in /,'in the ')}</p>:ai.message&&<p role="status" className="subtle">{ai.message}</p>}
+            {!ai.loading&&ai.candidates.length>0&&<><div className="selection-suggestion-list">{ai.candidates.map(candidate=><button type="button" key={candidate.id} aria-pressed={activeInterpretation?.id===candidate.id} onMouseEnter={()=>{setInterpretationEngaged(true);setHoveredInterpretation(candidateInterpretation(candidate));}} onMouseLeave={()=>setHoveredInterpretation(null)} onFocus={()=>{setInterpretationEngaged(true);setHoveredInterpretation(candidateInterpretation(candidate));}} onBlur={()=>setHoveredInterpretation(null)} onClick={()=>{onResearchEvent('candidate_activated');setActiveInterpretation(candidateInterpretation(candidate));setHoveredInterpretation(null);}}><span>{candidate.label.replace(/^Matching /,'Select similar ')}</span><small>{mergeGestureIds(candidate.elementIds).length} layers</small></button>)}</div></>}
           </div>
           <form className="interpretation-composer" onSubmit={submitMeaning}>
             <label className="sr-only" htmlFor="selection-meaning">Describe what you want to select</label>
-            <textarea id="selection-meaning" value={chatInput} maxLength={300} rows={2} placeholder="e.g. Select all images like this" onChange={e=>{setChatInput(e.target.value);setInterpretationEngaged(true);setHoveredInterpretation(null);setActiveInterpretation(null);}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.currentTarget.form?.requestSubmit();}}}/>
-            <div><label>Look in <select aria-label="Where to find matches" value={inferredRef.scope} onChange={e=>handleScopeChange(e.target.value as ScopeLevel)}><option value="exemplars">Drawn area</option><option value="screen">This screen</option><option value="document">All screens</option></select></label><button type="submit" disabled={!chatInput.trim()||ai.loading}>Send</button></div>
+            <textarea id="selection-meaning" value={chatInput} maxLength={300} rows={2} placeholder="Describe what to select, e.g. all images like this" onChange={e=>{setChatInput(e.target.value);setInterpretationEngaged(true);setHoveredInterpretation(null);setActiveInterpretation(null);}} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.currentTarget.form?.requestSubmit();}}}/>
+            <div><button type="submit" disabled={!chatInput.trim()||ai.loading}>Send</button></div>
           </form>
+          <p className="scope-label composer-scope-note">{SCOPE_NOTE[currentScope]}</p>
           {activeInterpretation&&<button type="button" className="primary-action confirm-reference" onClick={()=>{onResearchEvent('ai_interpretation_chosen');commitInterpretation(activeInterpretation);}}><Check size={14}/>Select {activeInterpretation.selectedIds.length} objects</button>}
           {!ai.loading&&!!draftRef&&<button type="button" onClick={()=>commitInterpretation({id:'manual-touched',label:`${inferredRef.selectedIds.length} selected objects`,description:'Manual selection',reasoning:'Directly indicated objects',selectedIds:mergeGestureIds(inferredRef.exemplarIds),exemplarIds:inferredRef.exemplarIds,inferredIds:[],scope:'exemplars',confidence:'high'})}>Keep my drawn selection</button>}
 
@@ -518,6 +555,7 @@ export default function Canvas({
             <rect x={-transform.x/transform.scale} y={-transform.y/transform.scale} width={viewport.width/transform.scale} height={viewport.height/transform.scale} fill="#101d27" fillOpacity="0.55" mask="url(#selection-preview-focus)"/>
           </svg>}
           {nodes.filter(node=>node.type==='screen'&&activeIds.includes(node.id)).map(frame=><div key={`frame-outline-${frame.id}`} className="canvas-frame-outline" style={{left:frame.x,top:frame.y,width:frame.w,height:frame.h,borderWidth:1/transform.scale}}/>)}
+          {scopeOutline.map(area=><div key={`scope-outline-${area.id}`} className="canvas-scope-outline" style={{left:area.x,top:area.y,width:area.w,height:area.h,borderWidth:2/transform.scale,borderRadius:8/transform.scale}}/>)}
           {/* Individual Selection Ring Overlays */}
           <AnimatePresence>
             {!showGestureAnimation && (selectionState === 'drawing' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift) || selectionState === 'moving' || selectionState === 'preview' || selectionState === 'disambiguating') && (movingIds.length||activeIds.length) > 0 && nodes.filter(n => (movingIds.length?movingIds:activeIds).includes(n.id) && n.type !== 'screen').map(node => {
