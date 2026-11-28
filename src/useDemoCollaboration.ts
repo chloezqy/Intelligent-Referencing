@@ -4,10 +4,10 @@ import {decideDesignChange} from './designChanges';
 import {useEffect,useRef,useState} from 'react';
 import type {CollaborationClient} from './collaborationClient';
 import type {RoomSnapshot,SharedReference,UserId} from './collaboration';
-import {DEMO_KEY,freshDemo,demoShare,demoComparison} from './demoCollaboration';
+import {DEMO_KEY,freshDemo,demoShare,demoComparison,normalizeRoom} from './demoCollaboration';
 // No transport, room tokens or network requests belong in this adapter.
 export function useDemoCollaboration(enabled:boolean):CollaborationClient{
- const [room,setRoom]=useState<RoomSnapshot>(()=>{if(enabled)try{const saved=JSON.parse(localStorage.getItem(DEMO_KEY)||'null');if(saved?.code==='demo'&&saved.documentId===freshDemo().documentId&&Array.isArray(saved.references))return saved;}catch{}return freshDemo();});
+ const [room,setRoom]=useState<RoomSnapshot>(()=>{if(enabled)try{const saved=JSON.parse(localStorage.getItem(DEMO_KEY)||'null');if(saved?.code==='demo'&&saved.documentId===freshDemo().documentId&&Array.isArray(saved.references))return normalizeRoom(saved);}catch{}return freshDemo();});
  const [user,setUser]=useState<UserId>(()=>{try{return enabled&&localStorage.getItem('sr-demo-perspective')==='B'?'B':'A';}catch{return 'A';}});
  const [selections,setSelections]=useState<CollaborationClient['selections']>({});
  const current=useRef(room);current.current=room;

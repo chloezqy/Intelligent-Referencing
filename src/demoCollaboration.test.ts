@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {collaborationMode} from './collaborationClient';
-import {freshDemo,demoShare,demoComparison} from './demoCollaboration';
+import {freshDemo,demoShare,demoComparison,normalizeRoom} from './demoCollaboration';
 import {evaluateAttempt,TASKS,ResearchAttempt} from './research';
 const demoPeer=()=>({userId:'B' as const,elementIds:['sc1-cta'],exemplarIds:['sc1-cta'],scope:'exemplars' as const,method:'conventional' as const,revision:1});
 const recipientEvidence=(ref:import('./collaboration').SharedReference):import('./collaboration').SharedReference=>({...ref,activity:[{id:'open',userId:'B',kind:'opened',elementIds:[],at:''},{id:'locate',userId:'B',kind:'located',elementIds:ref.elementIds,at:''}],responses:[{id:'reply',userId:'B',message:'Reviewed manually',createdAt:''}]});
@@ -28,4 +28,14 @@ test('Cross-user comparison snapshots both local and manually established demo s
 });
 test('Demo reference activity cannot substitute for actual canvas editing task evidence',()=>{
  for(const level of [4,5] as const){const attempt={id:`attempt-${level}`,level,startedAt:'',events:[]};const ref=demoShare(freshDemo(),{...draft,research:{level,attemptId:attempt.id}},level===4?'Review':'Compare','Review consistency','r').references[0];assert.equal(evaluateAttempt(attempt,[recipientEvidence(ref)]).complete,false);}
+});
+
+test('References saved by earlier versions load with empty lists instead of crashing the conversation',()=>{
+ const legacy={id:'legacy',sourceUser:'A',targetUser:'B',label:'Card',intent:'Review',createdAt:'2026-11-01T00:00:00Z',status:'open',elementIds:['hc1']} as any;
+ const room=normalizeRoom({...freshDemo(),references:[legacy,null as any]});
+ assert.equal(room.references.length,1);
+ assert.deepEqual(room.references[0].responses,[]);
+ assert.deepEqual(room.references[0].exemplarIds,[]);
+ assert.equal(room.references[0].message,'');
+ assert.deepEqual(room.references[0].elementIds,['hc1']);
 });

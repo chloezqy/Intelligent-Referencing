@@ -22,3 +22,12 @@ export function demoComparison(a:SelectionPresence,b:SelectionPresence,id:string
  if(!a.elementIds.length||!b.elementIds.length)throw new Error('Both selections need layers.');
  return {snapshotId:id,selections:structuredClone({A:a,B:b}),purpose:'',interpretation:ruleBasedInterpreter.interpret(a.elementIds,b.elementIds,MOCK_NODES)};
 }
+
+/** References saved by earlier versions can lack lists that the UI maps over; fill them in on load. */
+export function normalizeReference(ref:SharedReference):SharedReference{
+ const list=<T,>(value:T[]|undefined)=>Array.isArray(value)?value:[];
+ return {...ref,elementIds:list(ref.elementIds),exemplarIds:list(ref.exemplarIds),responses:list(ref.responses),message:typeof ref.message==='string'?ref.message:'',label:typeof ref.label==='string'?ref.label:''};
+}
+export function normalizeRoom(room:RoomSnapshot):RoomSnapshot{
+ return {...room,members:Array.isArray(room.members)?room.members:freshDemo().members,references:room.references.filter(ref=>ref&&typeof ref.id==='string').map(normalizeReference)};
+}
