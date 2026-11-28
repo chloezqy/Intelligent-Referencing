@@ -552,7 +552,7 @@ export default function Canvas({
 
           {/* FIGMA-STYLE OVERALL BOUNDING BOX WITH CLEAN CORNER HANDLES ONLY (NO CLUTTERED FLOATING BADGES) */}
           <AnimatePresence>
-            {!draftRef && (selectionState === 'preview' || selectionState === 'disambiguating' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift)) && boundingBox && !activeIds.every(id=>nodes.find(node=>node.id===id)?.type==='screen') && (
+            {!draftRef && activeIds.length > 1 && (selectionState === 'preview' || selectionState === 'disambiguating' || (selectionState === 'rect-selecting' && pendingPointer.current?.shift)) && boundingBox && !activeIds.every(id=>nodes.find(node=>node.id===id)?.type==='screen') && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

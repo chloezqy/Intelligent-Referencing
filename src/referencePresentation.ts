@@ -113,3 +113,8 @@ export function sharePopoverLayout(ids:string[],nodes:UIElement[],camera:CanvasT
   const position=selectionActionLayout(box,camera,viewport,{width,height});
   return {pin,offscreen,popup:{...position,width,maxHeight}};
 }
+
+/** The lower-left point attaches to the anchor; keep its screen-space body visible. */
+export function referencePinPosition(anchor:{x:number;y:number},viewport:{width:number;height:number}){
+ return {left:Math.max(4,Math.min(anchor.x,viewport.width-PIN_SIZE-4)),top:Math.max(4,Math.min(anchor.y-PIN_SIZE,viewport.height-PIN_SIZE-4))};
+}

@@ -1728,3 +1728,12 @@ body:has(.unified-reference-workflow) .figma-help{bottom:108px}
 .unified-reference-preview .confirmation-changes{margin-bottom:0}
 
 .unified-reference-preview .comparison-confirmation>.confirmation-change-title{display:none}
+/* Figma-style reference markers: one pointed body and an inset sender initial. */
+.reference-pin{width:24px;min-width:24px;height:24px;padding:3px;border:0;border-radius:50% 50% 50% 0;background:#30363c;box-shadow:0 2px 5px #0003;outline:none}
+.reference-pin .pin-avatar{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--participant-color);color:#fff;font-size:9px;font-weight:600;line-height:1}
+.reference-pin.selected,.share-draft-pin{outline:none;outline-offset:0}
+.reference-pin:hover,.reference-pin:focus-visible{outline:2px solid #0d99ff;outline-offset:1px}
+.reference-pin .pin-status{right:-2px;bottom:-2px;width:7px;height:7px;font-size:8px;border:1px solid #fff;background:#fff;color:var(--participant-color)}
+.reference-pin .pin-reference-count{position:absolute;right:-4px;top:-4px;min-width:11px;height:11px;padding:0 2px;display:grid;place-items:center;border-radius:5px;background:#fff;color:#354653;font-size:7px;line-height:1}
+.reference-pin .pin-target-count{right:auto;left:-4px;top:-4px;min-width:10px;height:10px;font-size:7px}
+.share-draft-pin .pin-avatar{font-size:15px;font-weight:400}

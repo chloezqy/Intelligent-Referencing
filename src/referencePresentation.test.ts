@@ -112,3 +112,18 @@ test('Compact chooser titles show intent and object name without changing saved 
  assert.equal(referenceChooserTitle({...ref,label:'  '}),'Review · Selected objects');
  assert.equal(referenceChooserTitle({...ref,label:'Lamp · Floor model'}),'Review · Lamp · Floor model');
 });
+
+test('Figma pin point aligns with the anchor and the body stays inside viewport edges',async()=>{
+ const {referencePinPosition}=await import('./referencePresentation');
+ assert.deepEqual(referencePinPosition({x:100,y:100},{width:500,height:400}),{left:100,top:76});
+ assert.deepEqual(referencePinPosition({x:499,y:0},{width:500,height:400}),{left:472,top:4});
+});
+test('Figma reference pins show sender initials while retaining reference identity and status',async()=>{
+ const React=await import('react'),{renderToStaticMarkup}=await import('react-dom/server'),{default:ReferencePins}=await import('./components/ReferencePins');
+ const r=reference('figma-pin',['hc1']);
+ const html=renderToStaticMarkup(React.createElement(ReferencePins,{references:[r],nodes:MOCK_NODES,camera,viewport,activeId:r.id,dismissChooser:false,onChooserChange:()=>{},onOpen:()=>{throw Error('Opening requires a click');}}));
+ assert.match(html,/class="pin-avatar user-A" aria-hidden="true">A<\/span>/);
+ assert.match(html,/Reference A1/);assert.match(html,/Awaiting review/);assert.doesNotMatch(html,/class="pin-status"/);
+ const grouped=renderToStaticMarkup(React.createElement(ReferencePins,{references:[r,{...r,id:'second'}],nodes:MOCK_NODES,camera,viewport,activeId:null,dismissChooser:false,onChooserChange:()=>{},onOpen:()=>{}}));
+ assert.match(grouped,/pin-reference-count/);assert.match(grouped,/Choose from 2 shared references/);
+});

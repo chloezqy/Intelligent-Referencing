@@ -14,7 +14,7 @@ import { ReferenceDraft, ReferenceIntent, DesignReference, DESIGN_REFERENCE_PURP
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
 import { requestId } from '../useCollaboration';
-import { sharePopoverLayout, shareActionLabel } from '../referencePresentation';
+import { sharePopoverLayout, shareActionLabel, referencePinPosition } from '../referencePresentation';
 import PropertyComparison from './PropertyComparison';
 interface Props {comparisonComposer?:boolean;renderReferenceWorkflow?:(sharing:(details:ReferenceShareDetails)=>React.ReactNode)=>React.ReactNode;comparisonKeys?:string[];onComparisonKeys?:(keys:string[])=>void;onPickSecond?:()=>void;documentNodes?:UIElement[];editingContent?:React.ReactNode;
  inspectorHost?:HTMLElement|null; inspector?:boolean;
@@ -61,7 +61,7 @@ export default function SharePopover(props:Props){
   if(inspector&&renderReferenceWorkflow)return <>{visible&&inspectorHost?createPortal(renderReferenceWorkflow(details=><button type="button" className="reference-share-action" onClick={()=>setComparisonShare(details)}><Share2 size={14}/><span>Share comparison</span><ChevronRight size={13}/></button>),inspectorHost):null}{comparisonShare&&<SharePopover {...props} comparisonComposer inspector={false} inspectorHost={undefined} renderReferenceWorkflow={undefined} visible draft={{...draft,comparison:referenceSharingContext(draft.comparison!,comparisonShare)}} onVisible={open=>{if(!open)setComparisonShare(null);}} onCancel={()=>setComparisonShare(null)} onShared={()=>setComparisonShare(null)}/>}</>;
 
   const content=<div ref={host} className={inspector?'inspector-share-host':'draft-share-layer absolute inset-0 pointer-events-none'} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
-    {!inspector&&!visible&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={{left:layout.pin.x-12,top:layout.pin.y-12}} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}>+</button>}
+    {!inspector&&!visible&&layout&&<button ref={pin} type="button" className={`reference-pin share-draft-pin user-${c.session?.userId||'A'} pointer-events-auto`} style={referencePinPosition(layout.pin,viewport)} title={`${label} · Unsent request`} aria-label={`Open ${label} popup`} aria-expanded={visible} aria-haspopup="dialog" onClick={()=>onVisible(!visible)}><span className="pin-avatar" aria-hidden="true">+</span></button>}
     {visible&&<div ref={bindDragPanel} role="dialog" aria-label={label} className={inspector?'inspector-composer':'share-popover sender-share-popover pointer-events-auto'} style={inspector?undefined:layout?{...layout.popup,...(writingAnchor?.key===placementKey?{top:writingAnchor.top,maxHeight:Math.min(640,viewport.height-writingAnchor.top-8)}:{})}:undefined}>
       {!inspector&&<header data-panel-drag-handle title="Drag to move panel"><h3>Share reference</h3><button type="button" aria-label="Close sharing popup" onClick={onCancel}>×</button></header>}
       <form onSubmit={async e=>{e.preventDefault();if(!inspector&&!chosenRecipients.length)return;const result=await c.share({...draft,...(documentNodes?{document:documentNodes}:{})},intent,note,sendId,true,inspector?undefined:chosenRecipients);if(result)onShared(result.id);}}>

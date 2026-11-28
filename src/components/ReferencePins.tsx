@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SharedReference } from '../collaboration';
 import { UIElement } from '../types';
 import { CanvasTransform } from '../workspace';
-import { layoutReferencePins, orderedReferences, referenceShortLabel, referenceChooserTitle, pinChooserBounds } from '../referencePresentation';
+import { layoutReferencePins, orderedReferences, referenceShortLabel, referenceChooserTitle, pinChooserBounds, referencePinPosition } from '../referencePresentation';
 interface Props { references:SharedReference[]; nodes:UIElement[]; camera:CanvasTransform; viewport:{width:number;height:number}; activeId:string|null; dismissChooser:boolean; onChooserChange:(open:boolean)=>void; onOpen:(id:string)=>void }
 export default function ReferencePins({references,nodes,camera,viewport,activeId,dismissChooser,onChooserChange,onOpen}:Props){
   const [dragPanel,setDragPanel]=useState<HTMLDivElement|null>(null);
@@ -30,9 +30,10 @@ export default function ReferencePins({references,nodes,camera,viewport,activeId
       const refs=pin.referenceIds.map(id=>byId.get(id)!),active=refs.some(r=>r.id===activeId),reviewed=refs.every(r=>r.status==='reviewed');
       const display=refs.find(r=>r.id===activeId)||refs[0],mixed=refs.some(r=>r.sourceUser!==display.sourceUser);
       const status=reviewed?'Reviewed':'Awaiting review';
-      const label=refs.length===1?`Open ${display.intent} reference from User ${display.sourceUser} · ${status} · ${pin.anchors.map(a=>nodes.find(n=>n.id===a.elementId)?.label).join(', ')}`:`Choose from ${refs.length} shared references · ${status}`;
-      return <button key={pin.key} type="button" data-reference-pin={display.id} data-element-id={(pin.anchors.find(a=>a.active)||pin.anchors[0]).elementId} className={`reference-pin user-${display.sourceUser} ${mixed?'mixed-users':''} ${active?'selected':''} ${reviewed?'reviewed':''}`} style={{left:pin.x-12,top:pin.y-12}} aria-label={label} title={refs.length===1?`User ${display.sourceUser} · ${referenceShortLabel(display)} · ${status}`:`${refs.length} references · Choose a conversation`} aria-expanded={refs.length>1?chooser===pin.key:undefined} aria-haspopup={refs.length>1?'dialog':undefined} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();lastTrigger.current=e.currentTarget;if(refs.length===1)open(display.id);else setChooser(chooser===pin.key?null:pin.key);}}>
-        <span>{refs.length>1?refs.length:`${display.sourceUser}${ordered.findIndex(r=>r.id===display.id)+1}`}</span><span className="pin-status" aria-hidden="true">{reviewed?'✓':'•'}</span>{pin.anchors.length>1&&refs.length===1&&<span className="pin-target-count" aria-hidden="true">{pin.anchors.length}</span>}
+      const number=`${display.sourceUser}${ordered.findIndex(r=>r.id===display.id)+1}`;
+      const label=refs.length===1?`Open reference ${number} · ${display.intent} reference from User ${display.sourceUser} · ${status} · ${pin.anchors.map(a=>nodes.find(n=>n.id===a.elementId)?.label).join(', ')}`:`Choose from ${refs.length} shared references · ${status}`;
+      return <button key={pin.key} type="button" data-reference-pin={display.id} data-element-id={(pin.anchors.find(a=>a.active)||pin.anchors[0]).elementId} className={`reference-pin user-${display.sourceUser} ${mixed?'mixed-users':''} ${active?'selected':''} ${reviewed?'reviewed':''}`} style={referencePinPosition(pin,viewport)} aria-label={label} title={refs.length===1?`Reference ${number} · User ${display.sourceUser} · ${referenceShortLabel(display)} · ${status}`:`${refs.length} references · Choose a conversation`} aria-expanded={refs.length>1?chooser===pin.key:undefined} aria-haspopup={refs.length>1?'dialog':undefined} onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();lastTrigger.current=e.currentTarget;if(refs.length===1)open(display.id);else setChooser(chooser===pin.key?null:pin.key);}}>
+        <span className={`pin-avatar user-${display.sourceUser}`} aria-hidden="true">{display.sourceUser}</span>{refs.length>1&&<span className="pin-reference-count" aria-hidden="true">{refs.length}</span>}{pin.anchors.length>1&&refs.length===1&&<span className="pin-target-count" aria-hidden="true">{pin.anchors.length}</span>}
       </button>;
     })}
     {selected&&<div ref={setDragPanel} role="dialog" aria-label="Shared reference conversations" className="pin-chooser pointer-events-auto" style={pinChooserBounds(selected,viewport)} onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
